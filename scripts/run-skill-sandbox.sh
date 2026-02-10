@@ -5,16 +5,23 @@ usage() {
   cat <<'USAGE'
 Usage:
   scripts/run-skill-sandbox.sh <repo-url> [options] [-- <codex-args...>]
+  scripts/run-skill-sandbox.sh --resume <sandbox-dir> [options] [-- <codex-args...>]
 
 Options:
+  --resume <sandbox-dir> Resume an existing sandbox directory.
   --ref <git-ref>  Checkout this branch/tag/commit after clone.
-  --keep           Keep the sandbox directory instead of deleting it on exit.
+  --remove         Remove the sandbox directory on exit.
   -h, --help       Show this help.
 
 Examples:
   scripts/run-skill-sandbox.sh https://github.com/example/project.git
   scripts/run-skill-sandbox.sh https://github.com/example/project.git -- --full-auto
   scripts/run-skill-sandbox.sh https://github.com/example/project.git --ref main -- exec "list available skills"
+  scripts/run-skill-sandbox.sh --resume /tmp/codex-skill-sandbox.ABC123
+
+Behavior:
+  Maintains a persistent repo mirror cache in /tmp/codex-skill-sandbox-cache.
+  First run clones into cache, later runs fetch updates, then sandbox clones from cache.
 USAGE
 }
 
@@ -23,15 +30,27 @@ if [[ ${1:-} == "" || ${1:-} == "-h" || ${1:-} == "--help" ]]; then
   exit 0
 fi
 
-repo_url="$1"
-shift
+repo_url=""
+resume_dir=""
+if [[ ${1:-} != "--resume" ]]; then
+  repo_url="$1"
+  shift
+fi
 
 git_ref=""
-keep_sandbox=0
+remove_on_exit=0
 codex_args=()
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
+    --resume)
+      if [[ $# -lt 2 ]]; then
+        echo "ERROR: --resume requires a value" >&2
+        exit 1
+      fi
+      resume_dir="$2"
+      shift 2
+      ;;
     --ref)
       if [[ $# -lt 2 ]]; then
         echo "ERROR: --ref requires a value" >&2
@@ -40,8 +59,8 @@ while [[ $# -gt 0 ]]; do
       git_ref="$2"
       shift 2
       ;;
-    --keep)
-      keep_sandbox=1
+    --remove)
+      remove_on_exit=1
       shift
       ;;
     --)
@@ -56,15 +75,51 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
+if [[ -n "$resume_dir" && -n "$repo_url" ]]; then
+  echo "ERROR: Provide either <repo-url> or --resume <sandbox-dir>, not both" >&2
+  exit 1
+fi
+
+if [[ -z "$resume_dir" && -z "$repo_url" ]]; then
+  echo "ERROR: Missing required argument: <repo-url> or --resume <sandbox-dir>" >&2
+  exit 1
+fi
+
+if [[ -n "$resume_dir" && -n "$git_ref" ]]; then
+  echo "ERROR: --ref cannot be used with --resume" >&2
+  exit 1
+fi
+
 repo_root="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 real_codex_home="${REAL_CODEX_HOME:-$HOME/.codex}"
+cache_root="/tmp/codex-skill-sandbox-cache"
 
-sandbox_root="$(mktemp -d /tmp/codex-skill-sandbox.XXXXXX)"
+sandbox_root=""
+if [[ -n "$resume_dir" ]]; then
+  sandbox_root="$resume_dir"
+else
+  sandbox_root="$(mktemp -d /tmp/codex-skill-sandbox.XXXXXX)"
+fi
 repo_dir="$sandbox_root/repo"
 sandbox_codex_home="$sandbox_root/codex-home"
 
+repo_hash=""
+repo_slug=""
+cache_repo_dir=""
+if [[ -n "$repo_url" ]]; then
+  if command -v sha256sum >/dev/null 2>&1; then
+    repo_hash="$(printf '%s' "$repo_url" | sha256sum | awk '{print substr($1, 1, 16)}')"
+  else
+    repo_hash="$(printf '%s' "$repo_url" | shasum -a 256 | awk '{print substr($1, 1, 16)}')"
+  fi
+
+  repo_slug="$(basename "${repo_url%/}")"
+  repo_slug="${repo_slug%.git}"
+  cache_repo_dir="$cache_root/${repo_slug}-${repo_hash}.git"
+fi
+
 cleanup() {
-  if [[ $keep_sandbox -eq 0 ]]; then
+  if [[ $remove_on_exit -eq 1 ]]; then
     # Guardrail: only delete directories created under /tmp.
     if [[ -d "$sandbox_root" && "$sandbox_root" == /tmp/* ]]; then
       rm -rf "$sandbox_root"
@@ -78,11 +133,39 @@ cleanup() {
 }
 trap cleanup EXIT
 
-echo "Creating sandbox at: $sandbox_root"
-git clone "$repo_url" "$repo_dir"
+if [[ -n "$resume_dir" ]]; then
+  if [[ ! -d "$sandbox_root" ]]; then
+    echo "ERROR: Resume directory does not exist: $sandbox_root" >&2
+    exit 1
+  fi
+  if [[ ! -d "$repo_dir" ]]; then
+    echo "ERROR: Resume sandbox is missing repo directory: $repo_dir" >&2
+    exit 1
+  fi
+  if [[ ! -d "$sandbox_codex_home" ]]; then
+    echo "ERROR: Resume sandbox is missing codex-home directory: $sandbox_codex_home" >&2
+    exit 1
+  fi
+  echo "Resuming sandbox at: $sandbox_root"
+else
+  echo "Creating sandbox at: $sandbox_root"
+  mkdir -p "$cache_root"
 
-if [[ -n "$git_ref" ]]; then
-  git -C "$repo_dir" checkout "$git_ref"
+  if [[ ! -d "$cache_repo_dir" ]]; then
+    echo "Cache miss. Cloning mirror to: $cache_repo_dir"
+    git clone --mirror "$repo_url" "$cache_repo_dir"
+  else
+    echo "Cache hit. Fetching updates in: $cache_repo_dir"
+    git -C "$cache_repo_dir" remote update --prune
+  fi
+
+  echo "Cloning sandbox repo from cache"
+  git clone "$cache_repo_dir" "$repo_dir"
+  git -C "$repo_dir" remote set-url origin "$repo_url"
+
+  if [[ -n "$git_ref" ]]; then
+    git -C "$repo_dir" checkout "$git_ref"
+  fi
 fi
 
 mkdir -p "$sandbox_codex_home/skills"
@@ -104,7 +187,7 @@ for skill_md in "$repo_root"/*/SKILL.md; do
   fi
   found_skills=1
   skill_dir_name="$(basename "$(dirname "$skill_md")")"
-  ln -s "$repo_root/$skill_dir_name" "$sandbox_codex_home/skills/$skill_dir_name"
+  ln -sfn "$repo_root/$skill_dir_name" "$sandbox_codex_home/skills/$skill_dir_name"
 done
 
 if [[ $found_skills -eq 0 ]]; then
