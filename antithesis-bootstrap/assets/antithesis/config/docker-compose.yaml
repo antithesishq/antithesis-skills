@@ -1,0 +1,6 @@
+# TODO: replace this docker-compose file with a working Antithesis test harness
+# for this project
+services:
+  noop:
+    image: busybox:1.36
+    command: ["sh", "-c", "tail -f /dev/null"]
