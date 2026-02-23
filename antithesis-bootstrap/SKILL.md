@@ -172,11 +172,14 @@ Then for each Test Template, create all the required Test Commands. Refer to the
 
 Refer to previous steps to figure out which commands you need and what the commands should do.
 
+Test Commands should be written in a higher level language than Bash. In most cases write the Test Commands using the projects language (like go, java, python, etc). This allows Test Commands to reuse existing patterns, shared code, and libraries from the project.
+
 Best practices:
 
 - Commands should eventually exit
 - There is a default property which verifies Commands exit 0. Thus, ensure that if commands fail it is because something unexpected has occurred.
 - Think of Commands like levers you are exposing to the Antithesis fuzzer. Exposing a suite of interesting commands can make it easier for the fuzzer to discover interesting and potentially erroneous system states.
+- Ensure that Test Template directories only contain Test Commands with valid prefixes. If a Test Command needs to import other files (like libraries or shared logic) put those extra files elsewhere.
 
 **Output of this step:**
 

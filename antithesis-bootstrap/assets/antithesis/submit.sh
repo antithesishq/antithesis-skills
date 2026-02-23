@@ -2,7 +2,7 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 [--duration seconds] [--registry <registry>] [--desc <description>]" >&2
+  echo "Usage: $0 [--duration minutes] [--registry <registry>] [--desc <description>]" >&2
 }
 
 DURATION="60"
@@ -81,7 +81,7 @@ if [[ -n "$USER_DESCRIPTION" ]]; then
 fi
 
 # Build test run params (JSON)
-DATA=json=$(
+DATA=$(
   jq -n \
     --arg test_name "$PROJECT_NAME" \
     --arg description "$RUN_DESCRIPTION" \
@@ -89,16 +89,40 @@ DATA=json=$(
     --arg images "$SUT_IMAGES" \
     --arg duration "$DURATION" \
     '{ params: {
-      antithesis.test_name: $test_name,
-      antithesis.description: $description,
-      antithesis.config_image: $config_image,
-      antithesis.images: $images,
-      antithesis.duration: $duration
+      "antithesis.test_name": $test_name,
+      "antithesis.description": $description,
+      "antithesis.config_image": $config_image,
+      "antithesis.images": $images,
+      "antithesis.duration": $duration
     }}'
 )
 
-curl --fail \
-  -X POST \
-  -u "${ANTITHESIS_USERNAME}:${ANTITHESIS_PASSWORD}" \
-  "https://${ANTITHESIS_TENANT}.antithesis.com/api/v1/launch/basic_test" \
-  -d "$DATA"
+response="$(
+  curl --fail -sS \
+    -X POST \
+    -u "${ANTITHESIS_USERNAME}:${ANTITHESIS_PASSWORD}" \
+    "https://${ANTITHESIS_TENANT}.antithesis.com/api/v1/launch/basic_test" \
+    -d "$DATA"
+)"
+
+echo "Test launch response:"
+if echo "$response" | jq -e . >/dev/null 2>&1; then
+  echo "$response" | jq .
+else
+  echo "$response"
+fi
+
+if [[ "$DURATION" =~ ^[0-9]+$ ]]; then
+  duration_minutes=$DURATION
+  eta_minutes=$((duration_minutes + 15))
+  if eta_timestamp="$(date -d "+${eta_minutes} minutes" "+%Y-%m-%d %H:%M:%S %Z" 2>/dev/null)"; then
+    :
+  elif eta_timestamp="$(date -v+"${eta_minutes}"M "+%Y-%m-%d %H:%M:%S %Z" 2>/dev/null)"; then
+    :
+  else
+    eta_timestamp="unavailable (unsupported date command)"
+  fi
+  echo "Estimated completion: ~${eta_minutes} minutes (${duration_minutes}m run + 15m buffer), around ${eta_timestamp}"
+else
+  echo "Estimated completion: unavailable (non-numeric --duration: ${DURATION})"
+fi
