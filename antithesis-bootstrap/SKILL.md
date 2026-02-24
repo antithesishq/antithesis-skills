@@ -187,6 +187,8 @@ One or more Test Templates containing Test Command executables written to `antit
 
 ### 7. Setup images and `docker-compose.yaml`
 
+> **Podman Compose compatibility:** Antithesis uses `podman compose` behind the scenes to run your deployment. For increased compatibility, prefer using `podman compose` over `docker compose` when testing locally. If `podman compose` is available on the system, use it; otherwise fall back to `docker compose`.
+
 The goal of this step is to create a working Docker compose configuration in `antithesis/config/docker-compose.yaml`. To do this you will need to create or adjust Dockerfiles so that all required components in the SUT can either be pulled or built.
 
 If you end up needing to create a Dockerfile, create one at `antithesis/Dockerfile` and use named layers to split out different services as needed.

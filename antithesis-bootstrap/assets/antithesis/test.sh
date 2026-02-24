@@ -7,7 +7,13 @@ COMPOSE_FILE="${SCRIPT_DIR}/config/docker-compose.yaml"
 COMPOSE_WAIT_TIMEOUT_SECONDS="30"
 
 compose() {
-  docker compose -f "${COMPOSE_FILE}" "$@"
+  # Antithesis uses podman compose behind the scenes, so prefer it locally
+  # for increased compatibility; fall back to docker compose if unavailable.
+  if command -v podman &>/dev/null; then
+    podman compose -f "${COMPOSE_FILE}" "$@"
+  else
+    docker compose -f "${COMPOSE_FILE}" "$@"
+  fi
 }
 
 # TODO: build any required docker images to make sure you're testing the latest
