@@ -2,28 +2,19 @@
 
 AI skills for Antithesis workflows.
 
-## Add These Skills To Codex And Claude
-
-From this repository root:
+## Install
 
 ```bash
-./scripts/install.sh
+npx skills add antithesishq/antithesis-skills
 ```
 
-`scripts/install.sh` only installs into tools it detects:
-- Codex: `${CODEX_HOME:-$HOME/.codex}`
-- Claude: `$HOME/.claude`
+## Install for local development
 
-Verify links:
-
-```bash
-ls -la "${CODEX_HOME:-$HOME/.codex}/skills"
-ls -la "$HOME/.claude/skills"
-```
+To work on these skills, use `make install-dev` to symlink them into your Claude and Codex skills directory.
 
 Restart Codex/Claude sessions after adding skills so they are re-discovered.
 
-## Validate
+## Validate skills
 
 ```bash
 make validate
