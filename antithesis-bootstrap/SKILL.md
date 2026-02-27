@@ -7,7 +7,7 @@ description: Bootstrap a minimal Antithesis-ready deployment by preparing the sy
 
 ## Purpose and Goal
 
-Use this skill to setup a project to run in Antithesis. To learn about Antithesis use the `Antithesis Documentation` skill or directly query the Antithesis Documentation MCP: https://antithesis.com/docs/mcp
+Use this skill to setup a project to run in Antithesis. To learn about Antithesis, use the `Antithesis Documentation` skill, which should prefer `snouty docs` and otherwise request markdown documentation pages directly.
 
 Success means the user has:
 
@@ -29,7 +29,7 @@ Success means the user has:
 
 ## Recommended Requirements
 
-Make sure the user has either the `antithesis-documentation` skill OR the `Antithesis Documentation MCP` installed so you can easily access up to date documentation. See [this reference](references/install-docs-mcp.md) for installation instructions.
+Make sure you can access current documentation through the `antithesis-documentation` skill. Prefer `snouty docs`; if `snouty` is unavailable, request markdown documentation pages directly from `https://antithesis.com/docs/`.
 
 ## Documentation Grounding
 
