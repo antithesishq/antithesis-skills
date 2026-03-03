@@ -13,17 +13,13 @@ Success means the user has:
 
 - One or more pre-built Linux x86-64 Docker images for their system under test and dependencies.
 - A `docker-compose.yaml` that can run hermetically (no internet).
-- At least one test composer scenario.
-- A reliable `setup_complete` signal to let Antithesis know when it can start running scenarios.
+- A reliable `setup_complete` signal to let Antithesis know when the entire SUT is up/healthy and it can start running scenarios.
 - A config image containing the `docker-compose.yaml` and related configuration files.
 
 ## Definitions and Concepts
 
 - SUT: System under test. Do not expose this term to users, just used within this file. Refers to the project as a whole that the user wants to run in Antithesis.
 - Workload: A synthetic workload designed to exercise the SUT.
-- Test Composer: An Antithesis framework which comprises a set of "Test Templates", each containing one or more "Test Command".
-- Test Template: A Test Template is a folder of "Test Commands" located at `/opt/antithesis/test/v1/{name}/` possibly distributed or copied across multiple containers. There may be more than one test template. Each timeline will only execute "Test Commands" from a single Test Template.
-- Test Command: An executable file in a Test Template with a valid prefix in its name. Valid prefixes are: `parallel_driver_, singleton_driver_, serial_driver_, first_, eventually_, finally_, anytime_`. Prefixes constrain when and how the Test Composer will compose different commands together in a single timeline.
 - Timeline: A single linear execution of the SUT + Workload. Antithesis runs many timelines in parallel, and arbitrarily branches timelines to search for interesting new behaviors.
 - Branch: Rather than starting each timeline from scratch, Antithesis often branches existing timelines near interesting points to more efficiently exercise the SUT. By doing this Antithesis can spend a lot more CPU on "interesting" areas of the code which are more likely to contain bugs.
 
@@ -53,10 +49,8 @@ Perform each of the following steps in order, revisiting the previous steps as n
 2. Understand the System Under Test
 3. Plan the System Under Test
 4. Implement components
-5. Add Antithesis assertions
-6. Create test templates and test commands
-7. Setup images and `docker-compose.yaml`
-8. Audit and prepare for deployment
+5. Setup images and `docker-compose.yaml`
+6. Audit and prepare for deployment
 
 As you perform each step record plans, notes, and tasks in the notebook directory you will create in step 1. You may want to also write down useful information you've learned in the Antithesis documentation for quick reference later on.
 
@@ -152,42 +146,9 @@ While implementing components keep the following principles in mind:
 
 Additionally, if you are writing code which will run in Test Commands which connects to a service over the network, you will need to ensure the code handles all forms of temporary network faults. Read the Fault injection page in the documentation to learn which faults your code needs to handle.
 
-### 5. Add Antithesis assertions
-
-For each of the properties you came up with in step 2, figure out how to assert that those properties hold via adding Antithesis SDK assertions to the code. Some of the assertions may be in the workload you write, while others may be embedded deeply in the project's code.
-
-Make sure to use the right assertion for the job.
-
-Always/AlwaysOrUnreachable assertions should be used to validate an expression is always true.
-
-Sometimes assertions should be used to validate that we see an expression is true at least once. These are very useful to verify we see rare codepaths or states, and perhaps want to spend more time exploring them.
-
-Reachable/Unreachable assertions should be used to verify which portions of the code we end up reaching (or not reaching). Reachable assertions can be used to verify the workload is expressive enough, while Unreachable assertions can be used to verify we don't reach unexpected or critical failures.
-
-### 6. Create test templates and test commands
-
-Determine which Test Templates you need. If in doubt just create one Test Template for now. The name doesn't matter to Antithesis.
-
-Then for each Test Template, create all the required Test Commands. Refer to the Test Composer reference to learn about the different prefixes you can use: https://antithesis.com/docs/test_templates/test_composer_reference.md
-
-Refer to previous steps to figure out which commands you need and what the commands should do.
-
-Test Commands should be written in a higher level language than Bash. In most cases write the Test Commands using the projects language (like go, java, python, etc). This allows Test Commands to reuse existing patterns, shared code, and libraries from the project.
-
-Best practices:
-
-- Commands should eventually exit
-- There is a default property which verifies Commands exit 0. Thus, ensure that if commands fail it is because something unexpected has occurred.
-- Think of Commands like levers you are exposing to the Antithesis fuzzer. Exposing a suite of interesting commands can make it easier for the fuzzer to discover interesting and potentially erroneous system states.
-- Ensure that Test Template directories only contain Test Commands with valid prefixes. If a Test Command needs to import other files (like libraries or shared logic) put those extra files elsewhere.
-
-**Output of this step:**
-
-One or more Test Templates containing Test Command executables written to `antithesis/test-composer/...`.
-
 ### 7. Setup images and `docker-compose.yaml`
 
-> **Podman Compose compatibility:** Antithesis uses `podman compose` behind the scenes to run your deployment. For increased compatibility, prefer using `podman compose` over `docker compose` when testing locally. If `podman compose` is available on the system, use it; otherwise fall back to `docker compose`.
+> **Podman compatibility:** Antithesis uses `podman` paired with `docker-compose` behind the scenes to run your deployment. For increased compatibility, prefer `docker-compose` (v1) vs `docker compose` when testing locally.
 
 The goal of this step is to create a working Docker compose configuration in `antithesis/config/docker-compose.yaml`. To do this you will need to create or adjust Dockerfiles so that all required components in the SUT can either be pulled or built.
 
