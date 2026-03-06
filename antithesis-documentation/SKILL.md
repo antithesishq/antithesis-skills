@@ -1,6 +1,6 @@
 ---
 name: antithesis-documentation
-description: Use Antithesis documentation efficiently for product, workflow, and integration questions. Prefer the Antithesis docs MCP when available, and use llms.txt as a direct plaintext doc index fallback.
+description: Use Antithesis documentation efficiently for product, workflow, and integration questions. Prefer the snouty docs CLI when available, and otherwise request markdown versions of documentation pages directly.
 ---
 
 # Antithesis Documentation
@@ -15,52 +15,55 @@ Because Antithesis's environment is perfectly deterministic, problems are reprod
 
 ## Accessing Documentation
 
-1. Prefer the Antithesis documentation MCP when available.
-2. If the MCP is not installed, you may install it or instruct the user to install it: https://antithesis.com/docs/mcp
-3. You can directly access the plaintext documentation index at:
-   https://antithesis.com/docs/llms.txt
-4. Use the MCP and/or `llms.txt` to locate authoritative documentation pages before giving detailed product guidance.
+1. Prefer `snouty docs` when the `snouty` CLI is installed.
+2. If `snouty` is missing, install it if you can, or tell the user it is available from:
+   https://github.com/antithesishq/snouty
+3. If you cannot use `snouty`, request markdown versions of documentation pages directly from `https://antithesis.com/docs/`.
 
-## Installing the Antithesis Documentation MCP Server
+## Using `snouty docs`
 
-The Antithesis Documentation MCP server is a public web service available without requiring any authentication at: https://antithesis.com/docs/mcp
+Use `snouty docs` to discover authoritative Antithesis documentation before giving detailed guidance. Inspect `snouty docs --help` to discover subcommands and usage examples.
 
-You can install it as a streaming-http MCP with no auth using one of the following methods:
+Recommended workflow:
 
-```
-# If NPX is available (preferred)
-npx add-mcp https://antithesis.com/docs/mcp -g -y --name "antithesis-documentation"
+1. Start with `snouty docs tree --depth 2` to get a quick overview of the docs.
+2. Use `snouty docs tree <filter>` to explore a section when you know the area but not the exact page name.
+3. Use `snouty docs search <terms>` to find likely pages for a specific topic.
+4. Use `snouty docs search -l <terms>` when you want just the page paths.
+5. Use `snouty docs show <path>` to read the full markdown page once you know the path.
+6. Cite the relevant documentation pages in your answer.
 
-# Claude Code
-claude mcp add --transport http antithesis-documentation https://antithesis.com/docs/mcp
+Useful details:
 
-# OpenAI Codex
-codex mcp add antithesis-documentation --url https://antithesis.com/docs/mcp
-```
+- `snouty docs show` accepts page paths like `using_antithesis/sdk/go`.
+- `snouty docs show` also accepts `/docs/.../` style paths and tries to normalize them for you.
+- A warning about failing to update docs and falling back to cached docs is usually fine, especially in sandboxes without network access. Treat it as non-fatal if the requested docs content is still returned.
+- `snouty docs sqlite` prints the local SQLite cache path if you need to inspect the index with external tools.
 
-## IMPORTANT: PAY ATTENTION TO ANTITHESIS URLS AND PATHS
+## Direct Markdown Fallback
 
-Always add the `.md` extension before requesting any files from `https://antithesis.com/docs/`.
+If `snouty` is unavailable, fetch markdown pages directly from `https://antithesis.com/docs`.
 
-Absolute paths on documentation pages are relative to `https://antithesis.com/docs/`.
+A plain text index of all markdown pages is available at `https://antithesis.com/docs/llms.txt`. Load this first.
+
+Always add the `.md` extension before requesting files from `https://antithesis.com/docs/`.
 
 Examples:
 
 - `https://antithesis.com/docs/using_antithesis/sdk/go/` becomes `https://antithesis.com/docs/using_antithesis/sdk/go.md`
 - `/using_antithesis/sdk/go/` becomes `https://antithesis.com/docs/using_antithesis/sdk/go.md`
 
-Exceptions to this rule:
+Exceptions:
 
-- `llms.txt` -> https://antithesis.com/docs/llms.txt
-- Urls with explicit extensions: `.txt`, `.js`, `.so`, etc.
-- `docs/generated/...` -> request as is
+- URLs with explicit file extensions such as `.txt`, `.js`, or `.so`
+- `docs/generated/...` paths should be requested as-is
 
-When presenting URLs to the user, reverse this transformation. This way you (the LLM Agent) consumes markdown while the user sees pretty HTML pages in their browser.
+When presenting links to the user, prefer the normal HTML page URL instead of the `.md` URL.
 
-If you want to link a user directly to a header, all headers are addressable via a fragment containing the slugified header. I.e. `#### Eventually Command` would become `https://.../docs/...#eventually-command`. Slugification strips url-unsafe characters and uses kebab-case. If you aren't sure just link directly to the page and tell the user which header to scroll to.
+If you want to link a user directly to a section, use a fragment with the slugified header when practical. If the slug is uncertain, link the page and name the section explicitly.
 
 ## Output
 
-- Clear, grounded answers about Antithesis behavior, sdk, setup, and best practices.
-- MCP install/configuration guidance when docs MCP is not present and you can't install it yourself.
-- Relevant links, including the source doc pages discovered via MCP or `llms.txt`.
+- Clear, grounded answers about Antithesis behavior, SDKs, setup, and best practices.
+- Relevant links to the documentation pages you used.
+- If the `snouty` command is missing ask the user if they want to install it, telling them that it is a CLI for working with the Antithesis API and docs.
