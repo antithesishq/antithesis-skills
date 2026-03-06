@@ -1,17 +1,3 @@
-# Run Discovery
-
-If the user did not provide an explicit triage report url, you can search for recent runs at `https://$TENANT.antithesis.com/runs`.
-
-The runs page is a virtualized grid rendered with `a-row` / `a-cell`, not a
-plain HTML `<table>`. Rows are loaded in a `.vscroll` container, so a DOM query
-only sees the currently rendered rows unless you scroll.
-
-## Get recent runs as JSON
-
-This expression scrolls through the virtualized runs list, collects all rendered
-rows it encounters, and returns one JSON object per run.
-
-```js
 (async function () {
   function clean(s) {
     return (s || "").replace(/\s+/g, " ").trim();
@@ -118,7 +104,9 @@ rows it encounters, and returns one JSON object per run.
     var utilizationCell = row.querySelector(".runs_table_utilization");
     var actionCell = row.querySelector("a-cell.table_left_most_right_pinned_col");
 
-    var nameTooltip = nameCell ? nameCell.closest("a-cell").querySelector("a-tooltip") : null;
+    var nameTooltip = nameCell
+      ? nameCell.closest("a-cell").querySelector("a-tooltip")
+      : null;
     var creatorTooltip = creatorSource
       ? creatorSource.closest("a-cell").querySelector("a-tooltip")
       : null;
@@ -133,7 +121,9 @@ rows it encounters, and returns one JSON object per run.
       description:
         nameMeta.Description || text(nameCell, ".runs_table_tooltip_text"),
       creatorSource: text(creatorSource),
-      creatorName: ownText(creatorName && creatorName.querySelector("div")) || text(creatorName),
+      creatorName:
+        ownText(creatorName && creatorName.querySelector("div")) ||
+        text(creatorName),
       creatorCategory: creatorMeta.Category || "",
       cadence: creatorMeta.Cadence || "",
       commit: creatorMeta["Commit hash"] || "",
@@ -146,7 +136,9 @@ rows it encounters, and returns one JSON object per run.
       utilization: pairMap(utilizationCell),
       triageUrl: actionCell ? actionUrl(actionCell, "Triage results") : null,
       logsUrl: actionCell ? actionUrl(actionCell, "Explore Logs") : null,
-      hasTriageResults: !!(actionCell && actionUrl(actionCell, "Triage results")),
+      hasTriageResults: !!(
+        actionCell && actionUrl(actionCell, "Triage results")
+      ),
     };
   }
 
@@ -170,7 +162,10 @@ rows it encounters, and returns one JSON object per run.
       scroller.scrollTop + Math.max(200, Math.floor(scroller.clientHeight * 0.8)),
     );
 
-    if (nextScrollTop === scroller.scrollTop || nextScrollTop === previousScrollTop) {
+    if (
+      nextScrollTop === scroller.scrollTop ||
+      nextScrollTop === previousScrollTop
+    ) {
       stablePasses += 1;
       if (stablePasses >= 2) break;
     } else {
@@ -190,10 +185,3 @@ rows it encounters, and returns one JSON object per run.
     runs: Array.from(runs.values()),
   });
 })();
-```
-
-Notes:
-
-- `triageUrl` is `null` for runs that are still in progress and do not yet have a report.
-- `findings` is keyed by labels such as `new`, `ongoing`, `resolved`, and `rare`.
-- `utilization` is keyed by labels such as `Test hours`, `Setup`, and `Explore`.

@@ -4,9 +4,8 @@ The Utilization section graphs the number of new behaviors discovered over time 
 
 ## Get total test hours
 
-```js
-var metric = document.querySelector(".utilization-summary__metric");
-metric ? metric.textContent.trim() : "no data";
-```
+Use this query file:
+
+- `assets/report/utilization-total-test-hours.js`
 
 The Utilization graph is rendered as SVG in the `.utilization_plot` element.
