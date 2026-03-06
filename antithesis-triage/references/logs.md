@@ -3,10 +3,20 @@
 Logs are accessed per-example from the triage report. Each example row in an expanded property has a "get logs" link that opens a timeline-specific log viewer on the search page.
 
 **Important:** The search/logs page requires full authentication (the report's `auth` token is not sufficient). Ensure the user is authenticated before navigating to log URLs.
+**Important:** Report-side queries in this skill only apply on the main report
+view. If you navigate to a hash route such as `#/run/.../finding/...`, reopen
+the original report URL and rerun the report loading check before using any
+report query again.
 
 ## Getting log URLs from triage report examples
 
-After expanding a property to see its examples table:
+First, expand visible failed properties until their examples tables are present:
+
+Use this query file:
+
+- `assets/report/expand-failed-examples.js`
+
+Then extract the example rows and log URLs:
 
 Use this query file:
 
