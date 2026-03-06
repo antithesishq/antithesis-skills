@@ -19,23 +19,10 @@ Because Antithesis's environment is perfectly deterministic, problems are reprod
 2. If `snouty` is missing, install it if you can, or tell the user it is available from:
    https://github.com/antithesishq/snouty
 3. If you cannot use `snouty`, request markdown versions of documentation pages directly from `https://antithesis.com/docs/`.
-4. `llms.txt` is not currently available. Do not rely on it.
 
 ## Using `snouty docs`
 
-Use `snouty docs` to discover authoritative Antithesis documentation before giving detailed guidance.
-
-Core commands:
-
-```bash
-snouty docs tree --depth 2
-snouty docs search fault injection
-snouty docs search --list go sdk
-snouty docs search --json --limit 3 rust sdk
-snouty docs tree
-snouty docs tree sdk --depth 3
-snouty docs show using_antithesis/sdk/go
-```
+Use `snouty docs` to discover authoritative Antithesis documentation before giving detailed guidance. Inspect `snouty docs --help` to discover subcommands and usage examples.
 
 Recommended workflow:
 
@@ -55,7 +42,9 @@ Useful details:
 
 ## Direct Markdown Fallback
 
-If `snouty` is unavailable, fetch markdown pages directly.
+If `snouty` is unavailable, fetch markdown pages directly from `https://antithesis.com/docs`.
+
+A plain text index of all markdown pages is available at `https://antithesis.com/docs/llms.txt`. Load this first.
 
 Always add the `.md` extension before requesting files from `https://antithesis.com/docs/`.
 
