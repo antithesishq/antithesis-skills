@@ -11,3 +11,8 @@ Failed properties query file:
 Passed properties query file:
 
 - `assets/report/properties-passed.js`
+
+To expand visible failed leaf properties until their example tables are
+available for log extraction, use:
+
+- `assets/report/expand-failed-examples.js`

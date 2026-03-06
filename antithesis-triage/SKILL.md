@@ -86,6 +86,11 @@ The report-page loading check returns `true` only when the main report
 sections have finished loading, including findings, properties, environment,
 and utilization.
 
+Report queries are only valid on the main report view. If you navigate to an
+internal hash route such as `#/run/.../finding/...`, reopen the original report
+URL and rerun `assets/report/loading-finished.js` before using report queries
+again.
+
 ## Recommended workflows
 
 ### Quick overview of a run
@@ -99,7 +104,7 @@ and utilization.
 
 1. Read `references/setup-auth.md` — authenticate and open the report
 2. Read `references/properties.md` — list properties, filter to failed
-3. Read `references/logs.md` — get log URLs from the failing property's examples, navigate to logs, find the highlighted assertion event and surrounding context
+3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
 ### Find a specific run
@@ -112,6 +117,7 @@ and utilization.
 
 - **Always authenticate first.** Every session starts with setup-auth.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
+- **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
