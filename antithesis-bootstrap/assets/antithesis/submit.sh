@@ -2,11 +2,10 @@
 set -euo pipefail
 
 usage() {
-  echo "Usage: $0 [--duration minutes] [--registry <registry>] [--desc <description>]" >&2
+  echo "Usage: $0 [--duration minutes] [--desc <description>]" >&2
 }
 
 DURATION="60"
-REGISTRY=""
 USER_DESCRIPTION=""
 
 while [[ $# -gt 0 ]]; do
@@ -18,15 +17,6 @@ while [[ $# -gt 0 ]]; do
         exit 2
       fi
       DURATION="$2"
-      shift 2
-      ;;
-    --registry)
-      if [[ $# -lt 2 ]]; then
-        echo "Missing value for --registry" >&2
-        usage
-        exit 2
-      fi
-      REGISTRY="$2"
       shift 2
       ;;
     --desc)
@@ -51,27 +41,27 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-if [[ -n "$REGISTRY" ]]; then
-  CONFIG_IMAGE="${REGISTRY}/config:latest"
-else
-  CONFIG_IMAGE="config"
+# TODO: Build the SUT docker images.
+# Make sure any private images referenced by antithesis/config/docker-compose.yaml
+# are tagged under ANTITHESIS_REPOSITORY so snouty can discover and push them.
+
+if [[ -z "${ANTITHESIS_REPOSITORY:-}" ]]; then
+  echo "ANTITHESIS_REPOSITORY must be set in the environment." >&2
+  exit 1
 fi
 
-# TODO: Build SUT docker images.
-# Making sure to tag them with the provided registry if specified.
+# Docker or Podman must already be logged into ANTITHESIS_REPOSITORY.
+# Antithesis-managed registries are typically configured during onboarding.
+# User-managed registries must be configured by the user before running this script.
 
-SUT_IMAGES="image1:tag,image2:tag" # TODO: set the actual images built, comma-separated
-
-# Build the config image
-docker build -f antithesis/config/Dockerfile -t $CONFIG_IMAGE antithesis/config
-
-if [[ -z "$REGISTRY" ]]; then
-  echo "Build complete: no --registry provided, skipped push and test run."
-  exit 0
+if ! command -v snouty >/dev/null 2>&1; then
+  echo "snouty is required to launch Antithesis runs. Install it from https://github.com/orbitinghail/snouty" >&2
+  exit 1
 fi
 
-# TODO: Push all docker images to the registry
-docker push $CONFIG_IMAGE
+# Snouty automatically discovers image: references in docker-compose.yaml and
+# pushes the ones already tagged under ANTITHESIS_REPOSITORY before uploading
+# the config image. antithesis.images does not need to be passed explicitly.
 
 PROJECT_NAME="TODO: set project name"
 GIT_REV="$(git rev-parse HEAD)"
@@ -80,49 +70,9 @@ if [[ -n "$USER_DESCRIPTION" ]]; then
   RUN_DESCRIPTION="${RUN_DESCRIPTION} - ${USER_DESCRIPTION}"
 fi
 
-# Build test run params (JSON)
-DATA=$(
-  jq -n \
-    --arg test_name "$PROJECT_NAME" \
-    --arg description "$RUN_DESCRIPTION" \
-    --arg config_image "$CONFIG_IMAGE" \
-    --arg images "$SUT_IMAGES" \
-    --arg duration "$DURATION" \
-    '{ params: {
-      "antithesis.test_name": $test_name,
-      "antithesis.description": $description,
-      "antithesis.config_image": $config_image,
-      "antithesis.images": $images,
-      "antithesis.duration": $duration
-    }}'
-)
-
-response="$(
-  curl --fail -sS \
-    -X POST \
-    -u "${ANTITHESIS_USERNAME}:${ANTITHESIS_PASSWORD}" \
-    "https://${ANTITHESIS_TENANT}.antithesis.com/api/v1/launch/basic_test" \
-    -d "$DATA"
-)"
-
-echo "Test launch response:"
-if echo "$response" | jq -e . >/dev/null 2>&1; then
-  echo "$response" | jq .
-else
-  echo "$response"
-fi
-
-if [[ "$DURATION" =~ ^[0-9]+$ ]]; then
-  duration_minutes=$DURATION
-  eta_minutes=$((duration_minutes + 15))
-  if eta_timestamp="$(date -d "+${eta_minutes} minutes" "+%Y-%m-%d %H:%M:%S %Z" 2>/dev/null)"; then
-    :
-  elif eta_timestamp="$(date -v+"${eta_minutes}"M "+%Y-%m-%d %H:%M:%S %Z" 2>/dev/null)"; then
-    :
-  else
-    eta_timestamp="unavailable (unsupported date command)"
-  fi
-  echo "Estimated completion: ~${eta_minutes} minutes (${duration_minutes}m run + 15m buffer), around ${eta_timestamp}"
-else
-  echo "Estimated completion: unavailable (non-numeric --duration: ${DURATION})"
-fi
+snouty run \
+  --webhook basic_test \
+  --config antithesis/config \
+  --test-name "$PROJECT_NAME" \
+  --description "$RUN_DESCRIPTION" \
+  --duration "$DURATION"

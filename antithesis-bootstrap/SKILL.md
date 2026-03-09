@@ -210,12 +210,13 @@ A working `docker-compose.yaml` that you can run and test locally. Possibly a ne
 
 ### 8. Audit and prepare for deployment
 
-Carefully review all files in the antithesis deployment directory against this implementation plan. Ensure that the `antithesis/submit.sh` script is updated to build and push all of the required Docker images. Then notify the user that they may run their first Antithesis test.
+Carefully review all files in the antithesis deployment directory against this implementation plan. Ensure that the `antithesis/submit.sh` script is updated to build the required Docker images, tag any private images referenced by `docker-compose.yaml` under `ANTITHESIS_REPOSITORY`, and then launch the run with `snouty run`. Prefer passing `--config antithesis/config`, which causes Snouty to discover and push matching `image:` references from `docker-compose.yaml` and then build and push the config image automatically. Then notify the user that they may run their first Antithesis test.
 
-Guide the user to setup the required env variables (ANTITHESIS_USERNAME, ANTITHESIS_PASSWORD, ANTITHESIS_TENANT, ANTITHESIS_REPO) and then run the submit script. Start with a short duration to verify that the SUT is working as expected. You may need to iterate with the user to fix any issues discovered during deployment. Make sure you write down any discovered issues to your notebook to prevent them in the future.
+Guide the user to set the required env variables for the current Snouty CLI flow. In particular, make sure `ANTITHESIS_REPOSITORY` points at the remote registry/repository where Snouty should push the generated config image. Also make sure Docker or Podman is already configured to authenticate to that registry before launching the run. For registries provisioned by Antithesis, onboarding usually covers this setup. For user-owned registries, the user must configure Docker or Podman login themselves. Then run the submit script. Start with a short duration to verify that the SUT is working as expected. You may need to iterate with the user to fix any issues discovered during deployment. Make sure you write down any discovered issues to your notebook to prevent them in the future.
 
 ```sh
+export ANTITHESIS_REPOSITORY=...
+
 ./antithesis/submit.sh \
-    --registry $ANTITHESIS_REPO \
     --duration 30 --desc "first test run"
 ```
