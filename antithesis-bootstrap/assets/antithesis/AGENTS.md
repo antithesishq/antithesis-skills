@@ -1,7 +1,7 @@
 This directory contains files relevant to running tests in Antithesis.
 
 **submit.sh**  
-Use this script to submit Antithesis test runs.
+Use this script to build and push any required images, then launch an Antithesis test run via `snouty run`.
 
 **test.sh**  
 Use this script to test the Antithesis harness locally.
