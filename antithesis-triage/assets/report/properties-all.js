@@ -1,6 +1,4 @@
 (async function () {
-  var TARGET = "failed";
-
   function wait(ms) {
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
@@ -70,10 +68,6 @@
     ).length;
   }
 
-  function isLeaf(container) {
-    return directChildren(container) === 0;
-  }
-
   function isExpanded(container) {
     return !!container.querySelector(
       ":scope > .property .property__expander._expanded, :scope > .property__details._unfolded",
@@ -82,6 +76,10 @@
 
   function expanderButton(container) {
     return container.querySelector(":scope > .property .property__expander-button");
+  }
+
+  function isLeaf(container) {
+    return directChildren(container) === 0;
   }
 
   function groupPath(container) {
@@ -120,9 +118,8 @@
     return !!tab && tab.getAttribute("selected") === "true";
   }
 
-  async function activateTargetTab() {
-    var tab =
-      document.querySelector("a-tab._failing") || tabByPattern(/\bfailed\b/);
+  async function activateAllTab() {
+    var tab = tabByPattern(/\ball\b/);
     if (!tab) return null;
 
     for (var attempt = 0; attempt < 12; attempt++) {
@@ -130,11 +127,10 @@
       await wait(250);
 
       var expected = countFromTab(tab);
-      var visibleTargetCount = visiblePropertyContainers().filter(function (container) {
-        return containerStatus(container) === TARGET;
-      }).length;
-
-      if (isSelected(tab) && (visibleTargetCount > 0 || expected === 0)) {
+      if (
+        isSelected(tab) &&
+        (visiblePropertyContainers().length > 0 || expected === 0)
+      ) {
         return tab;
       }
     }
@@ -160,41 +156,42 @@
     return changed;
   }
 
-  function targetLeaves() {
+  function leafProperties() {
     return visiblePropertyContainers()
       .filter(function (container) {
-        return (
-          isLeaf(container) &&
-          containerStatus(container) === TARGET &&
-          nameOf(container)
-        );
+        return isLeaf(container) && nameOf(container);
       })
       .map(function (container) {
         return {
           group: groupPath(container),
           name: nameOf(container),
-          status: TARGET,
+          status: containerStatus(container),
         };
       });
   }
 
-  var tab = await activateTargetTab();
+  var tab = await activateAllTab();
 
-  for (var i = 0; i < 16; i++) {
-    var before = targetLeaves().length;
+  for (var i = 0; i < 24; i++) {
+    var before = leafProperties().length;
     var changed = await expandVisibleGroups();
-    var after = targetLeaves().length;
+    var after = leafProperties().length;
 
     if (!changed && after === before) {
       break;
     }
   }
 
-  var properties = targetLeaves();
+  var properties = leafProperties();
+  var counts = properties.reduce(function (acc, property) {
+    acc[property.status] = (acc[property.status] || 0) + 1;
+    return acc;
+  }, {});
 
   return JSON.stringify({
-    filter: TARGET,
+    filter: "all",
     expectedCount: countFromTab(tab),
+    counts: counts,
     properties: properties,
   });
 })();
