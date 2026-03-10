@@ -1,6 +1,10 @@
 (async function () {
   var TARGET = "passed";
 
+  function clean(text) {
+    return (text || "").replace(/\s+/g, " ").trim();
+  }
+
   function click(el) {
     if (!el) return false;
     ["pointerdown", "mousedown", "mouseup", "click"].forEach(function (type) {
@@ -16,14 +20,6 @@
     return true;
   }
 
-  function activateTab(kind) {
-    return click(
-      document.querySelector(
-        kind === "failed" ? "a-tab._failing" : "a-tab._passing",
-      ),
-    );
-  }
-
   function stateFromStatus(el) {
     var classes = el ? el.className : "";
     return classes.includes("_passed")
@@ -36,15 +32,15 @@
   }
 
   function isVisible(el) {
+    if (!el) return false;
     var style = getComputedStyle(el);
     return style.display !== "none" && style.visibility !== "hidden";
   }
 
   function nameOf(container) {
-    return (
-      container
-        .querySelector(":scope > .property .property__name_label")
-        ?.textContent?.trim() || ""
+    return clean(
+      container.querySelector(":scope > .property .property__name_label")
+        ?.textContent,
     );
   }
 
@@ -65,10 +61,14 @@
     return path;
   }
 
-  function isGroup(container) {
-    return !!container.querySelector(
-      ":scope > .property .property__expander._parent_group, :scope > .property .property__expander .expander__icon._group",
-    );
+  function directChildren(container) {
+    return container.querySelectorAll(
+      ":scope > .property__details > .property-container",
+    ).length;
+  }
+
+  function isLeaf(container) {
+    return directChildren(container) === 0;
   }
 
   function isExpanded(container) {
@@ -77,71 +77,134 @@
     );
   }
 
-  function directChildren(container) {
-    return container.querySelectorAll(":scope > .property__details > .property-container")
-      .length;
+  function expanderButton(container) {
+    return container.querySelector(":scope > .property .property__expander-button");
   }
 
-  function expandVisibleGroups() {
+  function visiblePropertyContainers() {
+    return Array.from(document.querySelectorAll(".property-container")).filter(
+      isVisible,
+    );
+  }
+
+  function tabLabelText(tab) {
+    return clean(tab?.textContent).toLowerCase();
+  }
+
+  function tabByPattern(pattern) {
+    return Array.from(document.querySelectorAll("a-tab")).find(function (tab) {
+      return pattern.test(tabLabelText(tab));
+    });
+  }
+
+  function countFromTab(tab) {
+    var match = tabLabelText(tab).match(/(\d+)/);
+    return match ? Number(match[1]) : null;
+  }
+
+  function isSelected(tab) {
+    return !!tab && tab.getAttribute("selected") === "true";
+  }
+
+  function expandVisibleTargetGroups() {
     var changed = false;
 
-    Array.from(document.querySelectorAll(".property-container")).forEach(function (
-      container,
-    ) {
-      if (!isVisible(container) || !isGroup(container) || isExpanded(container)) {
+    visiblePropertyContainers().forEach(function (container) {
+      if (!isVisible(container)) {
         return;
       }
 
       var status = stateFromStatus(
         container.querySelector(":scope > .property .property__status"),
       );
-      if (status !== TARGET && directChildren(container) > 0) {
-        return;
-      }
+      var hasChildren = !!expanderButton(container);
+      var expanded = isExpanded(container);
 
-      if (click(container.querySelector(":scope > .property .property__expander-button"))) {
-        changed = true;
+      if (status === TARGET && hasChildren && !expanded) {
+        if (click(expanderButton(container))) {
+          changed = true;
+        }
       }
     });
 
     return changed;
   }
 
-  activateTab(TARGET);
-  await new Promise(function (resolve) {
-    setTimeout(resolve, 300);
-  });
+  var passingTab =
+    document.querySelector("a-tab._passing") || tabByPattern(/\bpassed\b/);
 
-  for (var i = 0; i < 8; i++) {
-    if (!expandVisibleGroups()) break;
+  for (var tabAttempt = 0; tabAttempt < 12; tabAttempt++) {
+    click(passingTab);
     await new Promise(function (resolve) {
       setTimeout(resolve, 250);
     });
+
+    var expected = countFromTab(passingTab);
+    if (
+      isSelected(passingTab) &&
+      (visiblePropertyContainers().some(function (container) {
+        return (
+          stateFromStatus(
+            container.querySelector(":scope > .property .property__status"),
+          ) === TARGET
+        );
+      }) || expected === 0)
+    ) {
+      break;
+    }
   }
+
+  for (var i = 0; i < 16; i++) {
+    var before = visiblePropertyContainers().filter(function (container) {
+      return (
+        isLeaf(container) &&
+        stateFromStatus(
+          container.querySelector(":scope > .property .property__status"),
+        ) === TARGET
+      );
+    }).length;
+    if (!expandVisibleTargetGroups()) {
+      break;
+    }
+    await new Promise(function (resolve) {
+      setTimeout(resolve, 300);
+    });
+    var after = visiblePropertyContainers().filter(function (container) {
+      return (
+        isLeaf(container) &&
+        stateFromStatus(
+          container.querySelector(":scope > .property .property__status"),
+        ) === TARGET
+      );
+    }).length;
+    if (after === before) {
+      break;
+    }
+  }
+
+  var properties = visiblePropertyContainers()
+    .filter(function (container) {
+      return (
+        stateFromStatus(
+          container.querySelector(":scope > .property .property__status"),
+        ) === TARGET &&
+        directChildren(container) === 0
+      );
+    })
+    .map(function (container) {
+      return {
+        group: groupPath(container),
+        name: nameOf(container),
+        status: TARGET,
+      };
+    })
+    .filter(function (property) {
+      return property.name;
+    });
 
   return JSON.stringify({
     filter: TARGET,
-    properties: Array.from(document.querySelectorAll(".property-container"))
-      .filter(function (container) {
-        return (
-          isVisible(container) &&
-          stateFromStatus(
-            container.querySelector(":scope > .property .property__status"),
-          ) === TARGET &&
-          !container.querySelector(":scope > .property__details > .property-container")
-        );
-      })
-      .map(function (container) {
-        return {
-          group: groupPath(container),
-          name: nameOf(container),
-          status: stateFromStatus(
-            container.querySelector(":scope > .property .property__status"),
-          ),
-        };
-      })
-      .filter(function (property) {
-        return property.name;
-      }),
+    expectedCount: countFromTab(passingTab),
+    properties: properties,
   });
 })();

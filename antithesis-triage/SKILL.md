@@ -60,6 +60,13 @@ cat assets/report/run-metadata.js \
   | agent-browser eval --session-name "$SESSION" --stdin
 ```
 
+Do not run report queries in parallel with `agent-browser open`, hash-route
+navigation, or any other command that can replace the page. Wait until the
+target page is settled before starting `eval` calls. On a single browser
+session, run report queries sequentially; property scripts mutate tab and
+expansion state and will interfere with each other if you launch them in
+parallel.
+
 ## Page Loading Checks
 
 Each page type has a dedicated `loading-finished.js` query. Use the matching
@@ -68,12 +75,23 @@ one before running page-specific queries.
 Command pattern:
 
 ```
-until [[ "$(
-  cat <loading-query-file> \
-    | agent-browser eval --session-name "$SESSION" --stdin
-)" == "true" ]]; do
+for _ in $(seq 1 60); do
+  if [[ "$(
+    cat <loading-query-file> \
+      | agent-browser eval --session-name "$SESSION" --stdin
+  )" == "true" ]]; then
+    break
+  fi
   sleep 1
 done
+```
+
+If the report page still is not ready after about 60 seconds, inspect the
+current state before retrying:
+
+```
+cat assets/report/loading-status.js \
+  | agent-browser eval --session-name "$SESSION" --stdin
 ```
 
 Use these loading checks:
@@ -84,7 +102,8 @@ Use these loading checks:
 
 The report-page loading check returns `true` only when the main report
 sections have finished loading, including findings, properties, environment,
-and utilization.
+and utilization. The report hydrates asynchronously after the browser `load`
+event, and findings are often the last section to settle.
 
 Report queries are only valid on the main report view. If you navigate to an
 internal hash route such as `#/run/.../finding/...`, reopen the original report
@@ -97,7 +116,7 @@ again.
 
 1. Read `references/setup-auth.md` — authenticate and open the report
 2. Read `references/run-metadata.md` — get the run title and date
-3. Read `references/properties.md` — list all properties with status
+3. Read `references/properties.md` — use the all-properties query for totals, then failed/passed/unfound queries only if you need filtered subsets
 4. Summarize: total properties, how many passed/failed/unfound, and flag any failures
 
 ### Investigate a failing property
@@ -118,6 +137,7 @@ again.
 - **Always authenticate first.** Every session starts with setup-auth.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
+- **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
 - **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
