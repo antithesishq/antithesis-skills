@@ -2,6 +2,9 @@
 
 AI skills for Antithesis workflows.
 
+> [!NOTE]
+> This repository is under active development. Also, due to the inherent nature of LLMs, some skills may not work perfectly. Please feel free to file issues and submit PRs if you discover ways to improve the skills.
+
 ## Install
 
 ```bash
