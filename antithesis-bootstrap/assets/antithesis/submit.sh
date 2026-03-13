@@ -55,7 +55,7 @@ fi
 # User-managed registries must be configured by the user before running this script.
 
 if ! command -v snouty >/dev/null 2>&1; then
-  echo "snouty is required to launch Antithesis runs. Install it from https://github.com/orbitinghail/snouty" >&2
+  echo "snouty is required to launch Antithesis runs. Install it from https://github.com/antithesishq/snouty" >&2
   exit 1
 fi
 
