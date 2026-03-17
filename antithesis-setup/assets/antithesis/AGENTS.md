@@ -2,8 +2,8 @@ This directory contains files relevant to running tests in Antithesis.
 
 Use the `antithesis-setup` skill to scaffold and manage this directory. Use the `antithesis-research` skill to analyze the system and build a property catalog. Use the `antithesis-workload` skill to implement assertions and test commands.
 
-**compose build && snouty run**
-Use `compose build` to create local images, then launch an Antithesis test run via `snouty run --config`. `snouty run` will automatically push any necessary images to `${ANTITHESIS_REPOSITORY}`.
+**./submit.sh**
+Use `./submit.sh` as the default way to start an Antithesis run. It runs `compose build` before invoking `snouty run --config`. Only call `snouty run` directly if you have already handled the build step yourself.
 
 **snouty validate**
 Use this command to quickly validate changes to the Antithesis scaffolding. See `snouty validate --help` for details.

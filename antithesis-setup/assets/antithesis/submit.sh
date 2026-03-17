@@ -1,0 +1,86 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+usage() {
+  echo "Usage: $0 [--duration minutes] [--desc <description>]" >&2
+}
+
+compose_cmd() {
+  if command -v podman >/dev/null 2>&1; then
+    printf '%s\n' "podman compose"
+    return
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    printf '%s\n' "docker compose"
+    return
+  fi
+
+  echo "podman or docker is required to build Antithesis images locally." >&2
+  exit 1
+}
+
+DURATION="60"
+USER_DESCRIPTION=""
+
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --duration)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for --duration" >&2
+        usage
+        exit 2
+      fi
+      DURATION="$2"
+      shift 2
+      ;;
+    --desc)
+      if [[ $# -lt 2 ]]; then
+        echo "Missing value for --desc" >&2
+        usage
+        exit 2
+      fi
+      USER_DESCRIPTION="$2"
+      shift 2
+      ;;
+    -*)
+      echo "Unknown option: $1" >&2
+      usage
+      exit 2
+      ;;
+    *)
+      echo "Unexpected argument: $1" >&2
+      usage
+      exit 2
+      ;;
+  esac
+done
+
+if [[ -z "${ANTITHESIS_REPOSITORY:-}" ]]; then
+  echo "ANTITHESIS_REPOSITORY must be set in the environment." >&2
+  exit 1
+fi
+
+if ! command -v snouty >/dev/null 2>&1; then
+  echo "snouty is required to launch Antithesis runs. Install it from https://github.com/antithesishq/snouty" >&2
+  exit 1
+fi
+
+COMPOSE="$(compose_cmd)"
+
+echo "Building compose images before submission..."
+$COMPOSE -f antithesis/config/docker-compose.yaml build
+
+PROJECT_NAME="TODO: set project name"
+GIT_REV="$(git rev-parse HEAD)"
+RUN_DESCRIPTION="$PROJECT_NAME (rev ${GIT_REV})"
+if [[ -n "$USER_DESCRIPTION" ]]; then
+  RUN_DESCRIPTION="${RUN_DESCRIPTION} - ${USER_DESCRIPTION}"
+fi
+
+snouty run \
+  --webhook basic_test \
+  --config antithesis/config \
+  --test-name "$PROJECT_NAME" \
+  --description "$RUN_DESCRIPTION" \
+  --duration "$DURATION"

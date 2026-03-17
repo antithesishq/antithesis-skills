@@ -3,7 +3,7 @@ name: antithesis-setup
 description: >
   Scaffold the Antithesis harness: initialize the working directory, write
   Dockerfiles and docker-compose.yaml with build directives, and prepare
-  submission scripts for local testing and Antithesis runs via snouty.
+  to submit your first Antithesis test run.
 keywords:
   - antithesis
   - setup
@@ -11,6 +11,7 @@ keywords:
   - docker-compose
   - infrastructure
   - scaffold
+  - bootstrap
 ---
 
 # Antithesis Setup
@@ -58,4 +59,5 @@ This skill is broken out into multiple steps, each in a different reference file
 - If `antithesis/test/` does not exist yet, create the directory structure needed for later workload work, but leave real test templates and assertions to `antithesis-workload`.
 - Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `snouty run`.
 - Treat local testing as required before the first submission.
+- Prefer a checked-in submission wrapper such as `antithesis/submit.sh` over telling agents to run raw `snouty run`. The wrapper should own the required `compose build` step.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.
