@@ -122,7 +122,7 @@ Network partition between client and server, so only the connections between tho
 }
 ```
 
-Network clog event where any connection to a container listed in `affected_nodes` can experience the `disruption_type` at random times for random durations. If the `affected_nodes` array were empty the fault doesn't actaully do anything.
+Network clog event where any connection to a container listed in `affected_nodes` can experience the `disruption_type` at random times for random durations. If the `affected_nodes` array were empty the fault doesn't actually do anything.
 
 ```json
 {
@@ -181,7 +181,7 @@ System level clock skew moves the time forward/backword by the `offset` and then
 
 #### Fault types and what they mean
 
-- **Network Partition**: Containers are placed in partion groups; if there is a link between containers in different groups that link will experience the `disruption_type`. Links between containers in the same group are not faulted by this event, but can be faulted by an overlapping event.
+- **Network Partition**: Containers are placed in partition groups; if there is a link between containers in different groups that link will experience the `disruption_type`. Links between containers in the same group are not faulted by this event, but can be faulted by an overlapping event.
 - **Network Clog**: The links of containers listed in `affected_nodes` will be subject to the `disruption_type` at random times for random durations.
 
 - Explanation of `disruption_type`'s:
