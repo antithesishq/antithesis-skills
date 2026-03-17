@@ -1,5 +1,27 @@
 # TODO: replace this docker-compose file with a working Antithesis test harness
-# for this project
+# for this project.
+#
+# If you use `${ANTITHESIS_REPOSITORY}` below, export it in the environment
+# before running `submit.sh`.
+#
+# Local images use `build:` so `submit.sh` can build them before `snouty run`.
+# Public images (e.g. postgres, redis) use `image:` directly.
+#
+# Example:
+#   services:
+#     myapp:
+#       container_name: myapp
+#       hostname: myapp
+#       build:
+#         context: ../..           # repo root (relative to this file)
+#         dockerfile: Dockerfile
+#       image: ${ANTITHESIS_REPOSITORY}/myapp:latest
+#
+#     postgres:
+#       container_name: postgres
+#       hostname: postgres
+#       image: docker.io/library/postgres:17.2
+
 services:
   noop:
     image: busybox:1.36

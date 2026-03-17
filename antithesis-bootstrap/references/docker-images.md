@@ -1,0 +1,38 @@
+# Docker Images
+
+How to create Docker images for the SUT.
+
+## Determine Required Images
+
+Consult the deployment topology from the Antithesis notebook, typically `notebook/deployment-topology.md`, to determine which images are needed.
+
+## Dependencies
+
+Use existing Docker images where possible (e.g., official postgres, minio for S3).
+
+## Services
+
+Find existing Dockerfiles in the project or create new ones. If creating a Dockerfile, create it at `antithesis/Dockerfile` and use named build stages to split different services.
+
+Check the current environment for `ANTITHESIS_REPOSITORY` before using `${ANTITHESIS_REPOSITORY}` in image tags. If it is not available, ask the user for the registry value and tell them it must be exported before running `antithesis/submit.sh`.
+
+Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag):
+
+```yaml
+services:
+  myapp:
+    build:
+      context: ../..
+      dockerfile: antithesis/Dockerfile
+      target: myapp    # if using multi-stage builds
+    image: ${ANTITHESIS_REPOSITORY}/myapp:latest
+```
+
+## Clients
+
+The client/workload image needs the test commands. Copy the test directory to `/opt/antithesis/test/v1/` in at least one image (usually the client). If you need helper scripts inside a template, prefix their file or directory names with `helper_` so Test Composer ignores them.
+
+## Requirements
+
+- All images must target Linux x86-64.
+- Follow the Docker best practices guide: `https://antithesis.com/docs/best_practices/docker_best_practices.md`

@@ -15,10 +15,16 @@ Because Antithesis's environment is perfectly deterministic, problems are reprod
 
 ## Accessing Documentation
 
-1. Prefer `snouty docs` when the `snouty` CLI is installed.
-2. If `snouty` is missing, install it if you can, or tell the user it is available from:
-   https://github.com/antithesishq/snouty
-3. If you cannot use `snouty`, request markdown versions of documentation pages directly from `https://antithesis.com/docs/`.
+The best way to access Antithesis documentation on the command line is via the Antithesis CLI which is called snouty.
+
+Run `snouty docs --help` to get started.
+
+## If `snouty` is missing
+
+1. Tell the user `snouty` is the Antithesis CLI.
+2. Point them to the install source: `https://github.com/antithesishq/snouty`
+3. Ask whether they want you to install it.
+4. After installation, re-run `snouty --help`.
 
 ## Using `snouty docs`
 
@@ -38,11 +44,11 @@ Useful details:
 - `snouty docs show` accepts page paths like `using_antithesis/sdk/go`.
 - `snouty docs show` also accepts `/docs/.../` style paths and tries to normalize them for you.
 - A warning about failing to update docs and falling back to cached docs is usually fine, especially in sandboxes without network access. Treat it as non-fatal if the requested docs content is still returned.
-- `snouty docs sqlite` prints the local SQLite cache path if you need to inspect the index with external tools.
+- `snouty docs sqlite` prints the path to a local SQLite database containing all of the Antithesis documentation. Use this if you want to directly query the docs.
 
 ## Direct Markdown Fallback
 
-If `snouty` is unavailable, fetch markdown pages directly from `https://antithesis.com/docs`.
+If `snouty` is unavailable, you may fetch markdown pages directly from `https://antithesis.com/docs/`.
 
 A plain text index of all markdown pages is available at `https://antithesis.com/docs/llms.txt`. Load this first.
 

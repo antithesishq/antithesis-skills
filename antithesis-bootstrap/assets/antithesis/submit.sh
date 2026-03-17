@@ -1,8 +1,21 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+COMPOSE_FILE="${SCRIPT_DIR}/config/docker-compose.yaml"
+
 usage() {
   echo "Usage: $0 [--duration minutes] [--desc <description>]" >&2
+}
+
+compose() {
+  # Antithesis uses podman compose behind the scenes, so prefer it locally
+  # for increased compatibility; fall back to docker compose if unavailable.
+  if command -v podman >/dev/null 2>&1; then
+    podman compose -f "${COMPOSE_FILE}" "$@"
+  else
+    docker compose -f "${COMPOSE_FILE}" "$@"
+  fi
 }
 
 DURATION="60"
@@ -41,10 +54,6 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# TODO: Build the SUT docker images.
-# Make sure any private images referenced by antithesis/config/docker-compose.yaml
-# are tagged under ANTITHESIS_REPOSITORY so snouty can discover and push them.
-
 if [[ -z "${ANTITHESIS_REPOSITORY:-}" ]]; then
   echo "ANTITHESIS_REPOSITORY must be set in the environment." >&2
   exit 1
@@ -59,9 +68,10 @@ if ! command -v snouty >/dev/null 2>&1; then
   exit 1
 fi
 
-# Snouty automatically discovers image: references in docker-compose.yaml and
-# pushes the ones already tagged under ANTITHESIS_REPOSITORY before uploading
-# the config image. antithesis.images does not need to be passed explicitly.
+# Build local images from `build:` directives before submission. Snouty then:
+# - Pushes all images tagged under ANTITHESIS_REPOSITORY
+# - Interpolates environment variables in docker-compose.yaml
+# - Uses the --config directory to launch the run
 
 PROJECT_NAME="TODO: set project name"
 GIT_REV="$(git rev-parse HEAD)"
@@ -69,6 +79,8 @@ RUN_DESCRIPTION="$PROJECT_NAME (rev ${GIT_REV})"
 if [[ -n "$USER_DESCRIPTION" ]]; then
   RUN_DESCRIPTION="${RUN_DESCRIPTION} - ${USER_DESCRIPTION}"
 fi
+
+compose build
 
 snouty run \
   --webhook basic_test \

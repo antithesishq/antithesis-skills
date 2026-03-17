@@ -16,8 +16,8 @@ compose() {
   fi
 }
 
-# TODO: build any required docker images to make sure you're testing the latest
-# code.
+# TODO: build any required docker images before testing. If the compose file uses
+# `build:` directives, you can use `compose build` to build all images locally.
 
 if ! compose up -d --wait --wait-timeout "${COMPOSE_WAIT_TIMEOUT_SECONDS}"; then
   echo "Timed out waiting for compose services to become ready." >&2
