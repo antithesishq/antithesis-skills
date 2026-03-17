@@ -22,7 +22,7 @@ in a mostly idle, ready state.
 
 Success means:
 
-- `antithesis/config/docker-compose.yaml` exists and equired SUT images are referenced with `build:` directives
+- `antithesis/config/docker-compose.yaml` exists and required SUT images are referenced with `build:` directives
 - `snouty validate antithesis/config/` succeeds
 - The harness is ready for the `antithesis-workload` skill to add or iterate on test templates, assertions, and workload code
 
