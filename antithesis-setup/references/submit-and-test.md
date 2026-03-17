@@ -7,15 +7,15 @@ How to test locally and submit to Antithesis.
 Before submitting to Antithesis, test locally:
 
 - Use `podman compose` if available; fall back to `docker compose`.
-- Verify that the compose file builds using `compose -f /path/to/config/docker-compose.yaml build`.
+- Verify that the compose file builds using either `podman compose -f /path/to/config/docker-compose.yaml build` or `docker compose -f /path/to/config/docker-compose.yaml build`.
 - Use `snouty validate /path/to/config-dir` to ensure that the compose setup can reach setup complete and any configured test-templates work.
 - This step is not complete until you can test the deployment locally and prove the harness is ready for workload execution.
 
 ## Preparing Submission
 
 - Review all files in the antithesis directory.
-- Ensure `compose build` exits cleanly.
-- Prefer a checked-in wrapper such as `antithesis/submit.sh` that runs `compose -f antithesis/config/docker-compose.yaml build` and then calls `snouty run --config antithesis/config`.
+- Ensure either `podman compose -f antithesis/config/docker-compose.yaml build` or `docker compose -f antithesis/config/docker-compose.yaml build` exits cleanly.
+- Prefer a checked-in wrapper such as `antithesis/submit.sh` that runs either `podman compose -f antithesis/config/docker-compose.yaml build` or `docker compose -f antithesis/config/docker-compose.yaml build` and then calls `snouty run --config antithesis/config`.
 - Only call `snouty run` directly when the build step has already been handled.
 - Snouty handles the rest: it pushes tagged images, consumes the config directory, interpolates env vars, and launches the run.
 

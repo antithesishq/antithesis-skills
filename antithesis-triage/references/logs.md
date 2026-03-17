@@ -163,7 +163,7 @@ Node kills, stops, pauses, and throttle all look like this:
 }
 ```
 
-System level clock skew moves the time forward/backword by the `offset` and then applies the offset in the other direction to return the time to normal.
+System level clock skew moves the time forward/backward by the `offset` and then applies the offset in the other direction to return the time to normal.
 
 ```json
 {
@@ -195,7 +195,7 @@ System level clock skew moves the time forward/backword by the `offset` and then
 
 ### How to interpret causality
 
-When an prompted to determine the cause of an error (e.g., container exit, assertion failure, error log message)
+When prompted to determine the cause of an error (e.g., container exit, assertion failure, error log message)
 which appears AFTER an Antithesis fault event:
 
 1. Check if the fault targeted the container involved in the error
