@@ -13,7 +13,7 @@ If the directory or notebook files already exist, preserve them and extend them 
 The Antithesis notebook is the central location for durable Antithesis handoff artifacts. Use it to:
 
 - Persist codebase-specific Antithesis analysis across conversation turns
-- Share canonical inputs and outputs across `antithesis-research`, `antithesis-bootstrap`, and `antithesis-workload`
+- Share canonical inputs and outputs across `antithesis-research`, `antithesis-setup`, and `antithesis-workload`
 - Record assumptions and open questions in the same files as the decisions they affect
 
 ## Writing Research Outputs

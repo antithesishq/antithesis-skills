@@ -21,10 +21,10 @@ Implement or improve the Antithesis workload. Success means:
 
 - Properties from the `antithesis-research` skill are mapped to concrete assertions
 - Test commands exist under `antithesis/test/` and exercise the right behaviors
-- The first real test templates are created after bootstrap, or existing ones are expanded
+- The first real test templates are created after setup, or existing ones are expanded
 - Triage findings turn into workload or property updates instead of staying implicit
 
-Use the `antithesis-research` skill first to build the property catalog. Use the `antithesis-bootstrap` skill to scaffold the infrastructure. Use the `antithesis-triage` skill to review runs, then return here to improve the workload.
+Use the `antithesis-research` skill first to build the property catalog. Use the `antithesis-setup` skill to scaffold the infrastructure. Use the `antithesis-triage` skill to review runs, then return here to improve the workload.
 
 ## Prerequisites and Scoping
 
@@ -83,7 +83,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 - Keep Antithesis-only code out of production paths. If you must touch shared code, make the change surgical and easy to wall off.
 - Prefer simple workload code over highly configurable abstractions.
-- Assume `antithesis-bootstrap` has already made the system runnable in a mostly idle state; this skill owns what the workload does once the system is up.
+- Assume `antithesis-setup` has already made the system runnable in a mostly idle state; this skill owns what the workload does once the system is up.
 - Write test commands in the project's language, not Bash, so they can reuse the project's clients, helpers, and libraries.
 
 ## Output

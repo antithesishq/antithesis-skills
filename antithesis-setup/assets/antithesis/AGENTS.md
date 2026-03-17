@@ -1,6 +1,6 @@
 This directory contains files relevant to running tests in Antithesis.
 
-Use the `antithesis-bootstrap` skill to scaffold and manage this directory. Use the `antithesis-research` skill to analyze the system and build a property catalog. Use the `antithesis-workload` skill to implement assertions and test commands.
+Use the `antithesis-setup` skill to scaffold and manage this directory. Use the `antithesis-research` skill to analyze the system and build a property catalog. Use the `antithesis-workload` skill to implement assertions and test commands.
 
 **compose build && snouty run**
 Use `compose build` to create local images, then launch an Antithesis test run via `snouty run --config`. `snouty run` will automatically push any necessary images to `${ANTITHESIS_REPOSITORY}`.
@@ -15,7 +15,7 @@ Inject this script into a Dockerfile to notify Antithesis that setup is complete
 This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. When compose uses `${ANTITHESIS_REPOSITORY}`, ensure it is exported in the environment before running `snouty run`. Snouty will push tagged images, consume this config directory, and launch the run.
 
 **notebook**
-This directory is the Antithesis notebook for the codebase. It contains the durable Antithesis handoff artifacts, including system analysis, property catalogs, topology plans, and other persistent integration notes. It is shared across the `antithesis-research`, `antithesis-workload`, and `antithesis-bootstrap` skills. Keep it up to date as Antithesis-related decisions change.
+This directory is the Antithesis notebook for the codebase. It contains the durable Antithesis handoff artifacts, including system analysis, property catalogs, topology plans, and other persistent integration notes. It is shared across the `antithesis-research`, `antithesis-workload`, and `antithesis-setup` skills. Keep it up to date as Antithesis-related decisions change.
 
 **test**
 This directory is where the `antithesis-workload` skill places test templates and related helpers. A test template is a directory containing test command executable files. Each test command must have a valid prefix: `parallel_driver_, singleton_driver_, serial_driver_, first_, eventually_, finally_, anytime_`. Prefixes constrain when and how commands are composed in a single timeline. Files or subdirectories prefixed with `helper_` are ignored by Test Composer and can be used for helper scripts kept alongside the commands.

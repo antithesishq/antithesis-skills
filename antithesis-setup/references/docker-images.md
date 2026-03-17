@@ -30,7 +30,7 @@ services:
 
 ## Clients
 
-If the deployment includes a client or workload image, make sure it can later receive test templates at `/opt/antithesis/test/v1/`. The `antithesis-bootstrap` skill does not need to create real test templates; it only needs to preserve the path and image structure that `antithesis-workload` will use. If helper files later live inside a template, prefix their file or directory names with `helper_` so Test Composer ignores them.
+If the deployment includes a client or workload image, make sure it can later receive test templates at `/opt/antithesis/test/v1/`. The `antithesis-setup` skill does not need to create real test templates; it only needs to preserve the path and image structure that `antithesis-workload` will use. If helper files later live inside a template, prefix their file or directory names with `helper_` so Test Composer ignores them.
 
 ## Requirements
 

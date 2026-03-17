@@ -107,4 +107,4 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/notebook/property-catalog.md`
 - `antithesis/notebook/deployment-topology.md`
 
-These outputs should be concrete enough for the `antithesis-bootstrap` skill and the `antithesis-workload` skill to use directly.
+These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
