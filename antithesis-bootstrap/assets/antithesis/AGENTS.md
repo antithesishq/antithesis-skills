@@ -5,8 +5,8 @@ Use the `antithesis-bootstrap` skill to scaffold and manage this directory. Use 
 **submit.sh**
 Use this script to build any local compose images, then launch an Antithesis test run via `snouty run`.
 
-**test.sh**
-Use this script to test the Antithesis harness locally. Its primary job is to prove the environment can start, become ready, and stay healthy in a mostly idle state. If workload commands already exist, it can invoke them too, but defining those commands belongs to the `antithesis-workload` skill.
+**snouty validate**
+Use this command to quickly validate changes to the Antithesis scaffolding. See `snouty validate --help` for details.
 
 **setup-complete.sh**
 Inject this script into a Dockerfile to notify Antithesis that setup is complete. This script should only run once the system under test is ready for testing. Antithesis will not run any test commands until it receives this event. You may use the Antithesis SDK's setup complete method instead if it makes more sense for your system.

@@ -6,10 +6,9 @@ How to test locally and submit to Antithesis.
 
 Before submitting to Antithesis, test locally:
 
-- Update `antithesis/test.sh` to bring up and test the environment. See TODOs in the template file.
 - Use `podman compose` if available; fall back to `docker compose`.
-- Verify the system comes up, emits `setup_complete`, and can remain healthy in a mostly idle state.
-- If workload commands already exist, verify they can run successfully, but creating or defining them belongs to `antithesis-workload`.
+- Verify that the compose file builds using `compose -f /path/to/config/docker-compose.yaml build`.
+- Use `snouty validate /path/to/config` to ensure that the compose setup can reach setup complete.
 - This step is not complete until you can test the deployment locally and prove the harness is ready for workload execution.
 
 ## Preparing Submission
