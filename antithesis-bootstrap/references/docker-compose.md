@@ -46,4 +46,4 @@ If you need reliable communication between containers, mount a named volume to e
 
 ## Test Template Mounting
 
-Ensure the test directory is available at `/opt/antithesis/test/v1/` in the appropriate container(s). If helper files or helper directories live inside a template, prefix them with `helper_` so they are not treated as test commands.
+Ensure the test directory path will be available at `/opt/antithesis/test/v1/` in the appropriate container(s) once workload code is added. This skill only needs to wire the environment so later workload templates can run there; defining those templates belongs to `antithesis-workload`.

@@ -26,8 +26,8 @@ if ! compose up -d --wait --wait-timeout "${COMPOSE_WAIT_TIMEOUT_SECONDS}"; then
   exit 1
 fi
 
-# TODO: run all of the test composer commands in a valid order.
-# If multiple test-templates exist you may need to restart docker compose
-# (down/up) to run subsequent test-templates.
+# TODO: once the workload exists, run the relevant test commands here.
+# This script's primary responsibility is to verify the harness can start,
+# become ready, and remain healthy in a mostly idle state.
 
 compose down

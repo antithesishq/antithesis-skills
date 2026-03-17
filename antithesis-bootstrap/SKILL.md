@@ -1,8 +1,8 @@
 ---
 name: antithesis-bootstrap
 description: >
-  Scaffold the Antithesis test infrastructure: initialize the working directory,
-  write Dockerfiles and docker-compose.yaml with build directives, and prepare
+  Scaffold the Antithesis harness: initialize the working directory, write
+  Dockerfiles and docker-compose.yaml with build directives, and prepare
   submission scripts for local testing and Antithesis runs via snouty.
 keywords:
   - antithesis
@@ -17,14 +17,16 @@ keywords:
 
 ## Purpose and Goal
 
-Scaffold the `antithesis/` harness needed to run a project in Antithesis.
+Scaffold the `antithesis/` harness needed to bring the system up in Antithesis
+in a mostly idle, ready state.
 
 Success means:
 
 - `antithesis/config/docker-compose.yaml` exists and is passed to `snouty run --config` in `antithesis/submit.sh`
 - Required SUT images are referenced with `build:` directives
 - The deployment is hermetic and emits `setup_complete` only when ready
-- Local testing works and at least one test template exists under `antithesis/test/`
+- Local testing can bring the environment up, verify readiness, and shut it down cleanly
+- The harness is ready for the `antithesis-workload` skill to add or iterate on test templates, assertions, and workload code
 
 ## Prerequisites
 
@@ -41,7 +43,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 ## Workflow
 
-This skill is broken out into multiple steps, each in a different reference file. Read and implemetn each reference file listed below one at a time to fully bootstrap a project.
+This skill is broken out into multiple steps, each in a different reference file. Read and implement each reference file listed below one at a time to fully bootstrap a project.
 
 - `references/directory-init.md`: initialize or merge the `antithesis/` directory from `assets/antithesis/`
 - `references/docker-images.md`: create or adapt Dockerfiles for SUT components
@@ -54,6 +56,8 @@ This skill is broken out into multiple steps, each in a different reference file
 - Merge with existing `antithesis/` content instead of overwriting it.
 - Prefer `podman compose` for local testing; fall back to `docker compose`.
 - Keep Antithesis-only scaffolding under `antithesis/` when practical.
+- Focus this skill on infrastructure and readiness, not on defining the workload itself.
+- If `antithesis/test/` does not exist yet, create the directory structure needed for later workload work, but leave real test templates and assertions to `antithesis-workload`.
 - Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `antithesis/submit.sh`.
 - Treat local testing as required before the first submission.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.
