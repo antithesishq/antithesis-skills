@@ -22,10 +22,8 @@ in a mostly idle, ready state.
 
 Success means:
 
-- `antithesis/config/docker-compose.yaml` exists and is passed to `snouty run --config` in `antithesis/submit.sh`
-- Required SUT images are referenced with `build:` directives
-- The deployment is hermetic and emits `setup_complete` only when ready
-- Local testing can bring the environment up, verify readiness, and shut it down cleanly
+- `antithesis/config/docker-compose.yaml` exists and equired SUT images are referenced with `build:` directives
+- `snouty validate antithesis/config/` succeeds
 - The harness is ready for the `antithesis-workload` skill to add or iterate on test templates, assertions, and workload code
 
 ## Prerequisites
@@ -58,6 +56,6 @@ This skill is broken out into multiple steps, each in a different reference file
 - Keep Antithesis-only scaffolding under `antithesis/` when practical.
 - Focus this skill on infrastructure and readiness, not on defining the workload itself.
 - If `antithesis/test/` does not exist yet, create the directory structure needed for later workload work, but leave real test templates and assertions to `antithesis-workload`.
-- Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `antithesis/submit.sh`.
+- Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `snouty run`.
 - Treat local testing as required before the first submission.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.

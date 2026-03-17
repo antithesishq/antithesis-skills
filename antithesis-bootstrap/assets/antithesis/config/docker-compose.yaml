@@ -2,9 +2,9 @@
 # for this project.
 #
 # If you use `${ANTITHESIS_REPOSITORY}` below, export it in the environment
-# before running `submit.sh`.
+# before running `snouty run`.
 #
-# Local images use `build:` so `submit.sh` can build them before `snouty run`.
+# Local images use `build:` so `compose build` can build them before `snouty run`.
 # Public images (e.g. postgres, redis) use `image:` directly.
 #
 # Example:
