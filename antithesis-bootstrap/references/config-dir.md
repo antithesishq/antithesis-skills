@@ -11,7 +11,7 @@ The `antithesis/config/` directory should include the files Antithesis needs to 
 
 - Application source code
 - Build contexts for SUT images
-- Test commands or helper scripts
+- Executable test commands or helper scripts
 - Dockerfiles
 
 ## Submission Flow
