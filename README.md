@@ -22,3 +22,14 @@ Restart Codex/Claude sessions after adding skills so they are re-discovered.
 ```bash
 make validate
 ```
+
+Validation uses `uv` and will create a local `.venv/` on first run.
+
+## Validate links
+
+```bash
+make validate-links
+```
+
+This uses `lychee` to check repository links, including raw URLs inside Markdown
+code spans via `--include-verbatim`.

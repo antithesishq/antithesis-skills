@@ -1,0 +1,8 @@
+[project]
+name = "antithesis-skills"
+version = "0.1.0"
+description = "AI skills for Antithesis workflows."
+requires-python = ">=3.11"
+dependencies = [
+    "tiktoken==0.12.0",
+]

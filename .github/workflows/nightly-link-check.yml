@@ -1,0 +1,32 @@
+name: Nightly Link Check
+
+on:
+  schedule:
+    - cron: "17 08 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  check-links:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Cache lychee results
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-
+            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config lychee.toml .
+          jobSummary: true
+          token: ${{ secrets.GITHUB_TOKEN }}

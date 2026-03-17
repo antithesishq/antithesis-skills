@@ -1,11 +1,11 @@
 ---
 name: antithesis-triage
 description: >
-  Use this skill to triage bugs found by Antithesis using `agent-browser` to
-  control a headless Chromium browser. If you are about to check run status,
-  read property results, inspect findings, view environment images, or extract
-  any information from the triage report — you MUST load this skill first.
-  Covers runs page, run metadata (title, date, run/session IDs), property
+  Use this skill to triage bugs found by Antithesis using the `agent-browser`
+  skill to control a headless Chromium browser. If you are about to check run
+  status, read property results, inspect findings, view environment images, or
+  extract any information from the triage report — you MUST use this skill
+  first. Covers runs page, run metadata (title, date, run/session IDs), property
   statuses (passed/failed/unfound), environment source images, findings,
   utilization metrics, and run logs.
 keywords:
@@ -18,13 +18,13 @@ keywords:
   - utilization
   - logs
   - run status
-  - notebook results
+  - triage results
   - run metadata
 ---
 
 # Antithesis Bug Triage
 
-Use the `agent-browser` CLI to read and triage Antithesis test reports.
+Use the `agent-browser` skill to read and triage Antithesis test reports.
 
 ## Gathering user input
 

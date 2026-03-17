@@ -5,6 +5,21 @@ usage() {
   echo "Usage: $0 [--duration minutes] [--desc <description>]" >&2
 }
 
+compose_cmd() {
+  if command -v podman >/dev/null 2>&1; then
+    printf '%s\n' "podman compose"
+    return
+  fi
+
+  if command -v docker >/dev/null 2>&1; then
+    printf '%s\n' "docker compose"
+    return
+  fi
+
+  echo "podman or docker is required to build Antithesis images locally." >&2
+  exit 1
+}
+
 DURATION="60"
 USER_DESCRIPTION=""
 
@@ -41,27 +56,20 @@ while [[ $# -gt 0 ]]; do
   esac
 done
 
-# TODO: Build the SUT docker images.
-# Make sure any private images referenced by antithesis/config/docker-compose.yaml
-# are tagged under ANTITHESIS_REPOSITORY so snouty can discover and push them.
-
 if [[ -z "${ANTITHESIS_REPOSITORY:-}" ]]; then
   echo "ANTITHESIS_REPOSITORY must be set in the environment." >&2
   exit 1
 fi
-
-# Docker or Podman must already be logged into ANTITHESIS_REPOSITORY.
-# Antithesis-managed registries are typically configured during onboarding.
-# User-managed registries must be configured by the user before running this script.
 
 if ! command -v snouty >/dev/null 2>&1; then
   echo "snouty is required to launch Antithesis runs. Install it from https://github.com/antithesishq/snouty" >&2
   exit 1
 fi
 
-# Snouty automatically discovers image: references in docker-compose.yaml and
-# pushes the ones already tagged under ANTITHESIS_REPOSITORY before uploading
-# the config image. antithesis.images does not need to be passed explicitly.
+COMPOSE="$(compose_cmd)"
+
+echo "Building compose images before submission..."
+$COMPOSE -f antithesis/config/docker-compose.yaml build
 
 PROJECT_NAME="TODO: set project name"
 GIT_REV="$(git rev-parse HEAD)"

@@ -1,0 +1,87 @@
+name: PR Skill Context
+
+on:
+  pull_request:
+    types:
+      - opened
+      - synchronize
+      - reopened
+      - ready_for_review
+
+permissions:
+  contents: read
+
+jobs:
+  utility-checks:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Check spelling
+        uses: crate-ci/typos@v1.44.0
+
+      - name: Cache lychee results
+        uses: actions/cache@v5
+        with:
+          path: .lycheecache
+          key: ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-${{ github.sha }}
+          restore-keys: |
+            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-
+            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-
+
+      - name: Check links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --config lychee.toml .
+          jobSummary: true
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+  python-validation-and-report:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    env:
+      TOKEN_ENCODING: cl100k_base
+      MIN_TOKEN_DELTA: "20"
+      MIN_PERCENT_DELTA: "5"
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Set up uv
+        uses: astral-sh/setup-uv@v5
+
+      - name: Sync project dependencies
+        run: uv sync --locked
+
+      - name: Validate skills
+        run: make validate
+
+      - name: Ensure base commit is available
+        run: git fetch --no-tags origin ${{ github.event.pull_request.base.sha }}
+
+      - name: Compare skill context
+        run: |
+          uv run python scripts/compare-skill-context.py \
+            --base-ref "${{ github.event.pull_request.base.sha }}" \
+            --head-ref "${{ github.event.pull_request.head.sha }}" \
+            --encoding "$TOKEN_ENCODING" \
+            --min-abs-delta "$MIN_TOKEN_DELTA" \
+            --min-percent-delta "$MIN_PERCENT_DELTA" \
+            --markdown-out skill-context-report.md
+
+      - name: Add workflow summary
+        run: cat skill-context-report.md >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upsert PR comment
+        uses: thollander/actions-comment-pull-request@v3
+        with:
+          file-path: skill-context-report.md
+          comment-tag: skill-context-report
+          mode: upsert

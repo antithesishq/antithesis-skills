@@ -84,3 +84,128 @@ Use this query file:
 - `assets/logs/search-error.js`
 
 The search count is displayed next to the search input (e.g., "1 / 30").
+
+## Parsing Logs
+
+When reading logs from an Antithesis run, there are TWO sources of log lines interleaved together:
+
+1. **Antithesis system events** — fault injection, container
+   lifecycle, network changes, compose, etc. Example: "fault_injector [host]"
+   where [host] indicates that this is coming from an Antithesis service.
+2. **Customer Application logs** — if it doesn't have [host] it's probably from
+   the customer's applications.
+
+### Antithesis Fault Log Format
+
+Antithesis system-level events appear as structured JSON on stdout. The fault injector logs look like:
+
+Network partition between client and server, so only the connections between those partition groups are faulted. Connections between containers in the same group are not faulted.
+
+```json
+{
+    fault:{
+        affected_nodes:[ALL],
+        details:{
+            asymmetric:true,
+            disruption_type:Slowed,
+            drop_rate:0,
+            latency:{
+                deviation:1597.9999999999998,
+                mean:1492.601977
+            },
+            partitions:[[client],[server]]
+        },
+        max_duration:0.183884736,
+        name:partition,
+        type:network
+    }
+}
+```
+
+Network clog event where any connection to a container listed in `affected_nodes` can experience the `disruption_type` at random times for random durations. If the `affected_nodes` array were empty the fault doesn't actually do anything.
+
+```json
+{
+    fault:{
+        affected_nodes:[server, client],
+        details:{
+            disruption_type:Stopped
+        },
+        max_duration:4.515860336,
+        name:clog,
+        type:network
+    }
+}
+```
+
+Network restore event which will restore all faulted network links:
+
+```json
+{
+    fault:{
+        affected_nodes:[ALL],
+        name:restore,
+        type:network
+    }
+}
+```
+
+Node kills, stops, pauses, and throttle all look like this:
+
+```json
+{
+    fault:{
+        affected_nodes:[server-3],
+        max_duration:1.7741677258234223,
+        name:kill,
+        type:node
+    }
+}
+```
+
+System level clock skew moves the time forward/backward by the `offset` and then applies the offset in the other direction to return the time to normal.
+
+```json
+{
+    fault:{
+        affected_nodes:[ALL],
+        details:{
+            offset:-0.11456344671067203
+        },
+        max_duration:0.15177661326674713,
+        name:skip,
+        type:clock
+    }
+}
+```
+
+#### Fault types and what they mean
+
+- **Network Partition**: Containers are placed in partition groups; if there is a link between containers in different groups that link will experience the `disruption_type`. Links between containers in the same group are not faulted by this event, but can be faulted by an overlapping event.
+- **Network Clog**: The links of containers listed in `affected_nodes` will be subject to the `disruption_type` at random times for random durations.
+
+- Explanation of `disruption_type`'s:
+  - Stopped - packets are dropped entirely
+  - Slowed - packets are delayed with latency
+  - Jammed - packets are "piled up" until a future deliver time
+
+- **Container Kill / Stop / Pause**: The named container is killed, stopped, or paused for some duration. If it is killed or stopped Antithesis will restart the container after the duration. If a restart policy is defined the container may be restarted immediately by docker-compose.
+- **CPU Throttle**: The cpu on the target container is slowed for a duration.
+- **Clock Skew**: System clock on the host system which runs the containers is jumped forward or backward.
+
+### How to interpret causality
+
+When prompted to determine the cause of an error (e.g., container exit, assertion failure, error log message)
+which appears AFTER an Antithesis fault event:
+
+1. Check if the fault targeted the container involved in the error
+2. If yes, some errors are expected — the real question
+   is whether the test code or customer code correctly handled the error
+3. If no fault preceded the error, the failure may not have been caused by the fault event
+
+### Key timestamps
+
+Antithesis log timestamps reflect true execution order on the
+host system that runs the containers. When
+correlating Antithesis events with customer container logs, use
+Antithesis timestamps as the source of truth for ordering.
