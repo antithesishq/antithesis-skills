@@ -10,6 +10,5 @@ Use LLVM-based instrumentation and the Antithesis runtime library.
 - Vendor or otherwise cache `libvoidstar.so`; do not rely on fetching it during every build.
 - Install `libvoidstar.so` at `/usr/lib/libvoidstar.so` in the container and ensure it is on the library search path.
 - Build with the documented `RUSTFLAGS`
-- Do not add `fsanitize-coverage-trace-pc-guard` to Rust link args.
 - Place DWARF debug artifacts or unstripped binaries in `/symbols/`.
 - Validate locally with `ldd <binary> | grep libvoidstar` and `nm <binary> | grep sanitizer_cov_trace_pc_guard`.

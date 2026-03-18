@@ -2,7 +2,11 @@
 
 Logs are accessed per-example from the triage report. Each example row in an expanded property has a "get logs" link that opens a timeline-specific log viewer on the search page.
 
-**Important:** The search/logs page requires full authentication (the report's `auth` token is not sufficient). Ensure the user is authenticated before navigating to log URLs.
+**Important:** Some tenants require full authentication for the search/logs
+page, while others allow log URLs that inherit access from a tokenized public
+report. If a `logsUrl` from the report opens successfully, you can continue in
+that session. If it redirects away from the search page or fails to load, do a
+full interactive login first.
 **Important:** Report-side queries in this skill only apply on the main report
 view. If you navigate to a hash route such as `#/run/.../finding/...`, reopen
 the original report URL and rerun the report loading check before using any

@@ -4,7 +4,7 @@ Use this reference for any language that does not have a first-class Antithesis 
 
 ## Fallback SDK
 
-First, use the `antithesis-documentation` skill to load the latest Antithesis docs relevant the fallback SDK.
+First, use the `antithesis-documentation` skill to load the latest Antithesis docs relevant to the fallback SDK.
 
 - `https://antithesis.com/docs/using_antithesis/sdk/fallback/`
 
