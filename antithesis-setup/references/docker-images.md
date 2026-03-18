@@ -14,6 +14,13 @@ Use existing Docker images where possible (e.g., official postgres, minio for S3
 
 Find existing Dockerfiles in the project or create new ones. If creating a Dockerfile, create it at `antithesis/Dockerfile` and use named build stages to split different services.
 
+Apply the `references/instrumentation.md` decisions while you adapt images:
+
+- For Java, .NET, JavaScript, and Python flows that rely on Antithesis catalog discovery, add `/opt/antithesis/catalog/` and populate it with the runtime artifacts Antithesis should scan.
+- For Go, Rust, C, C++, and similar LLVM-style flows, ensure the final runtime image contains the instrumented artifact and exposes the required symbol files under `/symbols/`.
+- Prefer symlinks into `/symbols/` when the original debug files already exist elsewhere in the image and the docs permit it.
+- Keep instrumentation-only toolchain changes out of unrelated production image paths when practical by using Antithesis-specific build stages.
+
 Check the current environment for `ANTITHESIS_REPOSITORY` before using `${ANTITHESIS_REPOSITORY}` in image tags. If it is not available, ask the user for the registry value and tell them it must be exported before running `snouty run`.
 
 Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag):

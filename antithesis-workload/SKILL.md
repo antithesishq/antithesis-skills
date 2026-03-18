@@ -84,6 +84,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 - Keep Antithesis-only code out of production paths. If you must touch shared code, make the change surgical and easy to wall off.
 - Prefer simple workload code over highly configurable abstractions.
 - Assume `antithesis-setup` has already made the system runnable in a mostly idle state; this skill owns what the workload does once the system is up.
+- Assume `antithesis-setup` has already installed the relevant SDK and added one minimal bootstrap assertion in the SUT. This skill owns the broader property catalog beyond that initial integration check.
 - Write test commands in the project's language, not Bash, so they can reuse the project's clients, helpers, and libraries.
 
 ## Output

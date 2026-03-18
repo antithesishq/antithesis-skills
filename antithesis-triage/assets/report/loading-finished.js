@@ -4,7 +4,7 @@
   }
 
   function hasLoadingText(text) {
-    return /\bLoading(?:\.\.\.)?\b/i.test(text || "");
+    return /loading(?:\.\.\.)?/i.test(text || "");
   }
 
   function findSectionByHeading(heading) {
