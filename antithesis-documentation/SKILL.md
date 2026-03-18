@@ -23,7 +23,7 @@ Run `snouty docs --help` to get started.
 
 1. Tell the user `snouty` is the Antithesis CLI.
 2. Point them to the install source: `https://github.com/antithesishq/snouty`
-3. Ask whether they want you to install it.
+3. Ask whether they want you to install it. If yes, follow instructions in `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md`.
 4. After installation, re-run `snouty --help`.
 
 ## Using `snouty docs`
