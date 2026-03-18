@@ -2,7 +2,7 @@
 
 Enable your AI agents to set up Antithesis for you. Other workflows coming soon.  
 
-`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's suggested but not required. 
+`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills. [Snouty CLI](https://github.com/antithesishq/snouty) is also a prereq. 
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will: 
   - Analyze your system to provide a basic catalog of relevant [reliability properties](https://antithesis.com/docs/resources/reliability_glossary/)
@@ -13,8 +13,6 @@ Enable your AI agents to set up Antithesis for you. Other workflows coming soon.
 **`antithesis-research` produces planning artifacts that you should review carefully.**
 
 `antithesis-triage` is still under development and will enable agents to parse and analyze the results of your Antithesis test runs. 
-
-The [Snouty CLI](https://github.com/antithesishq/snouty) is a prerequisite for all these skills. 
 
 > [!NOTE]
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
