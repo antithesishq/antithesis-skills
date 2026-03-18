@@ -21,8 +21,6 @@ Apply the `references/instrumentation.md` decisions while you adapt images:
 - Prefer symlinks into `/symbols/` when the original debug files already exist elsewhere in the image and the docs permit it.
 - Keep instrumentation-only toolchain changes out of unrelated production image paths when practical by using Antithesis-specific build stages.
 
-Check the current environment for `ANTITHESIS_REPOSITORY` before using `${ANTITHESIS_REPOSITORY}` in image tags. If it is not available, ask the user for the registry value and tell them it must be exported before running `snouty run`.
-
 Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag):
 
 ```yaml
@@ -32,7 +30,7 @@ services:
       context: ../..
       dockerfile: antithesis/Dockerfile
       target: myapp    # if using multi-stage builds
-    image: ${ANTITHESIS_REPOSITORY}/myapp:latest
+    image: myapp:latest
 ```
 
 ## Clients

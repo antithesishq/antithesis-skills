@@ -10,10 +10,8 @@ Create a working Docker Compose config at `antithesis/config/docker-compose.yaml
 
 Services use one of two patterns:
 
-- **Local images** use `build:` with a context path and `image:` with `${ANTITHESIS_REPOSITORY}/name:tag`. Build these before invoking `snouty run`.
+- **Local images** use `build:` with a context path and `image:` with `name:tag`. Build these before invoking `snouty run`.
 - **Public images** use `image:` directly (e.g. `docker.io/library/postgres:17.2`).
-
-Before writing `${ANTITHESIS_REPOSITORY}/...` tags, check whether `ANTITHESIS_REPOSITORY` is already available in the current environment. If not, ask the user for the registry value and tell them it must be exported before running `compose build`.
 
 Example:
 ```yaml
@@ -22,7 +20,7 @@ services:
     build:
       context: ../..
       dockerfile: Dockerfile
-    image: ${ANTITHESIS_REPOSITORY}/myapp:latest
+    image: myapp:latest
 
   postgres:
     image: docker.io/library/postgres:17.2

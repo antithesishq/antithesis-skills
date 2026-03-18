@@ -64,7 +64,6 @@ This skill is broken out into multiple steps, each in a different reference file
 - Installing the relevant Antithesis SDK into the SUT and adding one minimal bootstrap assertion is part of setup, not deferred workload work.
 - If `antithesis/test/` does not exist yet, create the directory structure needed for later workload work, but leave real test templates and assertions to `antithesis-workload`.
 - Treat instrumentation and symbolization as bootstrap work. The setup is not complete until the relevant images expose `/opt/antithesis/catalog/` or `/symbols/` correctly for their language.
-- Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `snouty run`.
 - Treat local testing as required before the first submission.
 - Use `snouty run` directly to submit runs. Run `compose build` before `snouty run` to ensure images are up to date.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.

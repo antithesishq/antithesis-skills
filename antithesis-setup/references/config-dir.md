@@ -18,8 +18,5 @@ The `antithesis/config/` directory should include the files Antithesis needs to 
 
 When using `snouty run --config antithesis/config`:
 
-- Read `ANTITHESIS_REPOSITORY` from the current environment if it is available.
-- If `ANTITHESIS_REPOSITORY` is not available, ask the user for the registry value before writing compose image tags.
 - Build compose services referenced via `build:` by using `compose build` before `snouty run`.
-- Ensure images that Snouty should push are tagged under `ANTITHESIS_REPOSITORY`.
 - Let Snouty consume the config directory, interpolate environment variables, and launch the run.
