@@ -66,5 +66,5 @@ This skill is broken out into multiple steps, each in a different reference file
 - Treat instrumentation and symbolization as bootstrap work. The setup is not complete until the relevant images expose `/opt/antithesis/catalog/` or `/symbols/` correctly for their language.
 - Resolve `ANTITHESIS_REPOSITORY` before writing `${ANTITHESIS_REPOSITORY}/...` image tags. If it is not readable from the current environment, ask the user for the registry value and tell them it must be exported in the environment before running `snouty run`.
 - Treat local testing as required before the first submission.
-- Prefer a checked-in submission wrapper such as `antithesis/submit.sh` over telling agents to run raw `snouty run`. The wrapper should own the required `compose build` step.
+- Use `snouty run` directly to submit runs. Run `compose build` before `snouty run` to ensure images are up to date.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.
