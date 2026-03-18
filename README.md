@@ -1,6 +1,6 @@
 # antithesis-skills
 
-Enable your AI agents to set up Antithesis for you. Other workflows coming soon.  
+Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. Other workflows coming soon.  
 
 `antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills. [Snouty CLI](https://github.com/antithesishq/snouty) is also a prereq. 
 
