@@ -29,7 +29,7 @@ Install an AI agent that supports skills (see above).
 
 The installer runs via `npx`, which ships with [Node.js](https://nodejs.org/). Install Node.js if you don't already have it.
 
-[Snouty CLI](https://github.com/antithesishq/snouty) is used by the documentation skill to search and retrieve docs. Install it before proceeding.
+[Snouty CLI](https://github.com/antithesishq/snouty) is used by the documentation skill to search and retrieve docs. Install it before proceeding. Antithesis also depends on [Docker](https://github.com/docker) and [Docker Compose](https://docs.docker.com/compose/install/), please install those too!. 
 
 ## Install
 
