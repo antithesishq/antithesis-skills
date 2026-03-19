@@ -98,6 +98,7 @@ cat assets/report/loading-status.js \
 Use these loading checks:
 
 - Report page: `assets/report/loading-finished.js`
+- Finding page: `assets/finding/loading-finished.js`
 - Logs page: `assets/logs/loading-finished.js`
 - Runs page: `assets/runs/loading-finished.js`
 
@@ -122,19 +123,11 @@ again.
 
 ### Investigate a failing property
 
-1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/properties.md` — list properties, filter to failed
-3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
-4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
-
-### Root-cause a specific finding (RCA)
-
 1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
-2. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
-3. Read `references/finding-analysis.md` — follow the RCA workflow to compare failing vs passing examples
-4. For each example: select the row, extract fault injection events, read validation logs
-5. Compare the conditions present in failing examples vs the passing example
-6. Summarize with: root cause pattern, fault injection trigger, what guarantee was violated, and a comparison table
+2. Read `references/properties.md` — list properties, filter to failed
+3. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
+4. Read `references/finding-analysis.md` — compare failing vs passing examples, extract fault events, and identify the root cause
+5. Report the failure with: property name, assertion text, fault injection trigger, and a comparison table
 
 ### Find a specific run
 
@@ -149,5 +142,8 @@ again.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
 - **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
-- **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
+- **Logs use virtual scrolling.** Only ~50-70 rows render at a time. Use the filter-based approach (see `references/finding-analysis.md`) to narrow results before scraping.
+- **Prefer structured data over log scraping.** Assertion details decoded from URLs and the Details panel provide authoritative, structured data. Use log scraping only for fault injection timeline context.
+- **Use filters for large log sets.** When the inline log viewer shows more than ~70 items, apply a filter (e.g., `fault:{`) before reading events. This makes virtual scrolling irrelevant.
+- **Finding pages load asynchronously.** Use `assets/finding/loading-finished.js` before running finding queries, just as you use the report loading check for report queries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.

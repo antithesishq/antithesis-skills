@@ -1,12 +1,15 @@
-// Extracts fault injection events and key validation events from
-// all visible log entries on the current finding page.
-// Useful for correlating faults with assertion failures.
+// Reads all currently visible events from the inline log viewer.
+// Unlike read-visible-events.js, this reads ALL rendered events (no cap).
+// Set PARSE_FAULTS = true to extract structured fault data.
 //
-// Note: only reads events currently rendered in the virtual scroll viewport
-// (~50-70 rows). If totalItems >> visibleCount, use filter-inline-logs.js
-// to narrow the log set before running this script.
+// Usage:
+//   var PARSE_FAULTS = true;
+//   <this script>
 
 (function () {
+  var parseFaults =
+    typeof PARSE_FAULTS !== "undefined" ? PARSE_FAULTS : false;
+
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
   }
@@ -66,7 +69,9 @@
   }
 
   function toValidJson(str) {
+    // Quote unquoted keys: {key: → {"key":
     var result = str.replace(/([{,]\s*)([a-zA-Z_]\w*)\s*:/g, '$1"$2":');
+    // Quote unquoted string values in arrays: [ALL] → ["ALL"]
     result = result.replace(/\[([^\[\]]*)\]/g, function (m, inner) {
       if (!inner.trim()) return m;
       var items = inner.split(",").map(function (s) {
@@ -84,11 +89,13 @@
       });
       return "[" + items.join(",") + "]";
     });
+    // Quote unquoted string values after colons: :Jammed, → :"Jammed",
     result = result.replace(/:([a-zA-Z_]\w*)([,}\]])/g, ':"$1"$2');
     return result;
   }
 
   function parseFaultJson(text) {
+    // Match the outer {fault:{...}} or just {fault:...}
     var match = text.match(/\{fault:\{[\s\S]*\}$/);
     if (!match) return null;
 
@@ -117,59 +124,26 @@
 
   var events = Array.from(scope.querySelectorAll(".event"));
 
-  var faultEvents = [];
-  var validationEvents = [];
-
-  events.forEach(function (ev) {
+  var result = events.map(function (ev) {
     var text = extractOutput(ev);
-    var source = lastText(ev.querySelector(".event__source_name"));
-    var vtime = lastText(ev.querySelector(".event__vtime"));
+    var entry = {
+      vtime: lastText(ev.querySelector(".event__vtime")),
+      source: lastText(ev.querySelector(".event__source_name")),
+      text: text,
+      highlighted: ev.classList.contains("_emphasized_blue"),
+    };
 
-    var isFault =
-      source.includes("fault_injector") ||
-      text.includes('"type":"network"') ||
-      text.includes("type:network") ||
-      text.includes('"type":"node"') ||
-      text.includes("type:node") ||
-      text.includes('"type":"clock"') ||
-      text.includes("type:clock") ||
-      text.includes("name:kill") ||
-      text.includes("name:partition") ||
-      text.includes("name:clog") ||
-      text.includes("name:restore") ||
-      text.includes("name:stop") ||
-      text.includes("name:pause");
-
-    var isValidation =
-      text.includes("Broke watch guarantee") ||
-      text.includes("Watch validation") ||
-      text.includes("Linearization") ||
-      text.includes("validation failed") ||
-      text.includes("validation success") ||
-      text.includes("Assertion Always") ||
-      text.includes("Assertion Sometimes") ||
-      text.includes("Assertion Reachable") ||
-      text.includes("finally_validation") ||
-      text.includes("container_exit_code");
-
-    if (isFault) {
-      var entry = { vtime: vtime, source: source, text: text };
+    if (parseFaults && text.includes("fault:")) {
       var parsed = parseFaultJson(text);
       if (parsed) {
         entry.fault = parsed;
       }
-      faultEvents.push(entry);
     }
-    if (isValidation) {
-      validationEvents.push({
-        vtime: vtime,
-        source: source,
-        text: text,
-        highlighted: ev.classList.contains("_emphasized_blue"),
-      });
-    }
+
+    return entry;
   });
 
+  // Read from the visible counter only
   var counterText = "";
   var allCounters = document.querySelectorAll(".sequence_toolbar__items-counter");
   for (var ci = 0; ci < allCounters.length; ci++) {
@@ -182,8 +156,7 @@
 
   return JSON.stringify({
     totalItems: countMatch ? countMatch[1] : "unknown",
-    visibleCount: events.length,
-    faultEvents: faultEvents,
-    validationEvents: validationEvents,
+    visibleCount: result.length,
+    events: result,
   });
 })();
