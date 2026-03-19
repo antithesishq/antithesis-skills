@@ -1,9 +1,6 @@
 # TODO: replace this docker-compose file with a working Antithesis test harness
 # for this project.
 #
-# If you use `${ANTITHESIS_REPOSITORY}` below, export it in the environment
-# before running `snouty run`.
-#
 # Local images use `build:` so `compose build` can build them before `snouty run`.
 # Public images (e.g. postgres, redis) use `image:` directly.
 #
@@ -15,7 +12,7 @@
 #       build:
 #         context: ../..           # repo root (relative to this file)
 #         dockerfile: Dockerfile
-#       image: ${ANTITHESIS_REPOSITORY}/myapp:latest
+#       image: myapp:latest
 #
 #     postgres:
 #       container_name: postgres

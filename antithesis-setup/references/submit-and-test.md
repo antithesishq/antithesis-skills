@@ -15,9 +15,7 @@ Before submitting to Antithesis, test locally:
 ## Preparing Submission
 
 - Review all files in the antithesis directory.
-- Ensure either `podman compose -f antithesis/config/docker-compose.yaml build` or `docker compose -f antithesis/config/docker-compose.yaml build` exits cleanly.
-- Prefer a checked-in wrapper such as `antithesis/submit.sh` that runs either `podman compose -f antithesis/config/docker-compose.yaml build` or `docker compose -f antithesis/config/docker-compose.yaml build` and then calls `snouty run --config antithesis/config`.
-- Only call `snouty run` directly when the build step has already been handled.
+- Build images first: `podman compose -f antithesis/config/docker-compose.yaml build` (or `docker compose` if podman is unavailable).
 - Snouty handles the rest: it pushes tagged images, consumes the config directory, interpolates env vars, and launches the run.
 
 ## Environment Setup
@@ -35,7 +33,15 @@ Before submitting to Antithesis, test locally:
 ```sh
 export ANTITHESIS_REPOSITORY=registry.example.com/team/project
 
-./antithesis/submit.sh --duration 30 --desc "first test run"
+# Build images
+podman compose -f antithesis/config/docker-compose.yaml build
+
+# Submit run
+snouty run \
+  --config antithesis/config \
+  --test-name "PROJECT_NAME" \
+  --description "first test run" \
+  --duration 30
 ```
 
 Start with a short duration to verify the SUT works. Iterate with the user to fix issues. Document any durable issues or follow-up decisions in the relevant Antithesis scratchbook file under `antithesis/scratchbook/`.

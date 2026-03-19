@@ -2,8 +2,8 @@ This directory contains files relevant to running tests in Antithesis.
 
 Use the `antithesis-setup` skill to scaffold and manage this directory. Use the `antithesis-research` skill to analyze the system and build a property catalog. Use the `antithesis-workload` skill to implement assertions and test commands.
 
-**./submit.sh**
-Use `./submit.sh` as the default way to start an Antithesis run. It runs `compose build` before invoking `snouty run --config`. Only call `snouty run` directly if you have already handled the build step yourself.
+**snouty run**
+Use `snouty run --config antithesis/config` to start an Antithesis run. Always run `compose build` first to ensure images are up to date.
 
 **snouty validate**
 Use this command to quickly validate changes to the Antithesis scaffolding. See `snouty validate --help` for details.
@@ -12,7 +12,7 @@ Use this command to quickly validate changes to the Antithesis scaffolding. See 
 Inject this script into a Dockerfile to notify Antithesis that setup is complete. This script should only run once the system under test is ready for testing. Antithesis will not run any test commands until it receives this event.
 
 **config**
-This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. When compose uses `${ANTITHESIS_REPOSITORY}`, ensure it is exported in the environment before running `snouty run`. Snouty will push tagged images, consume this config directory, and launch the run.
+This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. Snouty will push tagged images, consume this config directory, and launch the run.
 
 **scratchbook**
 This directory is the Antithesis scratchbook for the codebase. It contains documents such as system analysis, property catalogs, topology plans, and other persistent integration notes. Keep it up to date as Antithesis-related decisions change.
