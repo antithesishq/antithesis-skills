@@ -48,6 +48,7 @@ task. Read the relevant file before performing that task.
 | `references/findings.md`      | Viewing behavioral diffs between runs                      |
 | `references/utilization.md`   | Checking test hours or behavior discovery rate             |
 | `references/logs.md`          | Investigating logs for a specific property example         |
+| `references/finding-analysis.md` | RCA workflow: analyzing a finding by comparing failing/passing examples |
 
 ## Query files
 
@@ -125,6 +126,15 @@ again.
 2. Read `references/properties.md` — list properties, filter to failed
 3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
+
+### Root-cause a specific finding (RCA)
+
+1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
+2. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
+3. Read `references/finding-analysis.md` — follow the RCA workflow to compare failing vs passing examples
+4. For each example: select the row, extract fault injection events, read validation logs
+5. Compare the conditions present in failing examples vs the passing example
+6. Summarize with: root cause pattern, fault injection trigger, what guarantee was violated, and a comparison table
 
 ### Find a specific run
 
