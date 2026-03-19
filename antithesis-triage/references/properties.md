@@ -1,13 +1,10 @@
 # Properties
 
-On some reports, a fresh page load only exposes top-level property groups. The
-dedicated property scripts activate the requested tab and expand visible groups
-before collecting leaf properties.
+Properties have finished loading when `assets/report/properties-all.js` stops
+returning "loading data" and starts returning an array.
 
-Do not run property queries while the page is navigating or while another
-command is changing the route. Open the report first, wait for
-`assets/report/loading-finished.js` to return `true`, and only then run a
-property query.
+Do not run other property queries until properties have finished loading.
+
 
 On a single `agent-browser` session, run property queries one at a time. The
 property scripts switch tabs and expand groups, so concurrent `eval` calls can
@@ -28,8 +25,3 @@ Passed properties query file:
 Unfound properties query file:
 
 - `assets/report/properties-unfound.js`
-
-To expand visible failed leaf properties until their example tables are
-available for log extraction, use:
-
-- `assets/report/expand-failed-examples.js`

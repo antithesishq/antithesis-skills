@@ -8,4 +8,4 @@ Use this query file:
 
 - `assets/report/utilization-total-test-hours.js`
 
-The Utilization graph is rendered as SVG in the `.utilization_plot` element.
+The script returns `test_minutes` (how much testing you did) and `wall_minutes` (how long the test took)

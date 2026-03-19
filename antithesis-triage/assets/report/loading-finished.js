@@ -17,9 +17,7 @@
   var metadata = clean(document.querySelector(".branded_metadata")?.textContent);
   var environmentSection = findSectionByHeading("Environment");
   var utilizationSection = findSectionByHeading("Utilization");
-  var propertiesSection = document.querySelector(
-    "section.section_properties:not(.section_findings)",
-  );
+  var propertiesSection = document.getElementById('claude_properties_section');
   var environmentImages = document.querySelectorAll(
     ".presentation_environment__source_image",
   ).length;
@@ -56,11 +54,7 @@
       clean(utilizationSection.textContent) &&
       !hasLoadingText(utilizationSection.textContent))
   );
-  var propertiesLoaded = !!(
-    propertyTabs >= 2 &&
-    propertyContainers > 0 &&
-    !hasLoadingText(propertiesText)
-  );
+  var propertiesLoaded = propertiesText !== "loading data";
   var findingsLoaded =
     !!findingsSection &&
     !hasLoadingText(findingsText) &&

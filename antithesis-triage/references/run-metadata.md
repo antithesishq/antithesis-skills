@@ -6,5 +6,4 @@ Use this query file:
 
 - `assets/report/run-metadata.js`
 
-The script returns `title`, the raw `metadata`, plus best-effort parsed
-`conductedOn` and `source` fields.
+The script returns `title`, the UTC `conductedOn`, the `principal`, the `run_id` and the `session_id`
