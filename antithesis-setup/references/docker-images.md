@@ -4,7 +4,7 @@ How to create Docker images for the SUT.
 
 ## Determine Required Images
 
-Consult the deployment topology from the Antithesis notebook, typically `notebook/deployment-topology.md`, to determine which images are needed.
+Consult the deployment topology from the Antithesis scratchbook, typically `antithesis/scratchbook/deployment-topology.md`, to determine which images are needed.
 
 ## Dependencies
 

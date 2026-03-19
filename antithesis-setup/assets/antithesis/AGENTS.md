@@ -14,8 +14,8 @@ Inject this script into a Dockerfile to notify Antithesis that setup is complete
 **config**
 This directory contains the `docker-compose.yaml` file used to bring up this system within the Antithesis environment, along with any closely related config files. When compose uses `${ANTITHESIS_REPOSITORY}`, ensure it is exported in the environment before running `snouty run`. Snouty will push tagged images, consume this config directory, and launch the run.
 
-**notebook**
-This directory is the Antithesis notebook for the codebase. It contains documents such as system analysis, property catalogs, topology plans, and other persistent integration notes. Keep it up to date as Antithesis-related decisions change.
+**scratchbook**
+This directory is the Antithesis scratchbook for the codebase. It contains documents such as system analysis, property catalogs, topology plans, and other persistent integration notes. Keep it up to date as Antithesis-related decisions change.
 
 **test**
 This directory contains test templates. A test template is a directory containing test command executable files. Each test command must have a valid prefix: `parallel_driver_, singleton_driver_, serial_driver_, first_, eventually_, finally_, anytime_`. Prefixes constrain when and how commands are composed in a single timeline. Files or subdirectories prefixed with `helper_` are ignored by Test Composer and can be used for helper scripts kept alongside the commands.

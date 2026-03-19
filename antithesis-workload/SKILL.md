@@ -28,9 +28,9 @@ Use the `antithesis-research` skill first to build the property catalog. Use the
 
 ## Prerequisites and Scoping
 
-Start from the existing Antithesis notebook, test code, and triage artifacts first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
+Start from the existing Antithesis scratchbook, test code, and triage artifacts first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
 
-- The property catalog location, if it is not the standard `antithesis/notebook/property-catalog.md`
+- The property catalog location, if it is not the standard `antithesis/scratchbook/property-catalog.md`
 - Which properties to implement, if the request is narrower than the full catalog
 - The project language or SDK choice, if the repo does not make it obvious
 - Triage findings or known gaps, if iterating on an existing workload
@@ -77,7 +77,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 1. Read `references/iteration.md`
 2. Read `references/assertions.md` if assertions need to change
 3. Read `references/test-commands.md` if command coverage needs to change
-4. Update the workload and the relevant Antithesis notebook artifacts together
+4. Update the workload and the relevant Antithesis scratchbook artifacts together
 
 ## General Guidance
 
@@ -91,4 +91,4 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 - Test commands and supporting workload code under `antithesis/test/`
 - Assertions in workload code or carefully chosen SUT locations
-- Updates to `antithesis/notebook/property-catalog.md` when the implemented properties change
+- Updates to `antithesis/scratchbook/property-catalog.md` when the implemented properties change

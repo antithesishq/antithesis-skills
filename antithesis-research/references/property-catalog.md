@@ -81,4 +81,4 @@ Each category should have a brief description explaining what area of the system
 
 ## Output
 
-Write the catalog to `antithesis/notebook/property-catalog.md`.
+Write the catalog to `antithesis/scratchbook/property-catalog.md`.

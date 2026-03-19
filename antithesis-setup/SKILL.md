@@ -31,7 +31,7 @@ Success means:
 
 ## Prerequisites
 
-Expect a deployment topology and property catalog, usually in the Antithesis notebook at `antithesis/notebook/`. If they do not exist, use the `antithesis-research` skill first.
+Expect a deployment topology and property catalog, usually in the Antithesis scratchbook at `antithesis/scratchbook/`. If they do not exist, use the `antithesis-research` skill first.
 
 ## Documentation Grounding
 
