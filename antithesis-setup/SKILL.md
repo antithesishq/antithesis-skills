@@ -31,7 +31,8 @@ Success means:
 
 ## Prerequisites
 
-Expect a deployment topology and property catalog, usually in the Antithesis scratchbook at `antithesis/scratchbook/`. If they do not exist, use the `antithesis-research` skill first.
+- DO NOT PROCEED if the Antithesis scratchbook (usually at `antithesis/scratchbook/`) doesn't exist. Use the `antithesis-research` skill to create it.
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
 
 ## Documentation Grounding
 

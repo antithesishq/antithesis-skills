@@ -26,7 +26,13 @@ Implement or improve the Antithesis workload. Success means:
 
 Use the `antithesis-research` skill first to build the property catalog. Use the `antithesis-setup` skill to scaffold the infrastructure. Use the `antithesis-triage` skill to review runs, then return here to improve the workload.
 
-## Prerequisites and Scoping
+## Prerequisites
+
+- DO NOT PROCEED if the Antithesis scratchbook (usually at `antithesis/scratchbook/`) doesn't exist. Use the `antithesis-research` skill to create it.
+- DO NOT PROCEED if there is no `docker-compose.yaml` for Antithesis present. Use the `antithesis-setup` skill to create it.
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+
+# Scoping
 
 Start from the existing Antithesis scratchbook, test code, and triage artifacts first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
 
