@@ -17,31 +17,34 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 > [!NOTE]
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
 
+## Prerequisites
+
+These skills work with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [OpenAI Codex](https://openai.com/index/openai-codex/) on macOS or Linux. Install at least one of these before proceeding.
+
+The installer runs via `npx`, which ships with [Node.js](https://nodejs.org/). Install Node.js if you don't already have it.
+
 ## Install
+
+Run the installer:
 
 ```bash
 npx skills add antithesishq/antithesis-skills
 ```
 
-## Install for local development
+The installer presents an interactive menu. Choose the following options:
 
-To work on these skills, use `make install-dev` to symlink them into your Claude and Codex skills directory.
+1. **Skills** — select all five skills:
+   - `antithesis-documentation`
+   - `antithesis-research`
+   - `antithesis-setup`
+   - `antithesis-triage`
+   - `antithesis-workload`
+2. **Install scope** — choose **global**, not project.
+3. **Install method** — choose **symlink**.
+4. **Agents** — only select agents you have installed (Claude Code, Codex, or both). Do not install the `find-skills` skill.
 
-Restart Codex/Claude sessions after adding skills so they are re-discovered.
+Restart any open agent sessions after installing so the new skills are discovered.
 
-## Validate skills
+## Contributing
 
-```bash
-make validate
-```
-
-Validation uses `uv` and will create a local `.venv/` on first run.
-
-## Validate links
-
-```bash
-make validate-links
-```
-
-This uses `lychee` to check repository links, including raw URLs inside Markdown
-code spans via `--include-verbatim`.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for development setup and validation commands.
