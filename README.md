@@ -2,7 +2,7 @@
 
 Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. Other workflows coming soon.  
 
-`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills. [Snouty CLI](https://github.com/antithesishq/snouty) is also a prereq. 
+`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills.
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will: 
   - Analyze your system to provide a basic catalog of relevant [reliability properties](https://antithesis.com/docs/resources/reliability_glossary/)
@@ -22,6 +22,8 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 These skills work with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) or [OpenAI Codex](https://openai.com/index/openai-codex/) on macOS or Linux. Install at least one of these before proceeding.
 
 The installer runs via `npx`, which ships with [Node.js](https://nodejs.org/). Install Node.js if you don't already have it.
+
+[Snouty CLI](https://github.com/antithesishq/snouty) is used by the documentation skill to search and retrieve docs. Install it before proceeding.
 
 ## Install
 
