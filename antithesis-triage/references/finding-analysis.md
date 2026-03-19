@@ -77,31 +77,32 @@ For each Failing example:
 4. Record: what faults occurred, what validation errors appeared, and the assertion details
 
 **Key things to look for in failing examples:**
-- `fault_injector` events immediately before `finally_validation` or the assertion
+- `fault_injector` events immediately before the assertion — what fault was active?
 - Network faults: `name:partition`, `name:clog`, `name:restore` with `type:network`
 - Node faults: `name:kill`, `name:stop`, `name:pause` with `type:node`
-- Leader elections in Raft logs (e.g., "became leader at term N")
-- Container exits or restarts
-- The diff output showing expected vs received events (e.g., `- {Event: ...}` lines)
+- Clock faults: `name:skip` with `type:clock`
+- Container exits or restarts (`container_exit_code`)
+- Error messages or stack traces in the validation output
+- Application-specific error patterns (e.g., consensus elections, connection failures, timeout errors)
 
 ### 3. Analyze the passing example
 
 Select the Passing example and extract its fault/validation events. Compare:
 
-- Were there fewer or no fault injection events before validation?
+- Were there fewer or different fault injection events before validation?
 - Did the same assertion fire with `"condition": true` and empty error details?
-- Were there no leader elections or network disruptions?
+- Was the system in a more stable state (no active faults, no container restarts)?
 
 ### 4. Correlate and summarize
 
 Build a comparison table:
 
-| Factor               | Failing Examples          | Passing Example     |
-| -------------------- | ------------------------- | ------------------- |
-| Fault injection type | e.g., network restore ALL | None / different    |
-| Leader election      | Yes / No                  | Yes / No            |
-| Dropped event type   | e.g., delete-operation    | None                |
-| Error guarantee      | e.g., Reliable            | N/A                 |
+| Factor               | Failing Examples              | Passing Example     |
+| -------------------- | ----------------------------- | ------------------- |
+| Fault type           | e.g., network partition       | None / different    |
+| Fault target         | e.g., ALL nodes, specific node| N/A                 |
+| Container state      | e.g., exits, restarts         | Stable              |
+| Error details        | e.g., specific error message  | No errors           |
 
 ### 5. Check related findings
 
@@ -120,5 +121,4 @@ To navigate back to the full report from a finding page, click the "View full re
 
 - **Virtual scrolling limits visibility.** The inline log viewer only renders ~50-70 rows. If the logs have hundreds of items, the beginning or end may not be visible. Fault injection events often appear near the start of the visible window, while validation results appear near the end.
 - **Compare assertion details from URLs.** The `get_logs_event_desc` parameter in each example's log URL contains a base64-encoded JSON with the full assertion details, including `"condition": true/false` and `"details"`. Decoding this can be faster than reading logs.
-- **Delete operations are common culprits.** In watch-related assertions, dropped delete events are a frequent failure pattern during network disruptions.
-- **Multiple findings often share a root cause.** If "Watch validation passes" fails alongside "broke Reliable" and "broke Resumable," they are likely the same underlying bug.
+- **Multiple findings often share a root cause.** If several findings appear in the same run and involve the same containers or fault types, they are likely symptoms of the same underlying bug.
