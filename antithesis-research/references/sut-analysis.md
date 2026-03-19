@@ -68,4 +68,4 @@ These partial failure modes often reveal the most interesting bugs because syste
 
 ## Output
 
-Write the analysis to `antithesis/notebook/sut-analysis.md`.
+Write the analysis to `antithesis/scratchbook/sut-analysis.md`.

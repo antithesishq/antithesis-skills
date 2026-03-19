@@ -18,22 +18,21 @@ keywords:
 
 ## Purpose and Goal
 
-Research a target system and produce the Antithesis notebook artifacts that unblock the rest of the workflow. Success means:
+Research a target system and produce scratchbook artifacts that unblock the rest of the workflow. Success means:
 
-- `antithesis/notebook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas
-- `antithesis/notebook/property-catalog.md` lists concrete, testable properties with priorities
-- `antithesis/notebook/deployment-topology.md` describes the minimal useful container topology
+- `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas
+- `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities
+- `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology
 
 ## Prerequisites and Scoping
 
-Start from the repo, checked-in docs, and existing Antithesis notebook files first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
-
+Start from the repo, checked-in docs, and existing scratchbook files first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
 - The repo or codebase location, if it is not already clear
 - Which subsystem or component matters most, if the work is narrower than the whole repo
 - Known incidents, closed bugs, or specific failure modes worth targeting
 - External documentation, issue trackers, or design docs not present in the repo
 
-If Antithesis notebook artifacts already exist, treat them as inputs and extend them instead of rewriting them unless the user asks for a fresh pass.
+If scratchbook artifacts already exist, treat them as inputs and extend them instead of rewriting them unless the user asks for a fresh pass.
 
 ## Definitions and Concepts
 
@@ -60,7 +59,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 
 | Reference                           | When to read                                        |
 | ----------------------------------- | --------------------------------------------------- |
-| `references/notebook-setup.md`      | Always — read first to initialize the workspace     |
+| `references/scratchbook-setup.md`      | Always — read first to initialize the workspace     |
 | `references/sut-analysis.md`        | Analyzing the codebase and understanding components |
 | `references/property-catalog.md`    | Identifying and documenting testable properties     |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
@@ -69,25 +68,25 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 
 ### Full research pass (new project)
 
-1. Read `references/notebook-setup.md`
+1. Read `references/scratchbook-setup.md`
 2. Read `references/sut-analysis.md`
 3. Read `references/property-catalog.md`
 4. Read `references/deployment-topology.md`
-5. Write or update all findings in the Antithesis notebook under `antithesis/notebook/`
+5. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
 
 ### Targeted property research
 
 1. Read `references/sut-analysis.md` if the system model is missing or stale
 2. Read `references/property-catalog.md`
 3. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
-4. Update `antithesis/notebook/property-catalog.md` and record assumptions or open questions
+4. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
 
 ### Property expansion (after triage)
 
 1. Read `references/property-catalog.md`
 2. Review triage findings from the `antithesis-triage` skill
 3. Add new properties inspired by discovered behaviors
-4. Update the relevant files in the Antithesis notebook
+4. Update the relevant files in the scratchbook
 
 ## General Guidance
 
@@ -98,13 +97,13 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - Remember that Antithesis SDK assertions do not crash the program on failure; they are intended to be safe in production code and usually become low-overhead fallbacks or no-ops outside Antithesis
 - Focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Keep the deployment topology minimal; every extra container expands state space
-- Write down assumptions and open questions in the Antithesis notebook instead of keeping them implicit
-- If only part of the research is requested, still update the relevant notebook files and note what remains undone
+- Write down assumptions and open questions in the scratchbook instead of keeping them implicit
+- If only part of the research is requested, still update the relevant scratchbook files and note what remains undone
 
 ## Output
 
-- `antithesis/notebook/sut-analysis.md`
-- `antithesis/notebook/property-catalog.md`
-- `antithesis/notebook/deployment-topology.md`
+- `antithesis/scratchbook/sut-analysis.md`
+- `antithesis/scratchbook/property-catalog.md`
+- `antithesis/scratchbook/deployment-topology.md`
 
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.

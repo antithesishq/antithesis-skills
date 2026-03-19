@@ -38,7 +38,7 @@ export ANTITHESIS_REPOSITORY=registry.example.com/team/project
 ./antithesis/submit.sh --duration 30 --desc "first test run"
 ```
 
-Start with a short duration to verify the SUT works. Iterate with the user to fix issues. Document any durable issues or follow-up decisions in the relevant Antithesis notebook file under `antithesis/notebook/`.
+Start with a short duration to verify the SUT works. Iterate with the user to fix issues. Document any durable issues or follow-up decisions in the relevant Antithesis scratchbook file under `antithesis/scratchbook/`.
 
 After the first run, review the triage report for:
 

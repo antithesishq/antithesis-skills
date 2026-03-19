@@ -89,7 +89,7 @@ The workload client always needs the SDK to emit assertions. The SUT services ma
 
 ## Document the Plan
 
-Write to `antithesis/notebook/deployment-topology.md`. For each component, document:
+Write to `antithesis/scratchbook/deployment-topology.md`. For each component, document:
 
 - Container name
 - Image source (existing Dockerfile, official image, or new Dockerfile to create)
@@ -100,4 +100,4 @@ Write to `antithesis/notebook/deployment-topology.md`. For each component, docum
 
 ## Output
 
-Write the topology plan to `antithesis/notebook/deployment-topology.md`.
+Write the topology plan to `antithesis/scratchbook/deployment-topology.md`.

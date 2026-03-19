@@ -13,7 +13,7 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 1. Review which properties passed, failed, or were unfound.
 2. For failed properties, decide whether the problem is a SUT bug, a flawed assertion, or a workload gap.
 3. For unfound properties, add or adjust commands until the relevant code paths become reachable. Use `Sometimes` assertions as canary checks when needed.
-4. For newly discovered behaviors, add new properties and assertions and record them in the Antithesis notebook.
+4. For newly discovered behaviors, add new properties and assertions and record them in the Antithesis scratchbook.
 
 ## Common Improvements
 
@@ -23,9 +23,9 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 - Refine `Always` assertions that are too broad or too narrow.
 - Add `Reachable` assertions to confirm the workload covers expected code paths.
 
-## Update the Antithesis Notebook
+## Update the Antithesis scratchbook
 
-Update `antithesis/notebook/property-catalog.md` whenever properties are added or changed.
+Update `antithesis/scratchbook/property-catalog.md` whenever properties are added or changed.
 
 ## Cross-Reference
 
