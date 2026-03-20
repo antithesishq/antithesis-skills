@@ -9,13 +9,14 @@ Before submitting to Antithesis, test locally:
 - Use `podman compose` if available; fall back to `docker compose`.
 - Verify that the compose file builds using either `podman compose -f /path/to/config/docker-compose.yaml build` or `docker compose -f /path/to/config/docker-compose.yaml build`.
 - Run any language-specific local instrumentation checks described in `references/instrumentation.md`, such as `nm` or `ldd`, before relying on the first Antithesis run to catch packaging mistakes.
+- Verify that all built images target `amd64`. For each locally built image, run `podman image inspect <image> --format '{{.Architecture}}'` (or `docker image inspect <image> --format '{{.Architecture}}'`) and confirm the output is `amd64`. If any image reports `arm64`, the `platform: linux/amd64` directive is missing or ineffective — fix the compose file before proceeding.
 - Use `snouty validate /path/to/config-dir` to ensure that the compose setup can reach setup complete and any configured test-templates work.
 - This step is not complete until you can test the deployment locally and prove the harness is ready for workload execution.
 
 ## Preparing Submission
 
 - Review all files in the antithesis directory.
-- Build images first: `podman compose -f antithesis/config/docker-compose.yaml build` (or `docker compose` if podman is unavailable).
+- Build images first: `podman compose -f antithesis/config/docker-compose.yaml build` (or `docker compose` if podman is unavailable). The `platform: linux/amd64` directive in each service ensures builds target x86-64 even on ARM hosts.
 - Snouty handles the rest: it pushes tagged images, consumes the config directory, interpolates env vars, and launches the run.
 
 ## Environment Setup

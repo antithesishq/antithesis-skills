@@ -13,16 +13,20 @@ Services use one of two patterns:
 - **Local images** use `build:` with a context path and `image:` with `name:tag`. Build these before invoking `snouty run`.
 - **Public images** use `image:` directly (e.g. `docker.io/library/postgres:17.2`).
 
+Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. This applies to both local and public images — without it, builds and pulls on ARM hosts (e.g. macOS Apple Silicon) will produce the wrong architecture.
+
 Example:
 ```yaml
 services:
   myapp:
+    platform: linux/amd64
     build:
       context: ../..
       dockerfile: Dockerfile
     image: myapp:latest
 
   postgres:
+    platform: linux/amd64
     image: docker.io/library/postgres:17.2
 ```
 

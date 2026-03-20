@@ -89,6 +89,7 @@ If the deployment is polyglot, read every relevant file before you touch Dockerf
 
 When adapting Dockerfiles for Antithesis:
 
+- Ensure every service in docker-compose.yaml includes `platform: linux/amd64`. Antithesis runs on x86-64; images built for other architectures will not work.
 - Add any instrumentation-only build tools, compile flags, or helper binaries in Antithesis-specific stages when practical.
 - Ensure the runtime image includes the Antithesis SDK dependencies needed by the code path that emits the bootstrap property.
 - Add `/opt/antithesis/catalog/` for languages that rely on catalog discovery.
