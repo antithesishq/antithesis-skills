@@ -98,3 +98,18 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 - Test commands and supporting workload code under `antithesis/test/`
 - Assertions in workload code or carefully chosen SUT locations
 - Updates to `antithesis/scratchbook/property-catalog.md` when the implemented properties change
+
+## Self-Review
+
+Before declaring this skill complete, review your work against the criteria below. If your agent supports spawning sub-agents, create a new agent with fresh context to perform this review — give it the path to this skill file and have it read all output artifacts. A fresh-context reviewer catches blind spots that in-context review misses. If your agent does not support sub-agents, perform the review yourself: re-read the success criteria at the top of this file, then systematically check each item below against your actual output.
+
+Review criteria:
+
+- Every property in the catalog that was in scope has a corresponding SDK assertion in the workload or SUT code
+- Each assertion uses the correct SDK assertion type for its property's semantics (`Always`/`AlwaysOrUnreachable` for safety, `Sometimes` for liveness, `Reachable`/`Unreachable` for code path checks)
+- Test commands exist under `antithesis/test/` and use valid prefixes (`parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`)
+- Test commands are written in the project's language, not Bash, and reuse the project's clients and libraries where possible
+- Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
+- Helper files or directories are prefixed with `helper_` so Test Composer ignores them
+- `antithesis/scratchbook/property-catalog.md` is updated to reflect which properties are now implemented
+- Assertions are in workload code or surgical SUT locations — not scattered across production paths

@@ -107,3 +107,18 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/scratchbook/deployment-topology.md`
 
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
+
+## Self-Review
+
+Before declaring this skill complete, review your work against the criteria below. If your agent supports spawning sub-agents, create a new agent with fresh context to perform this review — give it the path to this skill file and have it read all output artifacts. A fresh-context reviewer catches blind spots that in-context review misses. If your agent does not support sub-agents, perform the review yourself: re-read the success criteria at the top of this file, then systematically check each item below against your actual output.
+
+Review criteria:
+
+- `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
+- `antithesis/scratchbook/property-catalog.md` exists and lists concrete, testable properties — not vague goals like "test failover"
+- Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)
+- `antithesis/scratchbook/deployment-topology.md` exists and describes a minimal container topology — every container is justified
+- Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
+- Claimed guarantees from docs, comments, or issues are represented as properties
+- Assumptions and open questions are recorded in the scratchbook, not left implicit
+- The outputs are concrete enough for `antithesis-setup` and `antithesis-workload` to use directly — no ambiguous steps or missing details

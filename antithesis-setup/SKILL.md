@@ -68,3 +68,20 @@ This skill is broken out into multiple steps, each in a different reference file
 - Treat local testing as required before the first submission.
 - Use `snouty run` directly to submit runs. Run `compose build` before `snouty run` to ensure images are up to date.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.
+
+## Self-Review
+
+Before declaring this skill complete, review your work against the criteria below. If your agent supports spawning sub-agents, create a new agent with fresh context to perform this review — give it the path to this skill file and have it read all output artifacts. A fresh-context reviewer catches blind spots that in-context review misses. If your agent does not support sub-agents, perform the review yourself: re-read the success criteria at the top of this file, then systematically check each item below against your actual output.
+
+Review criteria:
+
+- `antithesis/config/docker-compose.yaml` exists and every service has `build:` (for local images) or `image:` (for public images) configured correctly
+- Every service in docker-compose.yaml includes `platform: linux/amd64`
+- The instrumentation inventory from `references/instrumentation.md` is fully implemented: each service is instrumented, cataloged-only, or explicitly documented as uninstrumented
+- The relevant Antithesis SDK is installed in the SUT dependency graph
+- A bootstrap property exists in a simple, guaranteed-to-run code path (not behind rare behavior)
+- `/opt/antithesis/catalog/` or `/symbols/` is exposed correctly for each service's language
+- The `setup_complete` signal is wired in at least one entrypoint
+- `snouty validate antithesis/config/` succeeds
+- All built images target `amd64` (verified via `podman image inspect` or `docker image inspect`)
+- The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use
