@@ -21,11 +21,12 @@ Apply the `references/instrumentation.md` decisions while you adapt images:
 - Prefer symlinks into `/symbols/` when the original debug files already exist elsewhere in the image and the docs permit it.
 - Keep instrumentation-only toolchain changes out of unrelated production image paths when practical by using Antithesis-specific build stages.
 
-Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag):
+Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag). Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. Without this, builds on ARM hosts (e.g. macOS Apple Silicon) will produce images with the wrong architecture.
 
 ```yaml
 services:
   myapp:
+    platform: linux/amd64
     build:
       context: ../..
       dockerfile: antithesis/Dockerfile
@@ -39,5 +40,5 @@ If the deployment includes a client or workload image, make sure it can later re
 
 ## Requirements
 
-- All images must target Linux x86-64.
+- All images must target Linux x86-64. Set `platform: linux/amd64` on every service in docker-compose.yaml — both `build:` services and `image:`-only services (public images like postgres will also pull the wrong architecture on ARM hosts without it).
 - Follow the Docker best practices guide: `https://antithesis.com/docs/best_practices/docker_best_practices.md`

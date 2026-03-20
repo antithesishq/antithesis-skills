@@ -3,12 +3,14 @@
 #
 # Local images use `build:` so `compose build` can build them before `snouty run`.
 # Public images (e.g. postgres, redis) use `image:` directly.
+# Every service MUST include `platform: linux/amd64` — Antithesis runs on x86-64.
 #
 # Example:
 #   services:
 #     myapp:
 #       container_name: myapp
 #       hostname: myapp
+#       platform: linux/amd64
 #       build:
 #         context: ../..           # repo root (relative to this file)
 #         dockerfile: Dockerfile
@@ -17,9 +19,11 @@
 #     postgres:
 #       container_name: postgres
 #       hostname: postgres
+#       platform: linux/amd64
 #       image: docker.io/library/postgres:17.2
 
 services:
   noop:
+    platform: linux/amd64
     image: busybox:1.36
     command: ["sh", "-c", "tail -f /dev/null"]
