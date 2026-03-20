@@ -61,7 +61,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 | ----------------------------------- | --------------------------------------------------- |
 | `references/scratchbook-setup.md`      | Always — read first to initialize the workspace     |
 | `references/sut-analysis.md`        | Analyzing the codebase and understanding components |
-| `references/property-catalog.md`    | Identifying and documenting testable properties     |
+| `references/property-discovery.md`  | Discovering properties through structured attention focuses |
+| `references/property-catalog.md`    | Format and methodology for documenting properties   |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
 
 ## Recommended Workflows
@@ -70,22 +71,24 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 
 1. Read `references/scratchbook-setup.md`
 2. Read `references/sut-analysis.md`
-3. Read `references/property-catalog.md`
-4. Read `references/deployment-topology.md`
-5. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
+3. Read `references/property-discovery.md` and `references/property-catalog.md`
+4. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
+5. Read `references/deployment-topology.md`
+6. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
 
 ### Targeted property research
 
 1. Read `references/sut-analysis.md` if the system model is missing or stale
-2. Read `references/property-catalog.md`
-3. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
-4. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
+2. Read `references/property-discovery.md` and `references/property-catalog.md`
+3. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
+4. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
+5. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
 
 ### Property expansion (after triage)
 
-1. Read `references/property-catalog.md`
+1. Read `references/property-discovery.md` and `references/property-catalog.md`
 2. Review triage findings from the `antithesis-triage` skill
-3. Add new properties inspired by discovered behaviors
+3. Use the attention focuses from `references/property-discovery.md` to look for new properties inspired by triage findings
 4. Update the relevant files in the scratchbook
 
 ## General Guidance
