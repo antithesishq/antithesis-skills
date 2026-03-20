@@ -48,12 +48,9 @@ Use these query files from the skill assets directory:
 | Query file                                  | Purpose                                                                    |
 | ------------------------------------------- | -------------------------------------------------------------------------- |
 | `assets/finding/loading-finished.js`        | Check if finding page has finished loading                                 |
-| `assets/finding/examples-table.js`          | Get all example rows with status, time, URLs, and decoded assertion details |
+| `assets/finding/examples-table.js`          | Get all example rows with status, time, logs URL, moment, and decoded assertion details |
 | `assets/finding/select-example-row.js`      | Select an example row by index (prepend `var ROW_INDEX = N;`)              |
-| `assets/finding/decode-assertion-from-url.js` | Decode assertion JSON from a log URL parameter                            |
-| `assets/finding/extract-example-details.js` | Extract assertion data from the Details panel of the selected row          |
 | `assets/finding/get-inline-item-count.js`   | Get total item count from the inline log viewer                            |
-| `assets/finding/filter-inline-logs.js`      | Reference doc — filter must be applied via `agent-browser fill` (see below) |
 | `assets/finding/read-filtered-events.js`    | Read all visible events with optional structured fault parsing (prepend `var PARSE_FAULTS = true;`) |
 | `assets/finding/extract-fault-events.js`    | Extract fault injection and validation events from visible logs            |
 
@@ -118,8 +115,7 @@ Run `assets/finding/examples-table.js` to get every example row with decoded ass
 - Which examples have `condition: false` (failing) vs `condition: true` (passing)
 - The error message/details for each failing example
 - Whether all failing examples share the same error text
-- `moment` object with `session_id`, `input_hash`, and `vtime` for each example
-- `logsUrl` linking directly to the log viewer for each example's moment
+- `logsUrl` linking directly to the log viewer for each example
 
 If the assertion details are sufficient to determine the root cause (e.g., a clear error message describing the violated guarantee), you may not need to inspect fault logs at all.
 
@@ -144,22 +140,13 @@ For each example you need to investigate:
 6. Read validation events: `<read-filtered-events.js>`
 7. Clear filter: `agent-browser fill ".sequence_filter__input:visible" ""`
 
-### 4. Get detailed assertion data (optional)
-
-If the URL-decoded assertion from Step 2 was truncated or insufficient:
-- Use `<extract-example-details.js>` to read the full Details panel content
-- Or use `var LOG_URL = "..."; <decode-assertion-from-url.js>` for a specific URL
-
-### 5. Correlate and summarize
+### 4. Correlate and summarize
 
 For each example, include the moment reference and a link to the log viewer. Use the `moment` and `logsUrl` fields from `examples-table.js`:
 
 ````
 ### Example N — Failing (Xs)
 
-```
-Moment.from({ session_id: "...", input_hash: "...", vtime: ... })
-```
 [View logs](https://demo.antithesis.com/search?search=...)
 
 | vtime | source | event |
@@ -203,7 +190,7 @@ To navigate back to the full report from a finding page, click the "View full re
 
 ## Tips
 
-- **Prefer structured data over log scraping.** Assertion details decoded from URLs (via `examples-table.js` or `decode-assertion-from-url.js`) and the Details panel (`extract-example-details.js`) provide authoritative, structured data. Use log scraping only when you need fault injection timeline context.
+- **Prefer structured data over log scraping.** Assertion details decoded from URLs (via `examples-table.js`) provide authoritative, structured data. Use log scraping only when you need fault injection timeline context.
 - **Use filters for large log sets.** When the inline log viewer shows more than ~70 items, apply a filter (e.g., `fault:{`) before reading events. This makes virtual scrolling irrelevant because the filtered set fits in the viewport.
 - **Useful filter strings**: `fault:{` for fault injection events, `validation` for validation results, `container_exit_code` for container deaths, `error` for error-level logs.
 - **Compare assertion details from URLs.** The `get_logs_event_desc` parameter in each example's log URL contains a base64-encoded string with the full assertion details, including `condition` and `details`. The enhanced `examples-table.js` decodes this automatically.

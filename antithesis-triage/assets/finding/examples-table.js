@@ -24,35 +24,6 @@
     }
   }
 
-  function decodeMomentFromUrl(url) {
-    if (!url) return null;
-    try {
-      var params = new URL(url).searchParams;
-      var searchParam = params.get("search");
-      if (!searchParam) return null;
-      // Strip version prefix (e.g. "v3v", "v4v")
-      var b64 = searchParam.replace(/^v\d+v/, "");
-      b64 = b64.replace(/-/g, "+").replace(/_/g, "/");
-      while (b64.length % 4 !== 0) b64 += "=";
-      var searchObj = JSON.parse(atob(b64));
-      var session_id = searchObj.s || null;
-      var vtime = null;
-      var input_hash = null;
-      var clauses = (searchObj.q && searchObj.q.n && searchObj.q.n.r && searchObj.q.n.r.h) || [];
-      for (var i = 0; i < clauses.length; i++) {
-        var inner = clauses[i].h || [];
-        for (var j = 0; j < inner.length; j++) {
-          if (inner[j].f === "moment.vtime") vtime = inner[j].v;
-          if (inner[j].f === "moment.input_hash") input_hash = inner[j].v;
-        }
-      }
-      if (!session_id && !vtime) return null;
-      return { session_id: session_id, input_hash: input_hash, vtime: vtime };
-    } catch (e) {
-      return null;
-    }
-  }
-
   var rows = document.querySelectorAll(".examples_table__row");
 
   return JSON.stringify(
@@ -94,7 +65,6 @@
         time: time,
         artifacts: artifactCell,
         logsUrl: logsUrl,
-        moment: decodeMomentFromUrl(logsUrl),
         isSelected: isSelected,
         assertion: assertion,
       };
