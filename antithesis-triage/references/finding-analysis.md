@@ -142,21 +142,21 @@ For each example you need to investigate:
 
 ### 4. Correlate and summarize
 
-For each example, include the moment reference and a link to the log viewer. Use the `moment` and `logsUrl` fields from `examples-table.js`:
+For each example, include the moment reference and a link. Use the finding page URL for public reports (works without auth) or the `logsUrl` for authenticated sessions. Use the `moment` and `logsUrl` fields from `examples-table.js`, and the current finding page URL from the browser:
 
 ````
 ### Example N — Failing (Xs)
 
-[View logs](https://demo.antithesis.com/search?search=...)
+[View finding](https://public.antithesis.com/report/.../finding/...)
 
 | vtime | source | event |
 |-------|--------|-------|
 | ...   | ...    | ...   |
 ````
 
-Then build a comparison table with structured fault data:
+Then build a comparison table with structured fault data. **Link each example column header** to the finding page URL so readers can click through:
 
-| Factor            | Failing Example 0      | Failing Example 1    | Passing Example |
+| Factor            | [Failing Example 0 (Xs)](FINDING_URL) | [Failing Example 1 (Xs)](FINDING_URL) | [Passing Example (Xs)](FINDING_URL) |
 | ----------------- | ---------------------- | -------------------- | --------------- |
 | Fault names       | partition, clog        | kill                 | throttle        |
 | Fault type        | network                | node                 | node            |
@@ -181,6 +181,78 @@ Return to the main report and check if other findings correlate:
 - Other "Never:" properties with the same root cause
 - "No unexpected container exits" findings from the same containers
 - Properties that were passing previously but now fail
+
+## Full RCA report format
+
+When reporting on multiple failed properties (e.g. "RCA all failures"), produce a
+single cohesive report using this structure. Only perform RCA on **new** findings
+— skip ongoing and resolved findings. Collect finding URLs from
+`findings-grouped.js` (which returns `url` and `status` per finding) or from the
+browser's current URL when on a finding page.
+
+### Report header
+
+````
+## Triage Report: {Run Title}
+
+**Run date:** {date} | **Source:** {source} | [View full report]({REPORT_URL})
+**Properties:** {total} total — {passed} passed, **{failed} failed**, {unfound} unfound
+````
+
+Omit the `Source:` segment if the source field is empty.
+
+### Failure group sections
+
+Group related failures by shared root cause. Each group gets its own section:
+
+````
+### Failed Property Group N: {Group Name} ({count} properties — shared root cause)
+
+| Property | Type | Failing / Passing Examples | Finding |
+|----------|------|--------------------------|---------|
+| {name}   | Always | 3 failing, 1 passing   | [View]({FINDING_URL}) |
+| {name}   | Never  | 3 failing, 0 passing   | [View]({FINDING_URL}) |
+
+#### Root Cause: {one-line summary}
+
+{Narrative analysis}
+
+**Fault correlation across examples:**
+
+| Factor | [Failing Ex 0 (Xs)]({FINDING_URL}) | [Failing Ex 1 (Xs)]({FINDING_URL}) | [Passing Ex (Xs)]({FINDING_URL}) |
+|--------|-----|-----|-----|
+| Fault type | ... | ... | ... |
+| Disruption | ... | ... | ... |
+| ...    | ... | ... | ... |
+
+**Mechanism:** {explanation of how faults trigger the failure}
+````
+
+### Summary table
+
+At the end, include a summary linking each failure group back to the finding and
+a specific example as evidence:
+
+````
+### Summary
+
+| Finding | Severity | Link | Evidence |
+|---------|----------|------|----------|
+| {description} | **High** — real bug | [View]({FINDING_URL}) | [Failing example (Xs)]({FINDING_URL}) vs [Passing example (Xs)]({FINDING_URL}) |
+| {description} | **Informational** — expected | [View]({FINDING_URL}) | [{specific event description}]({FINDING_URL}) |
+````
+
+### Choosing link targets
+
+- **Finding URLs** (hash routes like `#/run/.../finding/...`) — preferred for
+  public reports; work without auth and show the full finding context
+- **Log URLs** (`logsUrl` from `examples-table.js`) — useful for authenticated
+  sessions; link directly to the moment-specific log viewer
+- When the report is public (`public.antithesis.com`), always use finding URLs
+- When the report requires auth, prefer finding URLs in tables and use log URLs
+  in per-example detail sections
+- If a finding URL is `null` (rare), fall back to referencing the finding by
+  name without a link
 
 ## Public report pages
 

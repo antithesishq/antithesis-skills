@@ -125,9 +125,22 @@ again.
 
 1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
 2. Read `references/properties.md` — list properties, filter to failed
-3. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
-4. Read `references/finding-analysis.md` — compare failing vs passing examples, extract fault events, and identify the root cause
-5. Report the failure with: property name, assertion text, fault injection trigger, and a comparison table
+3. Read `references/findings.md` — get findings with URLs to collect finding page links
+4. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
+5. Read `references/finding-analysis.md` — compare failing vs passing examples, extract fault events, and identify the root cause
+6. Report the failure with: property name, assertion text, fault injection trigger, a comparison table, and **links to the finding page and specific examples**
+
+### RCA all failed properties
+
+Use this workflow when the user wants a comprehensive review of all failures in a run.
+
+1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
+2. Read `references/run-metadata.md` — get the run title, date, and source
+3. Read `references/properties.md` — get all properties for totals, then filter to failed
+4. Read `references/findings.md` — get findings with URLs (the query returns `url` per finding); filter to only **new** findings — ongoing and resolved findings do not require RCA
+5. Match new findings to the failed properties from step 3; group related failed properties by shared root cause (e.g. watch failures together, container exits together)
+6. For each failure group with new findings, navigate to the finding page and follow the RCA workflow in `references/finding-analysis.md`
+7. Produce the final output using the **Full RCA report format** defined in `references/finding-analysis.md` — include finding links in property tables, linked example headers in fault correlation tables, and a summary table with finding and evidence links
 
 ### Find a specific run
 

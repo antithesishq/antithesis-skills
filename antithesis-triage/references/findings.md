@@ -9,3 +9,7 @@ loading to finish before running the findings query.
 Use this query file:
 
 - `assets/report/findings-grouped.js`
+
+The script returns date groups, each containing findings with `status`
+(new/resolved/rare), `property` (the finding name), and `url` (the finding
+page URL).

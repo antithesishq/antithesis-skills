@@ -26,6 +26,7 @@ JSON.stringify(
           return {
             status: match[1].replace(/\?$/, "").toLowerCase(),
             property: match[2].trim(),
+            url: a.href || null,
           };
         })
         .filter(Boolean);
