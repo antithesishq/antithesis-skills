@@ -73,3 +73,14 @@ If you want to link a user directly to a section, use a fragment with the slugif
 - Clear, grounded answers about Antithesis behavior, SDKs, setup, and best practices.
 - Relevant links to the documentation pages you used.
 - If the `snouty` command is missing ask the user if they want to install it, telling them that it is a CLI for working with the Antithesis API and docs.
+
+## Self-Review
+
+Before declaring this skill complete, review your work against the criteria below. This skill's output is conversational (answers grounded in documentation), so the review should happen in your current context. Re-read the guidance in this file, then systematically check each item below against the answers you produced.
+
+Review criteria:
+
+- Every factual claim in your answer is grounded in a specific documentation page you retrieved via `snouty docs` or direct markdown fetch
+- Documentation page links are included so the user can verify your sources
+- You have not mixed up concepts from different pages or added details not present in the source material
+- If the docs were ambiguous or silent on a point, you said so rather than filling the gap with assumptions

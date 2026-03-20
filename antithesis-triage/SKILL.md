@@ -141,3 +141,16 @@ again.
 - **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
+
+## Self-Review
+
+Before declaring this skill complete, review your work against the criteria below. This skill's output is conversational (summaries, tables, analysis), so the review should happen in your current context. Re-read the guidance in this file, then systematically check each item below against the answers and analysis you produced.
+
+Review criteria:
+
+- Every property status reported (passed, failed, unfound) was extracted from the actual triage report, not inferred or assumed
+- Findings reference specific data from the report — property names, assertion text, log lines, timestamps
+- No selectors or report data were fabricated — all queries used the reference files' prescribed query files
+- Failed properties include actionable context: the assertion text, relevant log lines, and timeline context
+- The summary distinguishes between what the report shows and what you interpret or recommend
+- If comparing runs, differences are grounded in data from both reports, not just one

@@ -21,7 +21,7 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 **Platform**: macOS or Linux.
 
-**AI agent**: Tested with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenAI Codex](https://openai.com/index/openai-codex/). Other agents that support skills may also work.
+**AI agent**: Tested with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenAI Codex](https://openai.com/index/openai-codex/). These skills work best with agents that can spawn sub-agents for self-review. Other agents that support skills may also work.
 
 ## Prerequisites
 
