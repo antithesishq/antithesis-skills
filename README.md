@@ -25,13 +25,7 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 ## Prerequisites
 
-Install an AI agent that supports skills (see above).
-
-The installer runs via `npx`, which ships with [npm](https://www.npmjs.com/). Install npm if you don't already have it.
-
-[Snouty CLI](https://github.com/antithesishq/snouty) is used by the documentation skill to search and retrieve docs. Install it before proceeding. You will also need either [Docker](https://github.com/docker) and [Docker Compose](https://docs.docker.com/compose/install/), or [Podman](https://podman.io/), please install those too!
-
-If building on macOS ARM (Apple Silicon), ensure your container runtime can build `linux/amd64` images. Antithesis runs on x86-64, so all images must target that architecture.
+You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
 
 ## Install
 
