@@ -60,7 +60,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 | Reference                           | When to read                                        |
 | ----------------------------------- | --------------------------------------------------- |
 | `references/scratchbook-setup.md`      | Always — read first to initialize the workspace     |
-| `references/sut-analysis.md`        | Analyzing the codebase and understanding components |
+| `references/sut-discovery.md`       | Discovering system characteristics through structured attention focuses |
+| `references/sut-analysis.md`        | General methodology for analyzing the codebase and understanding components |
 | `references/property-discovery.md`  | Discovering properties through structured attention focuses |
 | `references/property-catalog.md`    | Format and methodology for documenting properties   |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
@@ -70,15 +71,16 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 ### Full research pass (new project)
 
 1. Read `references/scratchbook-setup.md`
-2. Read `references/sut-analysis.md`
-3. Read `references/property-discovery.md` and `references/property-catalog.md`
-4. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
-5. Read `references/deployment-topology.md`
-6. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
+2. Read `references/sut-discovery.md` and `references/sut-analysis.md`
+3. Analyze the system using the ensemble or single-agent workflow from `references/sut-discovery.md`
+4. Read `references/property-discovery.md` and `references/property-catalog.md`
+5. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
+6. Read `references/deployment-topology.md`
+7. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
 
 ### Targeted property research
 
-1. Read `references/sut-analysis.md` if the system model is missing or stale
+1. Read `references/sut-discovery.md` and `references/sut-analysis.md` if the system model is missing or stale
 2. Read `references/property-discovery.md` and `references/property-catalog.md`
 3. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
 4. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
