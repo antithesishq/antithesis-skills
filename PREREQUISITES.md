@@ -17,10 +17,16 @@ You need the following to use antithesis-skills:
 
 These instructions are written for Debian Trixie but should work on other Debian releases.
 
-### npm
+### Base Tools
 
 ```bash
 sudo apt update
+sudo apt install -y curl
+```
+
+### npm
+
+```bash
 sudo apt install -y npm
 ```
 
@@ -66,6 +72,14 @@ npm install -g @openai/codex
 ```
 
 ## macOS
+
+### Base Tools
+
+Install [Homebrew](https://brew.sh) if you don't already have it:
+
+```bash
+/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"
+```
 
 ### npm
 
@@ -121,10 +135,16 @@ brew install --cask codex
 
 ## Ubuntu
 
-### npm
+### Base Tools
 
 ```bash
 sudo apt update
+sudo apt install -y curl
+```
+
+### npm
+
+```bash
 sudo apt install -y npm
 ```
 
