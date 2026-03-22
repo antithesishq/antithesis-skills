@@ -98,7 +98,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - Prefer specific, checkable guarantees over vague goals like "test failover"
 - If the system claims a guarantee in docs, comments, or issues, try to make it a property
 - Record not just the invariant, but why the chosen Antithesis assertion type is the right semantic fit for that property
-- Use `Sometimes` for liveness or meaningful-state reachability, not for invariants that must hold on every evaluation
+- Use `Sometimes(cond)` for liveness or non-trivial semantic states, not for invariants that must hold on every evaluation and not as a substitute for `Reachable(...)`
+- Identify where surgical SUT-side assertions would give materially better search guidance than workload-only checks, especially for rare, dangerous, timing-sensitive, or externally invisible states
 - Remember that Antithesis SDK assertions do not crash the program on failure; they are intended to be safe in production code and usually become low-overhead fallbacks or no-ops outside Antithesis
 - Focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Keep the deployment topology minimal; every extra container expands state space
@@ -122,6 +123,7 @@ Review criteria:
 - `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
 - `antithesis/scratchbook/property-catalog.md` exists and lists concrete, testable properties — not vague goals like "test failover"
 - Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)
+- Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks
 - `antithesis/scratchbook/deployment-topology.md` exists and describes a minimal container topology — every container is justified
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Claimed guarantees from docs, comments, or issues are represented as properties

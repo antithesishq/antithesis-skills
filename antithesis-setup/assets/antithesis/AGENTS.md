@@ -3,7 +3,7 @@ This directory contains files relevant to running tests in Antithesis.
 Use the `antithesis-setup` skill to scaffold and manage this directory. Use the `antithesis-research` skill to analyze the system and build a property catalog. Use the `antithesis-workload` skill to implement assertions and test commands.
 
 **snouty run**
-Use `snouty run --config antithesis/config` to start an Antithesis run. Always run `compose build` first to ensure images are up to date.
+Use `snouty run --webhook basic_test --config antithesis/config` to start an Antithesis run. Always run `compose build` first to ensure images are up to date.
 
 **snouty validate**
 Use this command to quickly validate changes to the Antithesis scaffolding. See `snouty validate --help` for details.

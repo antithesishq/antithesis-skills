@@ -12,16 +12,17 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 
 1. Review which properties passed, failed, or were unfound.
 2. For failed properties, decide whether the problem is a SUT bug, a flawed assertion, or a workload gap.
-3. For unfound properties, add or adjust commands until the relevant code paths become reachable. Use `Sometimes` assertions as canary checks when needed.
+3. For unfound properties, add or adjust commands until the relevant code paths become reachable. When extra guidance is needed, prefer targeted `Reachable(...)`, `Unreachable(...)`, or non-trivial `Sometimes(cond, ...)` assertions in the SUT over generic workload-side canaries.
 4. For newly discovered behaviors, add new properties and assertions and record them in the Antithesis scratchbook.
 
 ## Common Improvements
 
-- Add `Sometimes` assertions to verify the workload exercises rare but important paths.
+- Add non-trivial `Sometimes(cond)` assertions when a semantic state should occur at least once.
 - Add new `parallel_driver_` commands to generate more diverse load patterns.
 - Add `anytime_` validation commands to check invariants under active fault injection.
 - Refine `Always` assertions that are too broad or too narrow.
-- Add `Reachable` assertions to confirm the workload covers expected code paths.
+- Add `Reachable` assertions to confirm the workload or SUT covers expected outcomes and branch results.
+- Remove redundant early reachability markers when later outcome markers already provide the sharper signal.
 
 ## Update the Antithesis scratchbook
 

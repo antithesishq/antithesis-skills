@@ -24,7 +24,7 @@ in a mostly idle, ready state.
 Success means:
 
 - `antithesis/config/docker-compose.yaml` exists and required SUT images are referenced with `build:` directives
-- `snouty validate antithesis/config/` succeeds
+- `snouty validate` on `antithesis/config/` succeeds
 - the SUT dependency graph includes the relevant Antithesis SDK where assertions or lifecycle hooks will run
 - at least one minimal bootstrap property exists in a simple SUT path and is expected to show up in the first Antithesis run
 - The harness is ready for the `antithesis-workload` skill to add or iterate on test templates, assertions, and workload code
@@ -82,6 +82,6 @@ Review criteria:
 - A bootstrap property exists in a simple, guaranteed-to-run code path (not behind rare behavior)
 - `/opt/antithesis/catalog/` or `/symbols/` is exposed correctly for each service's language
 - The `setup_complete` signal is wired in at least one entrypoint
-- `snouty validate antithesis/config/` succeeds
+- `snouty validate` on `antithesis/config/` succeeds
 - All built images target `amd64` (verified via `podman image inspect` or `docker image inspect`)
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use

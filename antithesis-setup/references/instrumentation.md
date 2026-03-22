@@ -68,6 +68,8 @@ Good property shape:
 
 Keep this first property extremely simple. Its purpose is integration verification, not business validation. Use a stable, human-readable message so its history remains comparable across runs.
 
+After setup proves the SDK path works, later workload work should extend SUT-side instrumentation at rare or dangerous internal outcomes when that will guide search better than workload-only assertions.
+
 ## Language-Specific References
 
 After you determine the language for each service, read the matching reference file:

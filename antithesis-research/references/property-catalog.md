@@ -51,16 +51,21 @@ For every property, explicitly note which assertion type should implement it and
 
 - **`Always`**: Use for safety and correctness invariants that must hold every time the check runs. Example: "an acknowledged write is never lost once committed."
 - **`AlwaysOrUnreachable`**: Use for invariants on optional, rare, or workload-dependent paths where "never executed" is acceptable but any execution must satisfy the invariant. Example: "if a follower serves a stale-read fast path, its read timestamp is still safe."
-- **`Sometimes`**: Use for liveness/progress properties and for meaningful-state reachability. Choose it when the condition should become true at least once during a run, or when hitting that situation proves the workload is exercising an important scenario. Example: "leader election completes," "a rollback path is exercised," or "the workload reaches a degraded-but-recoverable mode." Do not use `Sometimes` for invariants that must hold on every evaluation.
-- **`Reachable`**: Use for pure reachability goals where the fact of hitting a code path or behavior matters more than checking a rich predicate. Example: "the compaction path is exercised at least once."
+- **`Sometimes(cond)`**: Use for liveness/progress properties and for non-trivial semantic states that should become true at least once during a run. The condition must itself be meaningful. Example: "leader election completes" or "a degraded-but-recoverable mode is observed." Do not use `Sometimes` for invariants that must hold on every evaluation, and treat `Sometimes(true, ...)` as a smell that should instead be `Reachable(...)`.
+- **`Reachable`**: Use for pure reachability goals where the fact of hitting a code path, branch result, or outcome helps Antithesis focus on interesting areas of the code to search. Prefer meaningful outcomes over broad path-entry markers. Example: "snapshot completed successfully" or "the compaction path emitted its no-op result."
 - **`Unreachable`**: Use for impossible states and critical failure paths that must never be observed. Example: "the data-corruption guardrail trips" or "an internal panic recovery path is entered."
 
-`Sometimes` assertions deserve extra attention in the catalog. They are more informative than generic line coverage because they can describe interesting situations, not just locations, and Antithesis uses them as exploration hints and replay checkpoints. Add them when you want to confirm the workload reaches rare, tricky, or high-value scenarios.
+`Sometimes(cond)` assertions deserve extra attention in the catalog. They are more informative than generic line coverage because they can describe interesting situations, not just locations, and Antithesis uses them as exploration hints and replay checkpoints. Add them when you want to confirm the system reaches rare, tricky, or high-value semantic states.
+
+When a state is dangerous, timing-sensitive, hard to observe externally, or useful as a branch or replay anchor, record that the property likely needs SUT-side instrumentation rather than workload-only checks.
+
+Every planned assertion message must be unique and specific. Do not model a broad property by reusing one assertion message at multiple unrelated callsites; split it into distinct properties or explicit sub-properties instead.
 
 If a property seems to fit multiple assertion types, prefer the one that matches the real guarantee:
 
-- "Must never happen" -> `Always` or `Unreachable`
-- "Must eventually happen at least once" -> `Sometimes` or `Reachable`
+- "Must always or never happen" -> `Always` or `Unreachable`
+- "Must eventually happen at least once because a meaningful condition becomes true" -> `Sometimes(cond)`
+- "Must eventually hit this line" -> `Reachable`
 - "Must hold whenever this optional path runs" -> `AlwaysOrUnreachable`
 
 ## How Many Properties
