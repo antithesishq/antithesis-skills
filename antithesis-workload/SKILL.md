@@ -113,6 +113,7 @@ Review criteria:
 - `Reachable(...)` markers are attached to distinct outcomes or branch results, not redundant early path-entry locations on the same straight-line flow
 - Test commands exist under `antithesis/test/` and use valid prefixes (`parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`)
 - Test commands are written in the project's language, not Bash, and reuse the project's clients and libraries where possible
+- No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
 - Helper files or directories are prefixed with `helper_` so Test Composer ignores them
 - `antithesis/scratchbook/property-catalog.md` is updated to reflect which properties are now implemented
