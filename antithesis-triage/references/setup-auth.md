@@ -52,7 +52,6 @@ Create the session with the shared persisted state name:
 
 ```
 agent-browser --session "$SESSION" --session-name antithesis open "https://$TENANT.antithesis.com"
-agent-browser --session "$SESSION" wait --load networkidle
 agent-browser --session "$SESSION" get url
 ```
 
@@ -61,11 +60,22 @@ If the url starts with `https://$TENANT.antithesis.com` then you are authenticat
 When you need to run report queries, also verify that the current URL is on the
 main report view and not a finding hash route.
 
+After each successful `open` call or any other navigation, confirm that the URL
+is on the page you expected with `agent-browser wait --fn`, inject the triage
+runtime, then call the
+appropriate `*.waitForReady()` method before calling
+`window.__antithesisTriage` methods:
+
+```bash
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
+```
+
 ## Authenticating
 
-If the shared `--session-name antithesis` state does not leave you authenticated, run an
-interactive login flow. `agent-browser` will save the session state
-automatically because you are using `--session-name`.
+If the shared `--session-name antithesis` state does not leave you
+authenticated, run an interactive login flow. `agent-browser` will save the
+session state automatically because you are using `--session-name`.
 
 Authentication requires running `agent-browser` with `--headed` which allows
 the user to sign in and handle 2FA themselves. Use the following commands to
@@ -84,8 +94,22 @@ before continuing.
 ```
 agent-browser --session "$SESSION" close
 agent-browser --session "$SESSION" --session-name antithesis open "https://$TENANT.antithesis.com"
-agent-browser --session "$SESSION" wait --load networkidle
+agent-browser --session "$SESSION" get url
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
 ```
+
+Use checks like these:
+
+- runs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/runs'"`
+- report page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname.startsWith('/report/')"`
+- logs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"`
+
+If the browser lands on a login page, Google auth page, or any other unexpected
+URL, stop and reauthenticate before injecting the runtime.
 
 ## Cleanup
 

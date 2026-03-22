@@ -9,22 +9,29 @@ that session. If it redirects away from the search page or fails to load, do a
 full interactive login first.
 **Important:** Report-side queries in this skill only apply on the main report
 view. If you navigate to a hash route such as `#/run/.../finding/...`, reopen
-the original report URL and rerun the report loading check before using any
-report query again.
+the original report URL and rerun `window.__antithesisTriage.report.waitForReady()`
+before using any report method again.
+
+If `window.__antithesisTriage` is missing, inject again and retry. After every
+`open` call or any navigation, use `agent-browser wait --fn` to confirm that
+the browser is on the expected page, inject again, then call the
+matching `*.waitForReady()` method before the next page-specific method call.
 
 ## Getting log URLs from triage report examples
 
 First, expand visible failed properties until their examples tables are present:
 
-Use this query file:
-
-- `assets/report/expand-failed-examples.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.report.expandFailedExamples())()"
+```
 
 Then extract the example rows and log URLs:
 
-Use this query file:
-
-- `assets/logs/get-example-urls.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getExampleUrls()"
+```
 
 ## Navigate to logs for a specific example
 
@@ -32,8 +39,17 @@ Use the `logsUrl` from the example row to open the log viewer:
 
 ```
 agent-browser --session "$SESSION" open "<logsUrl>"
-agent-browser --session "$SESSION" wait --load networkidle
+agent-browser --session "$SESSION" wait --fn \
+  "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.logs.waitForReady())()"
 ```
+
+Before injecting, make sure the browser is still on `/search` with
+`get_logs=true`. If it redirected to login or another page, reauthenticate
+first.
 
 ## Log viewer page structure
 
@@ -43,32 +59,26 @@ Log viewers are `div.sequence_printer_wrapper` elements, each with a virtual scr
 
 ## Get log item count
 
-Use this query file:
-
-- `assets/logs/get-item-count.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.getItemCount()"
+```
 
 ## Filter logs by text
 
-Use this query file:
-
-- `assets/logs/filter-error.js`
-
-To override the default `"error"` needle while still using
-`agent-browser eval --stdin`, prepend a small assignment before the query:
+Edit the query text directly in the snippet:
 
 ```bash
-{
-  printf 'window.__ANTITHESIS_QUERY__ = %s;\n' \
-    "$(jq -Rn --arg q "$QUERY" '$q')"
-  cat assets/logs/filter-error.js
-} | agent-browser --session "$SESSION" eval --stdin
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.filter('my search query')"
 ```
 
 Clear the filter:
 
-Use this query file:
-
-- `assets/logs/clear-filter.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.clearFilter()"
+```
 
 ## Read visible log entries
 
@@ -76,9 +86,10 @@ Each `.event` element contains tooltip children (`<a-tooltip>`) followed by a
 text node with the actual value. Use `lastText()` to extract the visible text,
 skipping tooltip prefixes.
 
-Use this query file:
-
-- `assets/logs/read-visible-events.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.readVisibleEvents()"
+```
 
 Note: logs use virtual scrolling — only ~50-70 rows render at a time. Scroll within `div.vscroll` to load more.
 
@@ -86,27 +97,20 @@ Note: logs use virtual scrolling — only ~50-70 rows render at a time. Scroll w
 
 The event that triggered the "get logs" link is highlighted with `._emphasized_blue`:
 
-Use this query file:
-
-- `assets/logs/find-highlighted-event.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.findHighlightedEvent()"
+```
 
 ## Search within logs
 
 Use the search input to find and navigate between matches:
 
-Use this query file:
-
-- `assets/logs/search-error.js`
-
-The script requires an explicit search needle. Inject
-`window.__ANTITHESIS_QUERY__` before piping the script to `eval --stdin`:
+Edit the query text directly in the snippet:
 
 ```bash
-{
-  printf 'window.__ANTITHESIS_QUERY__ = %s;\n' \
-    "$(jq -Rn --arg q "$QUERY" '$q')"
-  cat assets/logs/search-error.js
-} | agent-browser --session "$SESSION" eval --stdin
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.search('my search query')"
 ```
 
 The search count is displayed next to the search input (e.g., "1 / 30").

@@ -4,8 +4,11 @@ The Findings section shows a history of test runs, which essentially presents a 
 
 Findings are contained by `section.section_findings`. The section often stays in
 `Loading...` briefly after the rest of the report renders, so wait for report
-loading to finish before running the findings query.
+loading to finish before running the findings method.
 
-Use this query file:
+Use:
 
-- `assets/report/findings-grouped.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getFindingsGrouped()"
+```
