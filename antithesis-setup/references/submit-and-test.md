@@ -39,6 +39,7 @@ podman compose -f antithesis/config/docker-compose.yaml build
 
 # Submit run
 snouty run \
+  --webhook basic_test \
   --config antithesis/config \
   --test-name "PROJECT_NAME" \
   --description "first test run" \
