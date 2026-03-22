@@ -48,6 +48,7 @@ task. Read the relevant file before performing that task.
 | `references/findings.md`      | Viewing behavioral diffs between runs                      |
 | `references/utilization.md`   | Checking test hours or behavior discovery rate             |
 | `references/logs.md`          | Investigating logs for a specific property example         |
+| `references/finding-analysis.md` | RCA workflow: analyzing a finding by comparing failing/passing examples |
 
 ## Query files
 
@@ -97,6 +98,7 @@ cat assets/report/loading-status.js \
 Use these loading checks:
 
 - Report page: `assets/report/loading-finished.js`
+- Finding page: `assets/finding/loading-finished.js`
 - Logs page: `assets/logs/loading-finished.js`
 - Runs page: `assets/runs/loading-finished.js`
 
@@ -121,10 +123,24 @@ again.
 
 ### Investigate a failing property
 
-1. Read `references/setup-auth.md` — authenticate and open the report
+1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
 2. Read `references/properties.md` — list properties, filter to failed
-3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
-4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
+3. Read `references/findings.md` — get findings with URLs to collect finding page links
+4. Navigate to the finding page (click a finding from the report, or open a finding URL directly)
+5. Read `references/finding-analysis.md` — compare failing vs passing examples, extract fault events, and identify the root cause
+6. Report the failure with: property name, assertion text, fault injection trigger, a comparison table, and **links to the finding page and specific examples**
+
+### RCA all failed properties
+
+Use this workflow when the user wants a comprehensive review of all failures in a run.
+
+1. Read `references/setup-auth.md` — authenticate and open the report (skip auth for public report URLs)
+2. Read `references/run-metadata.md` — get the run title, date, and source
+3. Read `references/properties.md` — get all properties for totals, then filter to failed
+4. Read `references/findings.md` — get findings with URLs (the query returns `url` per finding); filter to only **new** findings — ongoing and resolved findings do not require RCA
+5. Match new findings to the failed properties from step 3; group related failed properties by shared root cause (e.g. watch failures together, container exits together)
+6. For each failure group with new findings, navigate to the finding page and follow the RCA workflow in `references/finding-analysis.md`
+7. Produce the final output using the **Full RCA report format** defined in `references/finding-analysis.md` — include finding links in property tables, linked example headers in fault correlation tables, and a summary table with finding and evidence links
 
 ### Find a specific run
 
@@ -139,7 +155,10 @@ again.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
 - **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
-- **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
+- **Logs use virtual scrolling.** Only ~50-70 rows render at a time. Use the filter-based approach (see `references/finding-analysis.md`) to narrow results before scraping.
+- **Prefer structured data over log scraping.** Assertion details decoded from URLs and the Details panel provide authoritative, structured data. Use log scraping only for fault injection timeline context.
+- **Use filters for large log sets.** When the inline log viewer shows more than ~70 items, apply a filter (e.g., `fault:{`) before reading events. This makes virtual scrolling irrelevant.
+- **Finding pages load asynchronously.** Use `assets/finding/loading-finished.js` before running finding queries, just as you use the report loading check for report queries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
 
 ## Self-Review
