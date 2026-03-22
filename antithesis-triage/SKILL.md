@@ -26,6 +26,15 @@ keywords:
 
 Use the `agent-browser` skill to read and triage Antithesis test reports.
 
+Every triage run should use:
+
+- a fresh, unique `SESSION` value such as `antithesis-triage-$(date +%s)-$$`
+
+Use `--session-name antithesis` so `agent-browser` manages shared
+authentication state automatically, while `--session "$SESSION"` keeps each
+triage run isolated from other concurrent agents. Close the unique live session
+when triage is complete.
+
 ## Gathering user input
 
 Before starting, collect the following from the user:
@@ -57,7 +66,7 @@ Use the following command pattern to evaluate a query file from the skill root:
 
 ```
 cat assets/report/run-metadata.js \
-  | agent-browser eval --session-name "$SESSION" --stdin
+  | agent-browser --session "$SESSION" eval --stdin
 ```
 
 Do not run report queries in parallel with `agent-browser open`, hash-route
@@ -78,7 +87,7 @@ Command pattern:
 for _ in $(seq 1 60); do
   if [[ "$(
     cat <loading-query-file> \
-      | agent-browser eval --session-name "$SESSION" --stdin
+      | agent-browser --session "$SESSION" eval --stdin
   )" == "true" ]]; then
     break
   fi
@@ -91,7 +100,7 @@ current state before retrying:
 
 ```
 cat assets/report/loading-status.js \
-  | agent-browser eval --session-name "$SESSION" --stdin
+  | agent-browser --session "$SESSION" eval --stdin
 ```
 
 Use these loading checks:
@@ -135,6 +144,9 @@ again.
 ## General guidance
 
 - **Always authenticate first.** Every session starts with setup-auth.
+- **Use disposable sessions.** Generate a unique `SESSION` for each triage run,
+  pair it with the shared `--session-name antithesis`, and `agent-browser
+  --session "$SESSION" close` when you finish or abort.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.

@@ -31,8 +31,8 @@ Use this query file:
 Use the `logsUrl` from the example row to open the log viewer:
 
 ```
-agent-browser open --session-name $SESSION "<logsUrl>"
-agent-browser wait --session-name $SESSION --load networkidle
+agent-browser --session "$SESSION" open "<logsUrl>"
+agent-browser --session "$SESSION" wait --load networkidle
 ```
 
 ## Log viewer page structure
