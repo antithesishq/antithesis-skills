@@ -48,8 +48,8 @@ Start from the existing Antithesis scratchbook, test code, and triage artifacts 
 - **Test command:** An executable in a test template with a valid prefix: `parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`.
 - **Timeline:** One linear execution of the SUT and workload. Antithesis runs many timelines in parallel and branches them to search for interesting behaviors.
 - **`Always` / `AlwaysOrUnreachable`:** Assertions for safety and correctness properties.
-- **`Sometimes`:** Assertions for liveness or "did we reach this state?" checks.
-- **`Reachable` / `Unreachable`:** Assertions about whether code paths or behaviors are exercised.
+- **`Sometimes(cond)`:** Assertions for liveness or non-trivial semantic states that should occur at least once.
+- **`Reachable` / `Unreachable`:** Assertions about whether meaningful outcomes or forbidden paths are exercised.
 
 ## Documentation Grounding
 
@@ -106,7 +106,11 @@ Before declaring this skill complete, review your work against the criteria belo
 Review criteria:
 
 - Every property in the catalog that was in scope has a corresponding SDK assertion in the workload or SUT code
-- Each assertion uses the correct SDK assertion type for its property's semantics (`Always`/`AlwaysOrUnreachable` for safety, `Sometimes` for liveness, `Reachable`/`Unreachable` for code path checks)
+- Each assertion uses the correct SDK assertion type for its property's semantics (`Always`/`AlwaysOrUnreachable` for safety, `Sometimes(cond)` for liveness or meaningful semantic state, `Reachable`/`Unreachable` for path and outcome checks)
+- `Sometimes(true, ...)` assertions should be rewritten as `Reachable(...)`.
+- Assertion messages are unique across the touched code; no broad property is implemented by reusing one message at multiple unrelated callsites
+- Workload-only instrumentation was not used where surgical SUT-side assertions would provide materially better search guidance for rare, dangerous, or timing-sensitive internal states
+- `Reachable(...)` markers are attached to distinct outcomes or branch results, not redundant early path-entry locations on the same straight-line flow
 - Test commands exist under `antithesis/test/` and use valid prefixes (`parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`)
 - Test commands are written in the project's language, not Bash, and reuse the project's clients and libraries where possible
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container

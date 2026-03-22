@@ -36,6 +36,9 @@ in documentation vs. implementation.
 Crash recovery, restart correctness, partial failure handling, retry semantics.
 Look for: incomplete operations that survive restarts, recovery procedures that
 assume clean state, retry storms, idempotency gaps in recovery paths.
+Also note candidate SUT instrumentation points for retry outcomes, recovery
+subphases, and dangerous internal fallback paths that workloads may not observe
+cleanly.
 
 ### 4. Protocol Contracts
 
@@ -60,12 +63,16 @@ sequences of valid operations, injection points.
 Consensus, leader election, split-brain, network partition behavior, replication.
 Look for: split-brain recovery, replication lag visibility, quorum loss handling,
 stale leader commands. May yield no properties for single-process systems.
+Also note candidate SUT instrumentation points for redirect emission, leader
+handoff, stepdown, and leadership-loss retry internals.
 
 ### 8. Lifecycle Transitions
 
 Startup, shutdown, upgrade, migration, initialization ordering. Look for: requests
 during startup before subsystems are ready, graceful shutdown that drops in-flight
 work, migration steps that assume no concurrent traffic.
+Also note candidate SUT instrumentation points for distinct lifecycle outcomes,
+not just broad "entered startup/shutdown path" markers.
 
 ### 9. Idempotency and Replay
 
