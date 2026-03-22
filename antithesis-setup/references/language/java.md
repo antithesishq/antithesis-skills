@@ -4,6 +4,8 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/java/how_to_build_with_sdk/`
 
+You MUST use the latest version of the Antithesis Java SDK. To look up the latest version, load `https://repo.maven.apache.org/maven2/com/antithesis/sdk/maven-metadata.xml` and use the `<release>` value.
+
 Java instrumentation and assertion cataloging are automatic bytecode weaving steps performed by Antithesis on compiled artifacts.
 
 - Add the Antithesis Java SDK dependency to the application build.

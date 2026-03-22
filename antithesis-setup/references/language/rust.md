@@ -4,6 +4,8 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/rust/instrumentation/`
 
+You MUST use the latest version of the Antithesis Rust SDK. To look up the latest version, load `https://crates.io/api/v1/crates/antithesis_sdk` and use `crate.max_stable_version`.
+
 Use LLVM-based instrumentation and the Antithesis runtime library.
 
 - Add the Antithesis Rust SDK crate to the crate graph for the code that will emit assertions.
