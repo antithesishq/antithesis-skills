@@ -117,3 +117,4 @@ Review criteria:
 - Helper files or directories are prefixed with `helper_` so Test Composer ignores them
 - `antithesis/scratchbook/property-catalog.md` is updated to reflect which properties are now implemented
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
+- Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.
