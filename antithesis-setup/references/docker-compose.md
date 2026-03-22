@@ -40,7 +40,7 @@ The compose config must run without internet access. All images must be pre-buil
 
 ## setup_complete Signal
 
-Ensure at least one entrypoint emits the `setup_complete` event. Use `antithesis/setup-complete.sh` or call the SDK's setup complete method. Only emit once the system is healthy and ready for testing.
+Ensure at least one entrypoint emits the `setup_complete` event. Use `antithesis/setup-complete.sh` or call the SDK's setup complete method. Only emit once the system is healthy and ready for testing. Do not emit `setup_complete` from `antithesis/test/` or from any `first_` command; those commands do not start until after Antithesis has already observed `setup_complete`.
 
 ## Named Volumes
 

@@ -34,7 +34,9 @@ Containers that run the test workload. These contain the test commands that exer
 A typical client container:
 
 1. Emits `setup_complete` to signal readiness
-2. Sleeps, letting Antithesis run test commands from the test template
+2. Sleeps or otherwise stays alive, letting Antithesis run test commands from the test template
+
+This readiness signaling happens before any test-template command runs. Do not plan for a `first_` command to emit `setup_complete`; `first_` commands are timeline actions that start only after Antithesis has already received the readiness signal.
 
 The client container image includes the test template directory at `/opt/antithesis/test/v1/{name}/`. Helper files or directories kept inside that template should use a `helper_` prefix so Test Composer ignores them.
 
