@@ -8,6 +8,8 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/fallback/`
 
+You MUST use the latest fallback SDK schema and message format. To look it up, load `https://antithesis.com/docs/using_antithesis/sdk/fallback/schema/` and follow the current schema there.
+
 The fallback SDK path works for any language because it relies on writing JSONL messages to Antithesis rather than linking a language-native SDK.
 
 - Use this path for assertions and lifecycle when no first-class SDK is available or practical.

@@ -4,6 +4,8 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/python/`
 
+You MUST use the latest version of the Antithesis Python SDK. To look up the latest version, load `https://pypi.org/pypi/antithesis/json` and use `info.version`.
+
 Current Python support is cataloging-only.
 
 - Add the Antithesis Python package to the environment where the SUT code runs.

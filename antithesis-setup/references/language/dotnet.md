@@ -4,6 +4,8 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/dotnet/instrumentation/`
 
+You MUST use the latest version of the Antithesis .NET SDK. To look up the latest version, load `https://api.nuget.org/v3-flatcontainer/antithesis.sdk/index.json` and use the last entry in the `versions` array.
+
 .NET instrumentation is automatic bytecode weaving over compiled assemblies.
 
 - Add the Antithesis .NET SDK package to the application project that will emit assertions.

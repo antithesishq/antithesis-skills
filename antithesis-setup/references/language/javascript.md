@@ -4,9 +4,10 @@ First, use the `antithesis-documentation` skill to load the latest Antithesis do
 
 - `https://antithesis.com/docs/using_antithesis/sdk/javascript_sdk/`
 
+There is no Antithesis JavaScript SDK. For JavaScript projects, use the fallback SDK for assertions and lifecycle by following `references/language/fallback.md`.
+
 JavaScript instrumentation is an Antithesis-side source transformation for NodeJS code.
 
-- Add the Antithesis JavaScript SDK to the runtime dependency graph of the NodeJS service or helper that will emit assertions.
 - Place the relevant built JavaScript tree in `/opt/antithesis/catalog/`.
 - Ensure the runtime artifact includes `node_modules` in the expected layout; the instrumentor searches for directories containing `node_modules`.
 - Do not expect browser JavaScript to be instrumented.
