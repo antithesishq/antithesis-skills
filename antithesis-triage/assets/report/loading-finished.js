@@ -3,6 +3,16 @@
     return (text || "").replace(/\s+/g, " ").trim();
   }
 
+  function isVisible(el) {
+    if (!el || typeof el.getBoundingClientRect !== "function") return false;
+
+    var rect = el.getBoundingClientRect();
+    if (rect.width <= 0 || rect.height <= 0) return false;
+
+    var style = window.getComputedStyle(el);
+    return style.display !== "none" && style.visibility !== "hidden";
+  }
+
   function hasLoadingText(text) {
     return /loading(?:\.\.\.)?/i.test(text || "");
   }
@@ -13,56 +23,70 @@
     });
   }
 
-  var title = clean(document.querySelector(".branded_title")?.textContent);
-  var metadata = clean(document.querySelector(".branded_metadata")?.textContent);
+  function visibleCount(selector) {
+    return Array.from(document.querySelectorAll(selector)).filter(isVisible).length;
+  }
+
+  function sectionLooksLoaded(section) {
+    if (!section || !isVisible(section)) return false;
+
+    var text = clean(section.textContent);
+    return !!(text && !hasLoadingText(text));
+  }
+
+  var titleEl = document.querySelector(".branded_title");
+  var metadataEl = document.querySelector(".branded_metadata");
+  var title = clean(titleEl?.textContent);
+  var metadata = clean(metadataEl?.textContent);
   var environmentSection = findSectionByHeading("Environment");
   var utilizationSection = findSectionByHeading("Utilization");
   var propertiesSection = document.querySelector(
     "section.section_properties:not(.section_findings)",
   );
-  var environmentImages = document.querySelectorAll(
-    ".presentation_environment__source_image",
-  ).length;
+  var environmentImages = visibleCount(".presentation_environment__source_image");
   var utilizationMetric = clean(
     document.querySelector(".utilization-summary__metric")?.textContent,
   );
-  var propertyTabs = document.querySelectorAll("a-tab").length;
-  var propertyContainers = document.querySelectorAll(".property-container").length;
+  var propertyTabs = visibleCount("a-tab");
+  var propertyContainers = visibleCount(".property-container");
   var propertiesText = clean(propertiesSection?.textContent);
   var findingsSection = document.querySelector("section.section_findings");
   var findingsText = clean(findingsSection?.textContent);
-  var findingsDetails = findingsSection?.querySelectorAll(
+  var findingsDetails = findingsSection && isVisible(findingsSection)
+    ? findingsSection.querySelectorAll(
     "details.findings_section_details",
-  ).length;
-  var findingLinks = findingsSection?.querySelectorAll(
+  ).length
+    : 0;
+  var findingLinks = findingsSection && isVisible(findingsSection)
+    ? findingsSection.querySelectorAll(
     'a[href*="/finding/"], a[href*="/findings/"]',
-  ).length;
-  var findingToggles = findingsSection?.querySelectorAll(
+  ).length
+    : 0;
+  var findingToggles = findingsSection && isVisible(findingsSection)
+    ? findingsSection.querySelectorAll(
     'input[name="include_manual"], input[name="show_ongoing"]',
-  ).length;
+  ).length
+    : 0;
   var findingsLoadedText =
     /no findings|show suppressions|show ongoing findings|open triage report for this run|look into all findings/i.test(
       findingsText,
     );
   var environmentLoaded = !!(
-    environmentImages > 0 ||
-    (environmentSection &&
-      clean(environmentSection.textContent) &&
-      !hasLoadingText(environmentSection.textContent))
+    environmentImages > 0 || sectionLooksLoaded(environmentSection)
   );
   var utilizationLoaded = !!(
-    utilizationMetric ||
-    (utilizationSection &&
-      clean(utilizationSection.textContent) &&
-      !hasLoadingText(utilizationSection.textContent))
+    utilizationMetric || sectionLooksLoaded(utilizationSection)
   );
   var propertiesLoaded = !!(
+    propertiesSection &&
+    isVisible(propertiesSection) &&
     propertyTabs >= 2 &&
     propertyContainers > 0 &&
     !hasLoadingText(propertiesText)
   );
   var findingsLoaded =
     !!findingsSection &&
+    isVisible(findingsSection) &&
     !hasLoadingText(findingsText) &&
     (findingsDetails > 0 ||
       findingLinks > 0 ||
@@ -70,6 +94,8 @@
       findingsLoadedText);
 
   return !!(
+    isVisible(titleEl) &&
+    isVisible(metadataEl) &&
     title &&
     metadata &&
     environmentLoaded &&

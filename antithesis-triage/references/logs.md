@@ -53,6 +53,17 @@ Use this query file:
 
 - `assets/logs/filter-error.js`
 
+To override the default `"error"` needle while still using
+`agent-browser eval --stdin`, prepend a small assignment before the query:
+
+```bash
+{
+  printf 'window.__ANTITHESIS_QUERY__ = %s;\n' \
+    "$(jq -Rn --arg q "$QUERY" '$q')"
+  cat assets/logs/filter-error.js
+} | agent-browser --session "$SESSION" eval --stdin
+```
+
 Clear the filter:
 
 Use this query file:
@@ -86,6 +97,17 @@ Use the search input to find and navigate between matches:
 Use this query file:
 
 - `assets/logs/search-error.js`
+
+The script requires an explicit search needle. Inject
+`window.__ANTITHESIS_QUERY__` before piping the script to `eval --stdin`:
+
+```bash
+{
+  printf 'window.__ANTITHESIS_QUERY__ = %s;\n' \
+    "$(jq -Rn --arg q "$QUERY" '$q')"
+  cat assets/logs/search-error.js
+} | agent-browser --session "$SESSION" eval --stdin
+```
 
 The search count is displayed next to the search input (e.g., "1 / 30").
 

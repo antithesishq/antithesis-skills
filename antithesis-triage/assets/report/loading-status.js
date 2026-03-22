@@ -1,4 +1,8 @@
 (function () {
+  if (!/^\/report\//.test(window.location.pathname)) {
+    return JSON.stringify({ error: "expected main report view", url: window.location.href });
+  }
+
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
   }

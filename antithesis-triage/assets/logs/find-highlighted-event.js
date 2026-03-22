@@ -1,4 +1,8 @@
 (function () {
+  if (window.location.pathname !== "/search" || !/[?&]get_logs=true\b/.test(window.location.search)) {
+    return JSON.stringify({ error: "expected selected-event logs view", url: window.location.href });
+  }
+
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
   }

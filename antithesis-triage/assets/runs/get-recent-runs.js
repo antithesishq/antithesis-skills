@@ -1,4 +1,8 @@
 (async function () {
+  if (window.location.pathname !== "/runs") {
+    return JSON.stringify({ error: "expected runs page", url: window.location.href });
+  }
+
   function clean(s) {
     return (s || "").replace(/\s+/g, " ").trim();
   }
