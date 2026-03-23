@@ -37,7 +37,7 @@ Install one of the following:
 **Docker and Docker Compose:**
 
 ```bash
-sudo apt install -y docker.io docker-compose-v2
+sudo apt install -y docker.io docker-compose-v2 docker-buildx
 sudo usermod -aG docker $USER
 ```
 
