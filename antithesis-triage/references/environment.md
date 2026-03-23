@@ -4,6 +4,7 @@ The Environment section (`section.section_container` containing "Environment" ti
 
 ## Get source images
 
-Use this query file:
-
-- `assets/report/environment-source-images.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getEnvironmentSourceImages()"
+```

@@ -8,9 +8,14 @@ only sees the currently rendered rows unless you scroll.
 
 ## Get recent runs as JSON
 
-Use this query file:
+Then run:
 
-- `assets/runs/get-recent-runs.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.runs.waitForReady())()"
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.runs.getRecentRuns())()"
+```
 
 Notes:
 

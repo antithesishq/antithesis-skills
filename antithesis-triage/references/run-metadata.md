@@ -2,9 +2,12 @@
 
 Extract high-level information about a triage report.
 
-Use this query file:
+Then run:
 
-- `assets/report/run-metadata.js`
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getRunMetadata()"
+```
 
-The script returns `title`, the raw `metadata`, plus best-effort parsed
+The method returns `title`, the raw `metadata`, plus best-effort parsed
 `conductedOn` and `source` fields.

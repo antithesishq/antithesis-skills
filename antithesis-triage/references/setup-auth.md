@@ -33,37 +33,92 @@ tenant session.
 
 ## Session naming
 
-Pick a session name to use based on the current project. Default to `antithesis` if unknown. Replace the variable `$SESSION` with your selected session name in all `agent-browser` commands.
+Use a fixed persisted session name so `agent-browser` auto-manages saved auth
+state for Antithesis. Hardcode `--session-name antithesis` in commands rather
+than introducing another variable.
+
+Use a fresh, unique browser session for each triage run so concurrent agents in
+the same project do not collide:
+
+```
+SESSION="antithesis-triage-$(date +%s)-$$"
+```
+
+Replace `$SESSION` in all commands below.
 
 ## Checking existing authentication
 
-To check if you are logged in already, run the following commands:
+Create the session with the shared persisted state name:
 
 ```
-agent-browser open --session-name $SESSION https://$TENANT.antithesis.com
-agent-browser wait --session-name $SESSION --load networkidle
-agent-browser get url --session-name $SESSION
+agent-browser --session "$SESSION" --session-name antithesis open "https://$TENANT.antithesis.com"
+agent-browser --session "$SESSION" get url
 ```
 
 If the url starts with `https://$TENANT.antithesis.com` then you are authenticated. If not, you need to authenticate before continuing.
 
 When you need to run report queries, also verify that the current URL is on the
-main report view and not a finding hash route. Reused browser sessions can
-restore a hash like `#/run/.../finding/...`, which will make report queries
-return incomplete data.
+main report view and not a finding hash route.
+
+After each successful `open` call or any other navigation, confirm that the URL
+is on the page you expected with `agent-browser wait --fn`, inject the triage
+runtime, then call the
+appropriate `*.waitForReady()` method before calling
+`window.__antithesisTriage` methods:
+
+```bash
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
+```
 
 ## Authenticating
 
-Authentication requires running `agent-browser` with `--headed` which allows the user to sign in and handle 2FA themselves. Use the following commands to open a browser window for login and then wait for the user to complete auth.
+If the shared `--session-name antithesis` state does not leave you
+authenticated, run an interactive login flow. `agent-browser` will save the
+session state automatically because you are using `--session-name`.
+
+Authentication requires running `agent-browser` with `--headed` which allows
+the user to sign in and handle 2FA themselves. Use the following commands to
+open a browser window for login, then wait for the user to complete auth:
 
 ```
-agent-browser open --session-name $SESSION --headed "https://antithesis.com/login/?redirect=home"
-agent-browser wait --session-name $SESSION --url "**/home"
+agent-browser --session "$SESSION" close
+agent-browser --session "$SESSION" --session-name antithesis --headed open "https://antithesis.com/login/?redirect=home"
+agent-browser --session "$SESSION" wait --url "**/home"
 ```
 
-Once the wait command completes successfully, reopen the browser headless before continuing.
+Once the wait command completes successfully, close the headed browser and
+reopen the same session headless with the same `--session-name antithesis`
+before continuing.
 
 ```
-agent-browser close --session-name $SESSION
-agent-browser open --session-name $SESSION https://$TENANT.antithesis.com
+agent-browser --session "$SESSION" close
+agent-browser --session "$SESSION" --session-name antithesis open "https://$TENANT.antithesis.com"
+agent-browser --session "$SESSION" get url
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
 ```
+
+Use checks like these:
+
+- runs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/runs'"`
+- report page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname.startsWith('/report/')"`
+- logs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"`
+
+If the browser lands on a login page, Google auth page, or any other unexpected
+URL, stop and reauthenticate before injecting the runtime.
+
+## Cleanup
+
+When triage is complete, or if you abort after opening a browser session, close
+it explicitly:
+
+```
+agent-browser --session "$SESSION" close
+```
+
+Closing the live session is safe because the shared Antithesis authentication
+state is managed separately by `--session-name antithesis`.

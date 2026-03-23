@@ -26,6 +26,15 @@ keywords:
 
 Use the `agent-browser` skill to read and triage Antithesis test reports.
 
+Every triage run should use:
+
+- a fresh, unique `SESSION` value such as `antithesis-triage-$(date +%s)-$$`
+
+Use `--session-name antithesis` so `agent-browser` manages shared
+authentication state automatically, while `--session "$SESSION"` keeps each
+triage run isolated from other concurrent agents. Close the unique live session
+when triage is complete.
+
 ## Gathering user input
 
 Before starting, collect the following from the user:
@@ -49,56 +58,105 @@ task. Read the relevant file before performing that task.
 | `references/utilization.md`   | Checking test hours or behavior discovery rate             |
 | `references/logs.md`          | Investigating logs for a specific property example         |
 
-## Query files
+## Runtime injection
 
-Reference files contain references to queries. Queries are stored in the assets directory, organized by the page they are relevant to.
+Use the browser-side runtime file:
 
-Use the following command pattern to evaluate a query file from the skill root:
+- `assets/antithesis-triage.js`
 
+Inject it into the current page with:
+
+```bash
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
 ```
-cat assets/report/run-metadata.js \
-  | agent-browser eval --session-name "$SESSION" --stdin
+
+Injecting the file registers methods on `window.__antithesisTriage`. Call those
+methods with `agent-browser eval`.
+
+Synchronous method pattern:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getRunMetadata()"
 ```
 
-Do not run report queries in parallel with `agent-browser open`, hash-route
+Async method pattern:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.runs.getRecentRuns())()"
+```
+
+If `window.__antithesisTriage` is missing, inject `assets/antithesis-triage.js` and retry the method call.
+
+Do not run method calls in parallel with `agent-browser open`, hash-route
 navigation, or any other command that can replace the page. Wait until the
 target page is settled before starting `eval` calls. On a single browser
-session, run report queries sequentially; property scripts mutate tab and
+session, run report queries sequentially; property methods mutate tab and
 expansion state and will interfere with each other if you launch them in
 parallel.
 
+After every `open` call or any interaction that may navigate or replace the
+page, first confirm that the browser has landed on the expected page type by
+waiting on `window.location`, then inject `assets/antithesis-triage.js`, then call the
+matching `waitForReady()` method before running page-specific methods. If a
+method call reports that `window.__antithesisTriage` is missing, inject and
+retry.
+
 ## Page Loading Checks
 
-Each page type has a dedicated `loading-finished.js` query. Use the matching
-one before running page-specific queries.
+Each page type has async wait methods. After navigation, first verify that the
+browser is on the page you expected with `agent-browser wait --fn`, inject the
+runtime, then call the matching wait method before running page-specific
+queries.
 
-Command pattern:
+Use checks like these:
 
+- Runs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/runs'"`
+- Report page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname.startsWith('/report/')"`
+- Logs page:
+  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"`
+
+This catches slow loads and auth redirects. If the browser lands on an unexpected
+page such as a login or Google auth flow, stop and reauthenticate before
+continuing.
+
+Use these wait methods to make sure the page is fully loaded before running other runtime methods:
+
+- Report page: `window.__antithesisTriage.report.waitForReady()`
+- Logs page: `window.__antithesisTriage.logs.waitForReady()`
+- Runs page: `window.__antithesisTriage.runs.waitForReady()`
+
+Example:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "(async () => window.__antithesisTriage.report.waitForReady())()"
 ```
-for _ in $(seq 1 60); do
-  if [[ "$(
-    cat <loading-query-file> \
-      | agent-browser eval --session-name "$SESSION" --stdin
-  )" == "true" ]]; then
-    break
-  fi
-  sleep 1
-done
+
+Each wait method polls for up to about 60 seconds by default and returns a
+result object with `ok`, `ready`, `attempts`, and `waitedMs`. On timeout, the
+result also includes `details`.
+
+Use the lower-level boolean checks when you need a one-shot probe:
+
+- Report page: `window.__antithesisTriage.report.loadingFinished()`
+- Logs page: `window.__antithesisTriage.logs.loadingFinished()`
+- Runs page: `window.__antithesisTriage.runs.loadingFinished()`
+
+If the report page still does not become ready, inspect:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.loadingStatus()"
 ```
 
-If the report page still is not ready after about 60 seconds, inspect the
-current state before retrying:
-
-```
-cat assets/report/loading-status.js \
-  | agent-browser eval --session-name "$SESSION" --stdin
-```
-
-Use these loading checks:
-
-- Report page: `assets/report/loading-finished.js`
-- Logs page: `assets/logs/loading-finished.js`
-- Runs page: `assets/runs/loading-finished.js`
+Equivalent one-shot status probes are also available at
+`window.__antithesisTriage.logs.loadingStatus()` and
+`window.__antithesisTriage.runs.loadingStatus()`.
 
 The report-page loading check returns `true` only when the main report
 sections have finished loading, including findings, properties, environment,
@@ -107,7 +165,9 @@ event, and findings are often the last section to settle.
 
 Report queries are only valid on the main report view. If you navigate to an
 internal hash route such as `#/run/.../finding/...`, reopen the original report
-URL and rerun `assets/report/loading-finished.js` before using report queries
+URL, wait until `window.location.pathname.startsWith('/report/')`, inject
+`assets/antithesis-triage.js`, and rerun
+`window.__antithesisTriage.report.waitForReady()` before using report methods
 again.
 
 ## Recommended workflows
@@ -135,6 +195,17 @@ again.
 ## General guidance
 
 - **Always authenticate first.** Every session starts with setup-auth.
+- **Use disposable sessions.** Generate a unique `SESSION` for each triage run,
+  pair it with the shared `--session-name antithesis`, and `agent-browser
+--session "$SESSION" close` when you finish or abort.
+- **Inject the runtime after navigation.** After every `open`, after link clicks
+  that may change pages, and after reopening the report from a finding route,
+  wait until `window.location` matches the expected page, inject
+  `assets/antithesis-triage.js`, then use the matching `*.waitForReady()`
+  method before the next page-specific method call.
+- **Retry missing-runtime errors by reinjecting.** If a command fails because
+  `window.__antithesisTriage` is undefined or missing, inject the runtime and
+  rerun the same method.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
