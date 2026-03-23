@@ -54,6 +54,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-workload`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.
+4. **Install find-skills skill** -- choose **No**.
 
 Restart any open agent sessions after installing so the new skills are discovered.
 
