@@ -6,10 +6,10 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will:
 
-- Analyze your system to provide a basic catalog of relevant [reliability properties](https://antithesis.com/docs/resources/reliability_glossary/)
-- Provide a suggested system topology for testing
-- Handle your [initial deployment to Antithesis](https://antithesis.com/docs/getting_started/setup/)
-- Create a basic [test template](https://antithesis.com/docs/test_templates/) to validate properties in the catalog
+- Analyze your system to provide a basic catalog of relevant [reliability properties](https://antithesis.com/docs/resources/reliability_glossary/).
+- Provide a suggested system topology for testing.
+- Handle your [initial deployment to Antithesis](https://antithesis.com/docs/getting_started/setup/).
+- Create a basic [test template](https://antithesis.com/docs/test_templates/) to validate properties in the catalog.
 
 **`antithesis-research` produces planning artifacts that you should review carefully.**
 
@@ -25,6 +25,46 @@ We recommend that you run `antithesis-research`, `antithesis-setup`, and `antith
 We also recommend running `docker/podman compose build` + `snouty validate` after the setup and workload skills to ensure that everything is working well.
 
 Furthermore, don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
+
+## Starter prompts
+
+To get the most out of the skills, we recommend that your prompts simply provide the required information for the skill. 
+
+Here are some examples starter prompts.
+
+> [!NOTE]
+> There are many ways to invoke a skill, in the examples below, it's invoked with a /skill-name. 
+
+### antithesis-research
+```
+/antithesis-research Research my codebase at /path/to/codebase and prepare a plan to test it with Antithesis. 
+```
+
+This skill outputs the following research materials, relative to the project directory: 
+* `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas.
+* `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities.
+* `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology.
+
+### antithesis-setup
+```
+/antithesis-setup Review the files in @antithesis/scratchbook/, build the things needed to begin testing with Antithesis, and validate the setup locally. 
+```
+
+This skill initializes an `antithesis/` directory, relative to the project, and adds all newly created setup files there. 
+
+Here's an example:
+* `antithesis/Dockerfile` performs a multi-stage build of the SUT.
+* `antithesis/config/docker-compose.yaml` orchestrates the SUT.
+* `antithesis/setup-complete.sh` emits the `setup_complete` lifecycle event.
+* `antithesis/workload-entrypoint.sh` waits for the SUT to be ready and calls `antithesis/setup_complete.sh` to signal `setup_complete`.
+* `antithesis/AGENTS.md` documents the `antithesis/` directory.
+
+### antithesis-workload
+```
+/antithesis-workload Review the plan for testing with Antithesis in @antithesis/scratchbook/property-catalog.md and implement the workload. 
+```
+
+This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT. 
 
 ## Compatibility
 
@@ -54,7 +94,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-workload`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.
-4. **Install find-skills skill** -- choose **No**.
+4. **Install find-skills skill** — choose **No**.
 
 Restart any open agent sessions after installing so the new skills are discovered.
 
