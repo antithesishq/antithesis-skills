@@ -49,7 +49,7 @@ debugger notebook itself.
 
 Before starting, collect the following from the user:
 
-1. **Debugger URL** (required) — A tokenized debugging-session URL like `https://TENANT.antithesis.com/debugging-session/...`. Tokenized URLs work without interactive login.
+1. **Debugger URL** (required) — A debugging-session URL like `https://TENANT.antithesis.com/debugging-session/...`.
 2. **What to investigate** — Are they checking filesystem contents? Runtime state? Specific artifacts? This determines which inspection cells to inject.
 3. **Container name** (if known) — The name of the container to target. If not provided, the notebook's `environment.containers.list({moment})` can discover available containers.
 
@@ -166,7 +166,7 @@ agent-browser --session "$SESSION" eval \
 ## General guidance
 
 - **Defer to antithesis-triage for auth.** If the debugger URL requires
-  authentication beyond its token, use the `antithesis-triage` skill's
+  authentication, use the `antithesis-triage` skill's
   `references/setup-auth.md` for the interactive login flow. Use the same
   `--session-name antithesis` so auth state is shared.
 - **Use disposable sessions.** Generate a unique `SESSION` for each debugging

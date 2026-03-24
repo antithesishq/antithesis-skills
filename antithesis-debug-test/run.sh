@@ -14,7 +14,7 @@ Runs a live exploration against an Antithesis debugging session:
 Requirements:
 - agent-browser
 - jq
-- A tokenized debugging-session URL (no interactive auth needed)
+- A debugging-session URL
 EOF
 }
 

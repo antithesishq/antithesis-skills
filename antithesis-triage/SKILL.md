@@ -269,7 +269,7 @@ again.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
-- **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
+- **Logs require full auth.** Navigating to log pages requires a fully authenticated session.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
 

@@ -31,8 +31,7 @@ Replace `$SESSION` in all commands below.
 
 ## Opening a debugger URL
 
-Tokenized debugger URLs work without interactive login. Open the provided URL
-directly:
+Open the provided URL:
 
 ```bash
 agent-browser --session "$SESSION" --session-name antithesis open "$URL"
