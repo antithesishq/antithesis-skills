@@ -12,9 +12,9 @@ Then run:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.runs.waitForReady())()"
+  "window.__antithesisTriage.runs.waitForReady()"
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.runs.getRecentRuns())()"
+  "window.__antithesisTriage.runs.getRecentRuns()"
 ```
 
 Notes:

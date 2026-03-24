@@ -12,3 +12,6 @@ Use:
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getFindingsGrouped()"
 ```
+
+The method automatically expands all findings sections before reading, so it
+returns complete results regardless of the initial DOM state.

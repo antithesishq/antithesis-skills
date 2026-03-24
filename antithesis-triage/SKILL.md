@@ -74,19 +74,15 @@ cat assets/antithesis-triage.js \
 Injecting the file registers methods on `window.__antithesisTriage`. Call those
 methods with `agent-browser eval`.
 
-Synchronous method pattern:
+Method call pattern:
 
 ```bash
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getRunMetadata()"
 ```
 
-Async method pattern:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.runs.getRecentRuns())()"
-```
+`agent-browser eval` awaits Promises automatically, so async and sync methods
+use the same call pattern.
 
 If `window.__antithesisTriage` is missing, inject `assets/antithesis-triage.js` and retry the method call.
 
@@ -134,7 +130,7 @@ Example:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.waitForReady())()"
+  "window.__antithesisTriage.report.waitForReady()"
 ```
 
 Each wait method polls for up to about 60 seconds by default and returns a
@@ -163,6 +159,70 @@ sections have finished loading, including findings, properties, environment,
 and utilization. The report hydrates asynchronously after the browser `load`
 event, and findings are often the last section to settle.
 
+## Handling error reports
+
+Not every report loads normally. Antithesis may show an **error report**
+instead of the usual property/findings/utilization view. The runtime detects
+two kinds of error:
+
+| Error type        | `error.type`    | What it looks like                                                                                                                                                                                                             |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Setup failure** | `setup_error`   | The report replaces the normal sections with a single "Error" card describing a container setup failure (e.g. a container died, the setup-complete event was never emitted). Properties, Findings, and Utilization are absent. |
+| **Runtime error** | `runtime_error` | A red/orange banner appears at the top of the page (class `GeneralErrorNew`). The normal sections may partially render but one or more (typically Findings) will be stuck on "Loading..." forever.                             |
+
+### Detection
+
+`waitForReady()` short-circuits when an error is detected — it will **not**
+wait 60 seconds for sections that will never load. The returned result object
+will contain an `error` field:
+
+```json
+{
+  "ok": true,
+  "ready": true,
+  "attempts": 1,
+  "waitedMs": 42,
+  "error": {
+    "type": "setup_error",
+    "summary": "Container setup failure",
+    "details": "Setup validation failures:\n• Container floci died during environment setup with exit code 1..."
+  }
+}
+```
+
+**After every `waitForReady()` call, check `result.error`.** If it is
+present, the report is an error report and you should change your workflow:
+
+1. **Extract what is available.** `getRunMetadata()` and
+   `getEnvironmentSourceImages()` still work for both error types. For
+   runtime errors, `getAllProperties()` / `getUtilizationTotalTestHours()`
+   may also work — the sections loaded normally, only Findings is broken.
+2. **Read the error details.** `result.error.details` contains the error
+   message. For setup errors this includes the validation failure and
+   troubleshooting steps. For runtime errors it contains the backend query
+   failure message.
+3. **Report the error to the user.** Explain which error type was found,
+   quote the details, and suggest next steps (fix the setup, contact
+   Antithesis, or re-run).
+
+You can also check for errors at any time with:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getError()"
+```
+
+This returns the error object (same shape as `result.error`) or `null` if the
+report is healthy.
+
+### What to skip on error reports
+
+- **Setup errors (`setup_error`)**: Do **not** call property, findings, or
+  utilization methods — those sections do not exist. Focus on metadata,
+  environment images, and the error details.
+- **Runtime errors (`runtime_error`)**: Do **not** call findings methods (the
+  section is stuck loading). Properties and utilization usually work normally.
+
 Report queries are only valid on the main report view. If you navigate to an
 internal hash route such as `#/run/.../finding/...`, reopen the original report
 URL, wait until `window.location.pathname.startsWith('/report/')`, inject
@@ -182,8 +242,8 @@ again.
 ### Investigate a failing property
 
 1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/properties.md` — list properties, filter to failed
-3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
+2. Read `references/properties.md` — list properties, filter to failed, get examples grouped by property
+3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
 ### Find a specific run
@@ -209,7 +269,7 @@ again.
 - **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
 - **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
-- **Logs require full auth.** The report page may load with just an `auth` token in the URL, but navigating to log pages requires a fully authenticated session.
+- **Logs require full auth.** Navigating to log pages requires a fully authenticated session.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
 

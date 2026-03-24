@@ -26,11 +26,6 @@ Report urls should start with `https://???.antithesis.com` where ??? is the tena
 
 The rest of these resources reference the tenant as `$TENANT`.
 
-If the user already gave you a tokenized report URL (`...?auth=...`), you can
-open that report directly without an interactive login step. Keep in mind that a
-tokenized report URL gives you report-scoped access, not necessarily a general
-tenant session.
-
 ## Session naming
 
 Use a fixed persisted session name so `agent-browser` auto-manages saved auth

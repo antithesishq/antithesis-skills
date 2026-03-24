@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -76,6 +76,59 @@
 
   function hasLoadingText(text) {
     return /loading(?:\.\.\.)?/i.test(text || "");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error detection
+  // ---------------------------------------------------------------------------
+
+  function detectSetupError() {
+    // Setup-failure reports replace the normal Properties / Findings / Utilization
+    // sections with a single "Error" section whose heading is an <h3>.
+    var sections = document.querySelectorAll(".section_container.top_section");
+
+    for (var i = 0; i < sections.length; i++) {
+      var heading = sections[i].querySelector("h3");
+      if (!heading || clean(heading.textContent) !== "Error") continue;
+
+      var summary = sections[i].querySelector(".section_summary");
+      var content = sections[i].querySelector(".section_content");
+
+      // The validation error message lives in a <pre> inside the content area.
+      // Fall back to the full section text (trimmed) if no <pre> is found.
+      var pre = content && content.querySelector("pre");
+      var details = clean(pre ? pre.textContent : content && content.textContent);
+
+      return {
+        type: "setup_error",
+        summary: clean(summary && summary.textContent),
+        details: details.length > 2000 ? details.substring(0, 2000) : details,
+      };
+    }
+
+    return null;
+  }
+
+  function detectRuntimeError() {
+    // Runtime errors render a prominent banner at the top of the page using the
+    // GeneralErrorNew component.  The rest of the report may partially load but
+    // one or more sections (typically Findings) will be stuck on "Loading...".
+    var el = document.querySelector(".GeneralErrorNew");
+    if (!el || !isVisible(el)) return null;
+
+    var title = el.querySelector(".GeneralErrorNew__title");
+    var text = el.querySelector(".GeneralErrorNew__text");
+    var details = clean(text && text.textContent);
+
+    return {
+      type: "runtime_error",
+      summary: clean(title && title.textContent) || "Error",
+      details: details.length > 2000 ? details.substring(0, 2000) : details,
+    };
+  }
+
+  function detectError() {
+    return detectSetupError() || detectRuntimeError() || null;
   }
 
   function requireReportPage() {
@@ -644,12 +697,71 @@
     );
   }
 
+  function examplesForContainer(container) {
+    return Array.from(
+      container.querySelectorAll(":scope > .property__details .examples_table__row"),
+    ).map(function (row) {
+      var example = row.querySelector(".example_failing, .example_passing");
+      var getLogsLink = row.querySelector("a[href*='search']");
+
+      return {
+        status: example ? example.className.replace("example_", "") : "",
+        time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
+        logsUrl: getLogsLink ? getLogsLink.href : null,
+      };
+    });
+  }
+
+  async function getFailedPropertyExamples() {
+    var error = requireReportPage();
+    if (error) return error;
+
+    var expanded = await expandFailedExamples();
+    if (expanded && expanded.error) return expanded;
+
+    var properties = visiblePropertyContainers()
+      .filter(function (container) {
+        return (
+          !isGroup(container) &&
+          containerStatus(container) === "failed" &&
+          examplesRows(container) > 0
+        );
+      })
+      .map(function (container) {
+        return {
+          group: groupPath(container),
+          name: nameOf(container),
+          status: containerStatus(container),
+          examples: examplesForContainer(container),
+        };
+      })
+      .filter(function (property) {
+        return property.name;
+      });
+
+    return {
+      filter: "failed",
+      properties: properties,
+      totalExamples: properties.reduce(function (sum, property) {
+        return sum + property.examples.length;
+      }, 0),
+    };
+  }
+
   var reportApi = {
     loadingFinished: function () {
       var titleEl = document.querySelector(".branded_title");
       var metadataEl = document.querySelector(".branded_metadata");
       var title = clean(titleEl && titleEl.textContent);
       var metadata = clean(metadataEl && metadataEl.textContent);
+
+      // Error reports are "done loading" even though normal sections may be
+      // missing or stuck.  Require at least the title to have rendered so the
+      // runtime has something to extract.
+      if (detectError() && isVisible(titleEl) && title) {
+        return true;
+      }
+
       var environmentSection = findSectionByHeading("Environment");
       var utilizationSection = findSectionByHeading("Utilization");
       var propertiesSection = document.querySelector(
@@ -720,7 +832,7 @@
     },
 
     waitForReady: async function (options) {
-      return waitForReady(
+      var result = await waitForReady(
         function () {
           return reportApi.loadingFinished();
         },
@@ -729,6 +841,10 @@
         },
         options,
       );
+
+      var err = detectError();
+      if (err) result.error = err;
+      return result;
     },
 
     loadingStatus: function () {
@@ -769,6 +885,7 @@
             ).length
           : 0,
         findingsText: clean(findingsSection && findingsSection.textContent),
+        error: detectError(),
         sections: {
           environment: sectionInfo(environmentSection),
           utilization: sectionInfo(utilizationSection),
@@ -776,6 +893,12 @@
           findings: sectionInfo(findingsSection),
         },
       };
+    },
+
+    getError: function () {
+      var navError = requireReportPage();
+      if (navError) return navError;
+      return detectError();
     },
 
     getRunMetadata: function () {
@@ -818,10 +941,24 @@
       });
     },
 
-    getFindingsGrouped: function () {
+    getFindingsGrouped: async function () {
       var error = requireReportPage();
       if (error) return error;
 
+      // Expand all findings sections so lazy-rendered content is available.
+      var sections = Array.from(
+        document.querySelectorAll("details.findings_section_details"),
+      );
+      var opened = 0;
+      sections.forEach(function (section) {
+        if (!section.open) {
+          section.open = true;
+          opened++;
+        }
+      });
+      if (opened > 0) await wait(300);
+
+      // Re-query after expansion in case the DOM changed.
       return Array.from(document.querySelectorAll("details.findings_section_details"))
         .map(function (section) {
           var summary = clean(
@@ -876,6 +1013,7 @@
     },
     expandFailedExamples: expandFailedExamples,
     getExampleUrls: getExampleUrls,
+    getFailedPropertyExamples: getFailedPropertyExamples,
   };
 
   var logsApi = {
@@ -1046,6 +1184,18 @@
         return row.querySelector("a-cell, [cell-identifier]");
       });
       if (!hasRenderedCells) return false;
+
+      // Cells exist structurally but may not have hydrated with data yet.
+      // Require at least one row with a non-empty name or status cell.
+      var hasPopulatedRow = rows.some(function (row) {
+        var name = row.querySelector('[cell-identifier="name"]');
+        var status = row.querySelector('[cell-identifier="status"]');
+        return (
+          (name && clean(name.textContent) !== "") ||
+          (status && clean(status.textContent) !== "")
+        );
+      });
+      if (!hasPopulatedRow) return false;
 
       var hasVisibleLoadingIndicator = Array.from(scroller.querySelectorAll("*")).some(
         function (el) {

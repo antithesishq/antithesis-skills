@@ -13,7 +13,7 @@ Example:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.waitForReady())()"
+  "window.__antithesisTriage.report.waitForReady()"
 ```
 
 On a single `agent-browser` session, run property queries one at a time. The
@@ -24,28 +24,28 @@ All properties:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.getAllProperties())()"
+  "window.__antithesisTriage.report.getAllProperties()"
 ```
 
 Failed properties:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.getFailedProperties())()"
+  "window.__antithesisTriage.report.getFailedProperties()"
 ```
 
 Passed properties:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.getPassedProperties())()"
+  "window.__antithesisTriage.report.getPassedProperties()"
 ```
 
 Unfound properties:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.getUnfoundProperties())()"
+  "window.__antithesisTriage.report.getUnfoundProperties()"
 ```
 
 To expand visible failed leaf properties until their example tables are
@@ -53,5 +53,15 @@ available for log extraction, use:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.expandFailedExamples())()"
+  "window.__antithesisTriage.report.expandFailedExamples()"
 ```
+
+To expand failed properties and collect their examples in one structured call:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getFailedPropertyExamples()"
+```
+
+This returns each failed property with its `group`, `name`, `status`, and
+`examples` array containing `{ status, time, logsUrl }` entries.

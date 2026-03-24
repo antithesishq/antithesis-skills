@@ -2,7 +2,7 @@ include_verbatim = true
 no_progress = true
 cache = true
 exclude = [
-  '^https://tenant\.antithesis\.com/?$',
+  '^https://tenant\.antithesis\.com/',
   '^https://openai\.com/',
   '^https://www\.npmjs\.com/',
 ]

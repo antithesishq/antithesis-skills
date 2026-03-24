@@ -3,3 +3,5 @@ __pycache__/
 .lycheecache
 antithesis-triage-test/out
 antithesis-triage-test/tmp
+antithesis-debug-test/out
+antithesis-debug-test/tmp
