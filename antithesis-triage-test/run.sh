@@ -53,6 +53,7 @@ REPORT_PROPERTIES_AUDIT_FILE="${TMP_BASE}-report-properties.json"
 REPORT_EXAMPLES_AUDIT_FILE="${TMP_BASE}-report-examples.json"
 REPORT_AUDIT_FILE="${TMP_BASE}-report.json"
 LOGS_AUDIT_FILE="${TMP_BASE}-logs.json"
+ERROR_REPORT_AUDIT_FILE="${TMP_BASE}-error-report.json"
 
 cleanup() {
   agent-browser --session "$SESSION" close >/dev/null 2>&1 || true
@@ -62,7 +63,8 @@ cleanup() {
     "$REPORT_PROPERTIES_AUDIT_FILE" \
     "$REPORT_EXAMPLES_AUDIT_FILE" \
     "$REPORT_AUDIT_FILE" \
-    "$LOGS_AUDIT_FILE"
+    "$LOGS_AUDIT_FILE" \
+    "$ERROR_REPORT_AUDIT_FILE"
 }
 trap cleanup EXIT
 
@@ -238,25 +240,77 @@ wait_ready logs >/dev/null
 LOGS_AUDIT="$(run_audit_phase logs)"
 write_json "$LOGS_AUDIT_FILE" "$LOGS_AUDIT"
 
-jq -n \
-  --arg tenant "$TENANT" \
-  --arg session "$SESSION" \
-  --arg runs_url "$RUNS_URL" \
-  --arg report_url "$LATEST_REPORT_URL" \
-  --arg logs_url "$LOGS_URL" \
-  --slurpfile runs_audit "$RUNS_AUDIT_FILE" \
-  --slurpfile report_audit "$REPORT_AUDIT_FILE" \
-  --slurpfile logs_audit "$LOGS_AUDIT_FILE" \
-  '{
-    ok: ($runs_audit[0].ok and $report_audit[0].ok and $logs_audit[0].ok),
-    tenant: $tenant,
-    session: $session,
-    runsUrl: $runs_url,
-    reportUrl: $report_url,
-    logsUrl: $logs_url,
-    runsAudit: $runs_audit[0],
-    reportAudit: $report_audit[0],
-    logsAudit: $logs_audit[0]
-  }' | tee "$OUT_JSON"
+# --- Error / incomplete report ---
+
+INCOMPLETE_REPORT_URL="$(
+  printf '%s\n' "$RUNS_AUDIT" \
+    | jq -r '.discovered.latestIncompleteReportUrl // empty'
+)"
+
+ERROR_REPORT_AUDIT=""
+ERROR_REPORT_URL=""
+if [[ -n "$INCOMPLETE_REPORT_URL" ]]; then
+  ERROR_REPORT_URL="$INCOMPLETE_REPORT_URL"
+  echo "error report (incomplete): $ERROR_REPORT_URL" >&2
+
+  open_page "$ERROR_REPORT_URL" report
+  wait_ready report >/dev/null
+  ERROR_REPORT_AUDIT="$(run_audit_phase report-error)"
+  write_json "$ERROR_REPORT_AUDIT_FILE" "$ERROR_REPORT_AUDIT"
+else
+  echo "no incomplete run found — skipping error report test" >&2
+fi
+
+# --- Final output ---
+
+if [[ -n "$ERROR_REPORT_AUDIT" ]]; then
+  jq -n \
+    --arg tenant "$TENANT" \
+    --arg session "$SESSION" \
+    --arg runs_url "$RUNS_URL" \
+    --arg report_url "$LATEST_REPORT_URL" \
+    --arg logs_url "$LOGS_URL" \
+    --arg error_report_url "$ERROR_REPORT_URL" \
+    --slurpfile runs_audit "$RUNS_AUDIT_FILE" \
+    --slurpfile report_audit "$REPORT_AUDIT_FILE" \
+    --slurpfile logs_audit "$LOGS_AUDIT_FILE" \
+    --slurpfile error_report_audit "$ERROR_REPORT_AUDIT_FILE" \
+    '{
+      ok: ($runs_audit[0].ok and $report_audit[0].ok and $logs_audit[0].ok and $error_report_audit[0].ok),
+      tenant: $tenant,
+      session: $session,
+      runsUrl: $runs_url,
+      reportUrl: $report_url,
+      logsUrl: $logs_url,
+      errorReportUrl: $error_report_url,
+      runsAudit: $runs_audit[0],
+      reportAudit: $report_audit[0],
+      logsAudit: $logs_audit[0],
+      errorReportAudit: $error_report_audit[0]
+    }' | tee "$OUT_JSON"
+else
+  jq -n \
+    --arg tenant "$TENANT" \
+    --arg session "$SESSION" \
+    --arg runs_url "$RUNS_URL" \
+    --arg report_url "$LATEST_REPORT_URL" \
+    --arg logs_url "$LOGS_URL" \
+    --slurpfile runs_audit "$RUNS_AUDIT_FILE" \
+    --slurpfile report_audit "$REPORT_AUDIT_FILE" \
+    --slurpfile logs_audit "$LOGS_AUDIT_FILE" \
+    '{
+      ok: ($runs_audit[0].ok and $report_audit[0].ok and $logs_audit[0].ok),
+      tenant: $tenant,
+      session: $session,
+      runsUrl: $runs_url,
+      reportUrl: $report_url,
+      logsUrl: $logs_url,
+      errorReportUrl: null,
+      runsAudit: $runs_audit[0],
+      reportAudit: $report_audit[0],
+      logsAudit: $logs_audit[0],
+      errorReportAudit: null
+    }' | tee "$OUT_JSON"
+fi
 
 echo "saved: $OUT_JSON" >&2

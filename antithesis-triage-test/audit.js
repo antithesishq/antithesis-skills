@@ -191,13 +191,22 @@
     var latestCompleted = runs.find(function (run) {
       return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
     });
+    var latestIncomplete = runs.find(function (run) {
+      return !!run.triageUrl && /\bincomplete\b/i.test(run.status);
+    });
 
     report.counts.totalRuns = runs.length;
     report.counts.completedReports = runs.filter(function (run) {
       return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
     }).length;
+    report.counts.incompleteReports = runs.filter(function (run) {
+      return !!run.triageUrl && /\bincomplete\b/i.test(run.status);
+    }).length;
     report.discovered.latestCompletedReportUrl = latestCompleted
       ? latestCompleted.triageUrl
+      : null;
+    report.discovered.latestIncompleteReportUrl = latestIncomplete
+      ? latestIncomplete.triageUrl
       : null;
 
     if (report.counts.totalRuns === 0) {
@@ -420,6 +429,90 @@
     return finalize(report);
   }
 
+  async function auditReportError() {
+    var runtime = window.__antithesisTriage;
+    var report = makeReport("report-error");
+
+    // waitForReady should short-circuit on error reports instead of timing out.
+    report.checks.push(
+      await runCheck("report.waitForReady", function () {
+        return runtime.report.waitForReady();
+      }, function (result) {
+        var summary = summarizeWait(result);
+        summary.hasError = !!result.error;
+        summary.errorType = result.error ? result.error.type : null;
+        return summary;
+      }, { keepResult: true }),
+    );
+
+    var waitCheck = report.checks.find(function (check) {
+      return check.name === "report.waitForReady";
+    });
+    var waitResult = waitCheck && waitCheck.result ? waitCheck.result : {};
+    var detectedError = waitResult.error || null;
+
+    // getError should agree with waitForReady.
+    report.checks.push(
+      await runCheck("report.getError", function () {
+        return runtime.report.getError();
+      }, function (result) {
+        return result;
+      }, { keepResult: true }),
+    );
+
+    // Metadata and environment should always work on error reports.
+    report.checks.push(
+      await runCheck("report.getRunMetadata", function () {
+        return runtime.report.getRunMetadata();
+      }, function (result) {
+        return {
+          title: result.title,
+          conductedOn: result.conductedOn,
+          source: result.source,
+        };
+      }, { keepResult: true }),
+    );
+    report.checks.push(
+      await runCheck("report.getEnvironmentSourceImages", function () {
+        return runtime.report.getEnvironmentSourceImages();
+      }, summarizeImages, { keepResult: true }),
+    );
+
+    // For runtime errors, properties and utilization should still work.
+    if (!detectedError || detectedError.type === "runtime_error") {
+      report.checks.push(
+        await runCheck("report.getAllProperties", function () {
+          return runtime.report.getAllProperties();
+        }, summarizeProperties),
+      );
+      report.checks.push(
+        await runCheck("report.getUtilizationTotalTestHours", function () {
+          return runtime.report.getUtilizationTotalTestHours();
+        }, summarizeStringMetric, { keepResult: true }),
+      );
+    }
+
+    // Validate error detection results.
+    report.discovered.errorType = detectedError ? detectedError.type : null;
+    report.discovered.errorSummary = detectedError ? detectedError.summary : null;
+    report.discovered.errorDetails = detectedError ? detectedError.details : null;
+    report.counts.waitedMs = waitResult.waitedMs || 0;
+
+    if (!detectedError) {
+      report.warnings.push(
+        "no error detected on this report — it may have loaded normally"
+      );
+    }
+    if (waitResult.waitedMs > 10000) {
+      report.warnings.push(
+        "waitForReady took " + waitResult.waitedMs +
+        "ms — error short-circuit may not be working"
+      );
+    }
+
+    return finalize(report);
+  }
+
   async function auditLogs() {
     var runtime = window.__antithesisTriage;
     var report = makeReport("logs");
@@ -512,6 +605,7 @@
   if (phase === "report-core") return auditReportCore();
   if (phase === "report-properties") return auditReportProperties();
   if (phase === "report-examples") return auditReportExamples();
+  if (phase === "report-error") return auditReportError();
   if (phase === "logs") return auditLogs();
 
   return {

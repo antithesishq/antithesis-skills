@@ -159,6 +159,70 @@ sections have finished loading, including findings, properties, environment,
 and utilization. The report hydrates asynchronously after the browser `load`
 event, and findings are often the last section to settle.
 
+## Handling error reports
+
+Not every report loads normally. Antithesis may show an **error report**
+instead of the usual property/findings/utilization view. The runtime detects
+two kinds of error:
+
+| Error type        | `error.type`    | What it looks like                                                                                                                                                                                                             |
+| ----------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| **Setup failure** | `setup_error`   | The report replaces the normal sections with a single "Error" card describing a container setup failure (e.g. a container died, the setup-complete event was never emitted). Properties, Findings, and Utilization are absent. |
+| **Runtime error** | `runtime_error` | A red/orange banner appears at the top of the page (class `GeneralErrorNew`). The normal sections may partially render but one or more (typically Findings) will be stuck on "Loading..." forever.                             |
+
+### Detection
+
+`waitForReady()` short-circuits when an error is detected — it will **not**
+wait 60 seconds for sections that will never load. The returned result object
+will contain an `error` field:
+
+```json
+{
+  "ok": true,
+  "ready": true,
+  "attempts": 1,
+  "waitedMs": 42,
+  "error": {
+    "type": "setup_error",
+    "summary": "Container setup failure",
+    "details": "Setup validation failures:\n• Container floci died during environment setup with exit code 1..."
+  }
+}
+```
+
+**After every `waitForReady()` call, check `result.error`.** If it is
+present, the report is an error report and you should change your workflow:
+
+1. **Extract what is available.** `getRunMetadata()` and
+   `getEnvironmentSourceImages()` still work for both error types. For
+   runtime errors, `getAllProperties()` / `getUtilizationTotalTestHours()`
+   may also work — the sections loaded normally, only Findings is broken.
+2. **Read the error details.** `result.error.details` contains the error
+   message. For setup errors this includes the validation failure and
+   troubleshooting steps. For runtime errors it contains the backend query
+   failure message.
+3. **Report the error to the user.** Explain which error type was found,
+   quote the details, and suggest next steps (fix the setup, contact
+   Antithesis, or re-run).
+
+You can also check for errors at any time with:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getError()"
+```
+
+This returns the error object (same shape as `result.error`) or `null` if the
+report is healthy.
+
+### What to skip on error reports
+
+- **Setup errors (`setup_error`)**: Do **not** call property, findings, or
+  utilization methods — those sections do not exist. Focus on metadata,
+  environment images, and the error details.
+- **Runtime errors (`runtime_error`)**: Do **not** call findings methods (the
+  section is stuck loading). Properties and utilization usually work normally.
+
 Report queries are only valid on the main report view. If you navigate to an
 internal hash route such as `#/run/.../finding/...`, reopen the original report
 URL, wait until `window.location.pathname.startsWith('/report/')`, inject

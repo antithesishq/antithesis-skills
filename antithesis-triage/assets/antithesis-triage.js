@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.0.0";
+  var VERSION = "1.1.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -76,6 +76,59 @@
 
   function hasLoadingText(text) {
     return /loading(?:\.\.\.)?/i.test(text || "");
+  }
+
+  // ---------------------------------------------------------------------------
+  // Error detection
+  // ---------------------------------------------------------------------------
+
+  function detectSetupError() {
+    // Setup-failure reports replace the normal Properties / Findings / Utilization
+    // sections with a single "Error" section whose heading is an <h3>.
+    var sections = document.querySelectorAll(".section_container.top_section");
+
+    for (var i = 0; i < sections.length; i++) {
+      var heading = sections[i].querySelector("h3");
+      if (!heading || clean(heading.textContent) !== "Error") continue;
+
+      var summary = sections[i].querySelector(".section_summary");
+      var content = sections[i].querySelector(".section_content");
+
+      // The validation error message lives in a <pre> inside the content area.
+      // Fall back to the full section text (trimmed) if no <pre> is found.
+      var pre = content && content.querySelector("pre");
+      var details = clean(pre ? pre.textContent : content && content.textContent);
+
+      return {
+        type: "setup_error",
+        summary: clean(summary && summary.textContent),
+        details: details.length > 2000 ? details.substring(0, 2000) : details,
+      };
+    }
+
+    return null;
+  }
+
+  function detectRuntimeError() {
+    // Runtime errors render a prominent banner at the top of the page using the
+    // GeneralErrorNew component.  The rest of the report may partially load but
+    // one or more sections (typically Findings) will be stuck on "Loading...".
+    var el = document.querySelector(".GeneralErrorNew");
+    if (!el || !isVisible(el)) return null;
+
+    var title = el.querySelector(".GeneralErrorNew__title");
+    var text = el.querySelector(".GeneralErrorNew__text");
+    var details = clean(text && text.textContent);
+
+    return {
+      type: "runtime_error",
+      summary: clean(title && title.textContent) || "Error",
+      details: details.length > 2000 ? details.substring(0, 2000) : details,
+    };
+  }
+
+  function detectError() {
+    return detectSetupError() || detectRuntimeError() || null;
   }
 
   function requireReportPage() {
@@ -701,6 +754,14 @@
       var metadataEl = document.querySelector(".branded_metadata");
       var title = clean(titleEl && titleEl.textContent);
       var metadata = clean(metadataEl && metadataEl.textContent);
+
+      // Error reports are "done loading" even though normal sections may be
+      // missing or stuck.  Require at least the title to have rendered so the
+      // runtime has something to extract.
+      if (detectError() && isVisible(titleEl) && title) {
+        return true;
+      }
+
       var environmentSection = findSectionByHeading("Environment");
       var utilizationSection = findSectionByHeading("Utilization");
       var propertiesSection = document.querySelector(
@@ -771,7 +832,7 @@
     },
 
     waitForReady: async function (options) {
-      return waitForReady(
+      var result = await waitForReady(
         function () {
           return reportApi.loadingFinished();
         },
@@ -780,6 +841,10 @@
         },
         options,
       );
+
+      var err = detectError();
+      if (err) result.error = err;
+      return result;
     },
 
     loadingStatus: function () {
@@ -820,6 +885,7 @@
             ).length
           : 0,
         findingsText: clean(findingsSection && findingsSection.textContent),
+        error: detectError(),
         sections: {
           environment: sectionInfo(environmentSection),
           utilization: sectionInfo(utilizationSection),
@@ -827,6 +893,12 @@
           findings: sectionInfo(findingsSection),
         },
       };
+    },
+
+    getError: function () {
+      var navError = requireReportPage();
+      if (navError) return navError;
+      return detectError();
     },
 
     getRunMetadata: function () {
