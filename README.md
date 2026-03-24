@@ -32,7 +32,8 @@ To get the most out of the skills, we recommend that your prompts simply provide
 
 Here are some examples starter prompts.
 
-There are many ways to invoke a skill, in the examples below, it's invoked with a /skill-name. 
+> [!NOTE]
+> There are many ways to invoke a skill, in the examples below, it's invoked with a /skill-name. 
 
 ### antithesis-research
 ```
@@ -49,7 +50,9 @@ This skill outputs the following research materials, relative to the project dir
 /antithesis-setup Review the files in @antithesis/scratchbook/, build the things needed to begin testing with Antithesis, and validate the setup locally. 
 ```
 
-This skill initializes an `antithesis/` directory, relative to the project, and adds all newly created setup files there. Here's an example:
+This skill initializes an `antithesis/` directory, relative to the project, and adds all newly created setup files there. 
+
+Here's an example:
 * `antithesis/Dockerfile` performs a multi-stage build of the SUT.
 * `antithesis/config/docker-compose.yaml` orchestrates the SUT.
 * `antithesis/setup-complete.sh` emits the `setup_complete` lifecycle event.
