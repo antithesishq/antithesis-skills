@@ -644,6 +644,57 @@
     );
   }
 
+  function examplesForContainer(container) {
+    return Array.from(
+      container.querySelectorAll(":scope > .property__details .examples_table__row"),
+    ).map(function (row) {
+      var example = row.querySelector(".example_failing, .example_passing");
+      var getLogsLink = row.querySelector("a[href*='search']");
+
+      return {
+        status: example ? example.className.replace("example_", "") : "",
+        time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
+        logsUrl: getLogsLink ? getLogsLink.href : null,
+      };
+    });
+  }
+
+  async function getFailedPropertyExamples() {
+    var error = requireReportPage();
+    if (error) return error;
+
+    var expanded = await expandFailedExamples();
+    if (expanded && expanded.error) return expanded;
+
+    var properties = visiblePropertyContainers()
+      .filter(function (container) {
+        return (
+          !isGroup(container) &&
+          containerStatus(container) === "failed" &&
+          examplesRows(container) > 0
+        );
+      })
+      .map(function (container) {
+        return {
+          group: groupPath(container),
+          name: nameOf(container),
+          status: containerStatus(container),
+          examples: examplesForContainer(container),
+        };
+      })
+      .filter(function (property) {
+        return property.name;
+      });
+
+    return {
+      filter: "failed",
+      properties: properties,
+      totalExamples: properties.reduce(function (sum, property) {
+        return sum + property.examples.length;
+      }, 0),
+    };
+  }
+
   var reportApi = {
     loadingFinished: function () {
       var titleEl = document.querySelector(".branded_title");
@@ -818,10 +869,24 @@
       });
     },
 
-    getFindingsGrouped: function () {
+    getFindingsGrouped: async function () {
       var error = requireReportPage();
       if (error) return error;
 
+      // Expand all findings sections so lazy-rendered content is available.
+      var sections = Array.from(
+        document.querySelectorAll("details.findings_section_details"),
+      );
+      var opened = 0;
+      sections.forEach(function (section) {
+        if (!section.open) {
+          section.open = true;
+          opened++;
+        }
+      });
+      if (opened > 0) await wait(300);
+
+      // Re-query after expansion in case the DOM changed.
       return Array.from(document.querySelectorAll("details.findings_section_details"))
         .map(function (section) {
           var summary = clean(
@@ -876,6 +941,7 @@
     },
     expandFailedExamples: expandFailedExamples,
     getExampleUrls: getExampleUrls,
+    getFailedPropertyExamples: getFailedPropertyExamples,
   };
 
   var logsApi = {
@@ -1046,6 +1112,18 @@
         return row.querySelector("a-cell, [cell-identifier]");
       });
       if (!hasRenderedCells) return false;
+
+      // Cells exist structurally but may not have hydrated with data yet.
+      // Require at least one row with a non-empty name or status cell.
+      var hasPopulatedRow = rows.some(function (row) {
+        var name = row.querySelector('[cell-identifier="name"]');
+        var status = row.querySelector('[cell-identifier="status"]');
+        return (
+          (name && clean(name.textContent) !== "") ||
+          (status && clean(status.textContent) !== "")
+        );
+      });
+      if (!hasPopulatedRow) return false;
 
       var hasVisibleLoadingIndicator = Array.from(scroller.querySelectorAll("*")).some(
         function (el) {

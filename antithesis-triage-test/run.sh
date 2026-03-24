@@ -126,7 +126,7 @@ run_audit_phase() {
 wait_ready() {
   local namespace="$1"
   agent-browser --session "$SESSION" eval \
-    "(async () => window.__antithesisTriage.${namespace}.waitForReady())()"
+    "window.__antithesisTriage.${namespace}.waitForReady()"
 }
 
 write_json() {

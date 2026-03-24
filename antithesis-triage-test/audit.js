@@ -172,7 +172,7 @@
       }, function (result) {
         var runs = Array.isArray(result.runs) ? result.runs : [];
         var completed = runs.filter(function (run) {
-          return !!run.triageUrl;
+          return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
         });
         return {
           count: result.count,
@@ -189,12 +189,12 @@
       ? runsCheck.result.runs
       : [];
     var latestCompleted = runs.find(function (run) {
-      return !!run.triageUrl;
+      return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
     });
 
     report.counts.totalRuns = runs.length;
     report.counts.completedReports = runs.filter(function (run) {
-      return !!run.triageUrl;
+      return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
     }).length;
     report.discovered.latestCompletedReportUrl = latestCompleted
       ? latestCompleted.triageUrl
@@ -352,11 +352,29 @@
       }, { keepResult: true }),
     );
 
+    report.checks.push(
+      await runCheck("report.getFailedPropertyExamples", function () {
+        return runtime.report.getFailedPropertyExamples();
+      }, function (result) {
+        var properties = Array.isArray(result.properties) ? result.properties : [];
+        return {
+          propertyCount: properties.length,
+          totalExamples: result.totalExamples || 0,
+          firstProperty: properties.length > 0
+            ? { group: properties[0].group, name: properties[0].name, examples: properties[0].examples.length }
+            : null,
+        };
+      }, { keepResult: true }),
+    );
+
     var expandedCheck = report.checks.find(function (check) {
       return check.name === "report.expandFailedExamples" && check.ok;
     });
     var urlsCheck = report.checks.find(function (check) {
       return check.name === "report.getExampleUrls" && check.ok;
+    });
+    var propertyExamplesCheck = report.checks.find(function (check) {
+      return check.name === "report.getFailedPropertyExamples" && check.ok;
     });
 
     report.counts.expandedProperties = expandedCheck && expandedCheck.result
@@ -375,9 +393,25 @@
           return !!(item && item.logsUrl);
         }).length
       : 0;
+    report.counts.failedPropertyExamples = propertyExamplesCheck && propertyExamplesCheck.result
+      ? propertyExamplesCheck.result.totalExamples || 0
+      : 0;
     report.discovered.firstExampleLogsUrl = urlsCheck
       ? firstNonEmptyLogsUrl(urlsCheck.result)
       : null;
+    if (!report.discovered.firstExampleLogsUrl && propertyExamplesCheck && propertyExamplesCheck.result) {
+      var properties = propertyExamplesCheck.result.properties || [];
+      for (var pi = 0; pi < properties.length; pi++) {
+        var examples = properties[pi].examples || [];
+        for (var ei = 0; ei < examples.length; ei++) {
+          if (examples[ei].logsUrl) {
+            report.discovered.firstExampleLogsUrl = examples[ei].logsUrl;
+            break;
+          }
+        }
+        if (report.discovered.firstExampleLogsUrl) break;
+      }
+    }
 
     if (!report.discovered.firstExampleLogsUrl) {
       report.warnings.push("report did not expose an example logs url");

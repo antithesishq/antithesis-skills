@@ -74,19 +74,15 @@ cat assets/antithesis-triage.js \
 Injecting the file registers methods on `window.__antithesisTriage`. Call those
 methods with `agent-browser eval`.
 
-Synchronous method pattern:
+Method call pattern:
 
 ```bash
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getRunMetadata()"
 ```
 
-Async method pattern:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.runs.getRecentRuns())()"
-```
+`agent-browser eval` awaits Promises automatically, so async and sync methods
+use the same call pattern.
 
 If `window.__antithesisTriage` is missing, inject `assets/antithesis-triage.js` and retry the method call.
 
@@ -134,7 +130,7 @@ Example:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.waitForReady())()"
+  "window.__antithesisTriage.report.waitForReady()"
 ```
 
 Each wait method polls for up to about 60 seconds by default and returns a
@@ -182,8 +178,8 @@ again.
 ### Investigate a failing property
 
 1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/properties.md` — list properties, filter to failed
-3. Read `references/logs.md` — expand failed-property example tables, get log URLs, navigate to logs, find the highlighted assertion event and surrounding context
+2. Read `references/properties.md` — list properties, filter to failed, get examples grouped by property
+3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
 ### Find a specific run

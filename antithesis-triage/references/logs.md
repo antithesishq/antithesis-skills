@@ -19,19 +19,20 @@ matching `*.waitForReady()` method before the next page-specific method call.
 
 ## Getting log URLs from triage report examples
 
-First, expand visible failed properties until their examples tables are present:
+Use `getFailedPropertyExamples()` to expand failed properties and collect
+examples grouped by property in one call:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.report.expandFailedExamples())()"
+  "window.__antithesisTriage.report.getFailedPropertyExamples()"
 ```
 
-Then extract the example rows and log URLs:
+Each property in the result includes its `group`, `name`, `status`, and an
+`examples` array with `{ status, time, logsUrl }` entries. Use the `logsUrl`
+from a specific example to navigate to its log viewer.
 
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getExampleUrls()"
-```
+The older two-step flow (`expandFailedExamples()` then `getExampleUrls()`) still
+works but returns a flat list without property context.
 
 ## Navigate to logs for a specific example
 
@@ -44,7 +45,7 @@ agent-browser --session "$SESSION" wait --fn \
 cat assets/antithesis-triage.js \
   | agent-browser --session "$SESSION" eval --stdin
 agent-browser --session "$SESSION" eval \
-  "(async () => window.__antithesisTriage.logs.waitForReady())()"
+  "window.__antithesisTriage.logs.waitForReady()"
 ```
 
 Before injecting, make sure the browser is still on `/search` with
