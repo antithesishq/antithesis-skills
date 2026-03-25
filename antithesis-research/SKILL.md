@@ -23,6 +23,8 @@ Research a target system and produce scratchbook artifacts that unblock the rest
 - `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas
 - `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities
 - `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology
+- `antithesis/scratchbook/properties/{slug}.md` captures per-property evidence trails and context
+- `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties
 
 ## Prerequisites and Scoping
 
@@ -85,6 +87,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 3. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
 4. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
 5. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
+6. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
+7. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
 
 ### Property expansion (after triage)
 
@@ -92,6 +96,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 2. Review triage findings from the `antithesis-triage` skill
 3. Use the attention focuses from `references/property-discovery.md` to look for new properties inspired by triage findings
 4. Update the relevant files in the scratchbook
+5. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
+6. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
 
 ## General Guidance
 
@@ -111,6 +117,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/scratchbook/sut-analysis.md`
 - `antithesis/scratchbook/property-catalog.md`
 - `antithesis/scratchbook/deployment-topology.md`
+- `antithesis/scratchbook/property-relationships.md`
+- `antithesis/scratchbook/properties/{slug}.md` (one per cataloged property)
 
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
 
@@ -122,9 +130,13 @@ Review criteria:
 
 - `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
 - `antithesis/scratchbook/property-catalog.md` exists and lists concrete, testable properties — not vague goals like "test failover"
+- Each property has a descriptive kebab-case slug as its canonical ID
 - Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)
 - Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks
 - `antithesis/scratchbook/deployment-topology.md` exists and describes a minimal container topology — every container is justified
+- Every cataloged property has a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md` that captures the evidence trail, relevant code paths, and key observations
+- `antithesis/scratchbook/property-relationships.md` exists and groups related properties into clusters with brief notes on suspected connections and dominance
+- Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Claimed guarantees from docs, comments, or issues are represented as properties
 - Assumptions and open questions are recorded in the scratchbook, not left implicit

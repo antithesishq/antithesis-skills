@@ -29,10 +29,12 @@ A recently-fixed bug is a great Antithesis test because the fix may not cover al
 
 ## Property Catalog Format
 
+Each property has a unique **slug** — a descriptive, kebab-case identifier (e.g., `acked-writes-survive`, `no-split-brain`). The slug is the canonical ID for the property, used as the catalog heading, the evidence filename (`properties/{slug}.md`), and the identifier in the property relationships file.
+
 For each property, document:
 
 ```
-### [ID]. [Property Name]
+### [slug] — [Property Name]
 
 | | |
 |---|---|
@@ -42,6 +44,8 @@ For each property, document:
 | **Antithesis Angle** | How does fault injection interact with this? What timing/interleaving does it explore? |
 | **Why It Matters** | Real-world impact. Link to issues if applicable. |
 ```
+
+For every property in the catalog, write a corresponding evidence file at `properties/{slug}.md`. See the "Evidence Files" section below.
 
 ## Choosing the Right Antithesis Assertion
 
@@ -84,6 +88,23 @@ Organize properties into categories based on system architecture. Common categor
 
 Each category should have a brief description explaining what area of the system it covers and why it matters.
 
+## Evidence Files
+
+Every property in the catalog must have a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. These files capture the context and reasoning behind each property — information that would otherwise be lost when findings are compressed into catalog entries.
+
+Evidence files are freeform markdown. Write whatever context would help a future reader understand why this property was identified and what code is involved. Typical content includes:
+
+- What led to identifying this property (code patterns, bug history, claimed guarantees, documentation)
+- Specific files and functions involved in the property
+- What goes wrong if the property is violated
+- Anything that would be expensive to rediscover (timing windows, configuration dependencies, subtle interactions)
+
+When you encounter questions you can't answer within the scope of discovery, include them in the evidence file — but don't just state the question. Capture why the question matters and what changes depending on the answer. For example, don't write "Does `fsmRestore()` enforce monotonicity?" Write "Does `fsmRestore()` enforce monotonicity? If not, a crash between `db.Swap()` and `fsmIdx.Store()` could cause index regression, which means the invariant statement needs to account for the restore path. If yes, the property is stronger than stated and the instrumentation can be simpler." A downstream investigator who reads this knows what to look for and how to update the property based on what they find.
+
+The goal is to preserve what you already know from your analysis. Don't do additional deep research for the evidence file — capture what you learned during discovery.
+
 ## Output
 
 Write the catalog to `antithesis/scratchbook/property-catalog.md`.
+Write per-property evidence files to `antithesis/scratchbook/properties/{slug}.md`.
+Write the property relationships to `antithesis/scratchbook/property-relationships.md`.
