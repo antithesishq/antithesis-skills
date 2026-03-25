@@ -110,8 +110,14 @@ Spawn one agent per focus. Each agent receives:
 Each agent returns:
 
 - Properties in catalog format (may be empty)
-- A brief note on what areas of the codebase it examined
-- Assumptions made or open questions encountered
+- Per-property evidence: for each property, the specific code paths examined
+  (files, functions, line numbers), the failure scenario, key observations, and
+  any open questions with context on why they matter and what the answer would
+  change. This per-property evidence is the primary input for writing evidence
+  files during synthesis — capture everything a future reader would need to
+  understand why this property was identified and how the code is involved.
+- A brief note on what areas of the codebase it examined beyond specific properties
+- Assumptions made that affect multiple properties
 
 ### Synthesis
 
@@ -124,9 +130,21 @@ After all agents complete, synthesize into a single property catalog:
 - **Resolve conflicts:** When agents disagree on assertion type or priority for
   the same property, evaluate which reasoning is stronger. Note the disagreement
   and resolution in the property's rationale.
-- **Renumber and organize:** Assign final IDs and group into categories per the
-  catalog format.
+- **Assign slugs and organize:** Assign a descriptive kebab-case slug to each
+  property and group into categories per the catalog format. The slug is the
+  canonical ID — see `references/property-catalog.md` for details.
 - **Record provenance:** For each property, note which focus(es) surfaced it.
+- **Write evidence files:** For each property, write an evidence file to
+  `properties/{slug}.md` in the scratchbook. Capture the supporting evidence,
+  relevant code paths, failure scenario, and key observations from the agent
+  outputs. These files are freeform markdown — write whatever context would help
+  a future reader understand why this property was identified and what code is
+  involved.
+- **Write property relationships:** Review the complete property set and write
+  `property-relationships.md` in the scratchbook. Group properties that share
+  evidence, code paths, or failure mechanisms into clusters. Note any suspected
+  dominance (where one property likely implies another). This is lightweight —
+  flag connections you noticed during synthesis, don't do deep analysis.
 
 ## Single-Agent Mode
 
@@ -139,7 +157,18 @@ focuses as a sequential checklist:
    focus yields nothing for this system, note why and move on.
 3. After all 10 passes, review the full catalog for duplicates, gaps, and
    consistency.
-4. Organize into final form per the catalog format.
+4. Assign a descriptive kebab-case slug to each property and organize into final
+   form per the catalog format.
+5. For each property, write an evidence file to `properties/{slug}.md` in the
+   scratchbook. Capture the supporting evidence, relevant code paths, failure
+   scenario, and key observations you encountered during your passes. Write
+   whatever context would help a future reader understand why this property was
+   identified and what code is involved.
+6. Review the complete property set and write `property-relationships.md` in the
+   scratchbook. Group properties that share evidence, code paths, or failure
+   mechanisms into clusters. Note any suspected dominance relationships. This is
+   lightweight — flag connections you noticed during the passes, don't do deep
+   analysis.
 
 Treat each pass as a fresh examination. Resist the pull to skip a focus because
 earlier passes "already covered" that area — the point is to look at the same code
@@ -147,5 +176,8 @@ from different angles.
 
 ## Output
 
-The output feeds into `antithesis/scratchbook/property-catalog.md` using the
-format defined in `references/property-catalog.md`.
+- `antithesis/scratchbook/property-catalog.md` — using the format defined in
+  `references/property-catalog.md`
+- `antithesis/scratchbook/properties/{slug}.md` — one per cataloged property
+- `antithesis/scratchbook/property-relationships.md` — suspected clusters and
+  connections
