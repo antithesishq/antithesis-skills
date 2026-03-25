@@ -2,10 +2,10 @@
 name: antithesis-debug
 description: >
   Use this skill to interactively debug Antithesis test runs using the
-  multiverse debugger notebook. Open a debugging-session URL, inspect container
-  filesystems and runtime state, inject shell commands, and extract evidence
-  from inside the Antithesis environment. Covers notebook interaction, action
-  authorization, filesystem inspection, and runtime investigation.
+  multiverse debugger. Open a debugging-session URL, inspect container
+  filesystems and runtime state, run shell commands, and extract evidence
+  from inside the Antithesis environment. Supports both the simplified
+  debugger (default) and the advanced notebook mode.
 keywords:
   - antithesis
   - debugger
@@ -22,7 +22,7 @@ keywords:
 # Antithesis Multiverse Debugger
 
 Use the `agent-browser` skill to interact with the Antithesis multiverse
-debugger notebook.
+debugger.
 
 Every debugging session should use:
 
@@ -43,20 +43,71 @@ Use this when the user gives:
 
 For auth and report navigation, use the `antithesis-triage` skill. It already
 encodes the right `agent-browser` session model. This skill handles the
-debugger notebook itself.
+debugger itself.
 
 ## Gathering user input
 
 Before starting, collect the following from the user:
 
 1. **Debugger URL** (required) — A debugging-session URL like `https://TENANT.antithesis.com/debugging-session/...`.
-2. **What to investigate** — Are they checking filesystem contents? Runtime state? Specific artifacts? This determines which inspection cells to inject.
-3. **Container name** (if known) — The name of the container to target. If not provided, the notebook's `environment.containers.list({moment})` can discover available containers.
+2. **What to investigate** — Are they checking filesystem contents? Runtime state? Specific artifacts?
+3. **Container name** (if known) — The name of the container to target. If not provided, the log view or container dropdown will show available containers.
+
+## Simplified vs. advanced mode
+
+The debugger has two modes. **Prefer simplified mode** — it is sufficient for
+most tasks.
+
+| Mode           | Best for                                                                                         | How it works                                                            |
+| -------------- | ------------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------- |
+| **Simplified** | Running shell commands, reading files, listing directories, extracting artifacts                 | Click log lines to set moment/container, type bash commands, press Send |
+| **Advanced**   | Programmatic inspection, branching, event sets, custom JavaScript, multi-step notebook workflows | Monaco editor with JavaScript cells, action authorization, runtime API  |
+
+### Detecting which mode is active
+
+Different tenants may open the debugger in either mode by default. After
+injecting the runtime (see `references/setup-session.md`), check which mode is
+active:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.getMode()"
+```
+
+Returns `"simplified"` or `"advanced"`. To switch:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  'window.__antithesisDebug.switchMode("simplified")'
+```
+
+### When to escalate to advanced mode
+
+Switch to advanced mode only when you need:
+
+- Branching (`moment.branch()`) and advancing time
+- Event set queries (`environment.events.up_to(moment)`)
+- Fault injector state inspection
+- Complex multi-cell notebook workflows
+- The full JavaScript notebook API
+
+To switch modes, use the three-dot menu (vertical dots icon) in the top-right
+corner of the debug timeline header. See `references/simplified-debugger.md`
+for details.
 
 ## Reference files
 
-Each reference file contains the commands and patterns for a specific task.
-Read the relevant file before performing that task.
+Each reference file covers a specific interaction mode or task. Read the
+relevant file before performing that task.
+
+### Simplified mode (default — start here)
+
+| Page                                | When to read                                                        |
+| ----------------------------------- | ------------------------------------------------------------------- |
+| `references/setup-session.md`       | Always — read first to set up the browser session                   |
+| `references/simplified-debugger.md` | Running commands, extracting files, reading logs in simplified mode |
+
+### Advanced mode (notebook)
 
 | Page                               | When to read                                        |
 | ---------------------------------- | --------------------------------------------------- |
@@ -65,7 +116,36 @@ Read the relevant file before performing that task.
 | `references/actions.md`            | Authorizing shell actions, reading action output    |
 | `references/common-inspections.md` | Ready-to-use debug cell snippets for common tasks   |
 
+## Recommended workflows
+
+### Simplified: Run a command in a container
+
+1. Read `references/setup-session.md` — open the debugger URL
+2. Read `references/simplified-debugger.md` — click a log line to set the
+   moment and container, enter a bash command, press Send, read the output
+3. Report findings with concrete evidence
+
+### Simplified: Extract a file
+
+1. Read `references/setup-session.md` — open the debugger URL
+2. Read `references/simplified-debugger.md` — click a log line, toggle
+   "Extract file", enter the file path, press Send
+3. Read the download link from the output
+
+### Advanced: Programmatic investigation
+
+1. Read `references/setup-session.md` — open the debugger URL and inject runtime
+2. Switch to advanced mode: `window.__antithesisDebug.switchMode("advanced")`
+3. Read `references/notebook.md` — understand the seeded notebook
+4. Read `references/common-inspections.md` — pick inspection cells
+5. Read `references/actions.md` — authorize actions and read results
+6. Report findings with evidence chain
+
 ## Runtime injection
+
+The JS runtime is required for **both** simplified and advanced modes. It
+provides the `window.__antithesisDebug` API with three namespaces:
+`simplified`, `notebook`, and `actions`.
 
 Use the browser-side runtime file:
 
@@ -81,9 +161,14 @@ cat assets/antithesis-debug.js \
 Injecting the file registers methods on `window.__antithesisDebug`. Call those
 methods with `agent-browser eval`.
 
-Method call pattern:
+Method call examples:
 
 ```bash
+# Simplified mode
+agent-browser --session "$SESSION" eval \
+  'window.__antithesisDebug.simplified.runCommand("ls -la /")'
+
+# Advanced mode
 agent-browser --session "$SESSION" eval \
   "window.__antithesisDebug.notebook.getSource()"
 ```
@@ -95,76 +180,56 @@ If `window.__antithesisDebug` is missing, inject `assets/antithesis-debug.js` an
 
 Do not run method calls in parallel with `agent-browser open`, navigation, or
 any other command that can replace the page. Wait until the target page is
-settled before starting `eval` calls. On a single browser session, run notebook
-queries sequentially; editor mutations and action authorization will interfere
-with each other if launched in parallel.
+settled before starting `eval` calls. Run queries sequentially; mutations will
+interfere with each other if launched in parallel.
 
 After every `open` call or any interaction that may navigate or replace the
 page, first confirm the browser has landed on the debugger page, then inject
-`assets/antithesis-debug.js`, then call `notebook.waitForReady()` before
+`assets/antithesis-debug.js` and call the appropriate `waitForReady()` before
 running other methods.
 
-## Page Loading Checks
+## Page loading checks
 
-After navigation, verify the browser is on the debugger page, inject the
-runtime, then call the wait method before running page-specific queries.
-
-```bash
-agent-browser --session "$SESSION" eval 'document.title'
-```
-
-Then wait for the notebook to be ready:
+After navigation, inject the runtime, then call the appropriate `waitForReady`:
 
 ```bash
+# Simplified mode
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.waitForReady()"
+
+# Advanced mode
 agent-browser --session "$SESSION" eval \
   "window.__antithesisDebug.notebook.waitForReady()"
 ```
 
-The wait method polls for up to 60 seconds and returns a result object with
-`ok`, `ready`, `attempts`, and `waitedMs`. On timeout, the result also includes
-`details`.
+Both poll for up to 60 seconds and return `{ ok, ready, attempts, waitedMs }`.
+On timeout, the result also includes `details`.
 
-Use the lower-level boolean check when you need a one-shot probe:
+One-shot probes:
 
 ```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.loadingFinished()"
+
 agent-browser --session "$SESSION" eval \
   "window.__antithesisDebug.notebook.loadingFinished()"
 ```
 
-If the notebook does not become ready, inspect:
+Diagnostics:
 
 ```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.loadingStatus()"
+
 agent-browser --session "$SESSION" eval \
   "window.__antithesisDebug.notebook.loadingStatus()"
 ```
 
-## Recommended workflows
-
-### Inspect container filesystem
-
-1. Read `references/setup-session.md` — open the debugger URL
-2. Read `references/notebook.md` — read the seeded notebook to understand available variables
-3. Read `references/common-inspections.md` — pick the right inspection cell
-4. Read `references/actions.md` — authorize the action and read the result
-5. Report the findings with concrete evidence from the container
-
-### Investigate a specific artifact
-
-1. Read `references/setup-session.md` — open the debugger URL
-2. Read `references/notebook.md` — read the seeded notebook, then inject a targeted search cell
-3. Read `references/actions.md` — authorize and read the result
-4. Based on the result, inject follow-up cells as needed
-5. Report findings with the evidence chain
-
-### General exploration
-
-1. Read `references/setup-session.md` — open the debugger URL
-2. Read `references/notebook.md` — read the seeded notebook to understand `environment`, `moment`, and `containers`
-3. Inject exploration cells one at a time, authorizing and reading each result before proceeding
-4. Only after getting concrete runtime evidence, form hypotheses about the issue
-
 ## General guidance
 
+- **Start in simplified mode.** The simplified debugger handles most debugging
+  tasks. Only switch to advanced mode when you specifically need the notebook
+  API.
 - **Defer to antithesis-triage for auth.** If the debugger URL requires
   authentication, use the `antithesis-triage` skill's
   `references/setup-auth.md` for the interactive login flow. Use the same
@@ -172,21 +237,25 @@ agent-browser --session "$SESSION" eval \
 - **Use disposable sessions.** Generate a unique `SESSION` for each debugging
   run, pair it with the shared `--session-name antithesis`, and
   `agent-browser --session "$SESSION" close` when you finish or abort.
+- **Run commands sequentially.** In both modes, wait for each command to
+  complete before sending the next one.
+- **Do not fabricate container names.** Use the container dropdown (simplified)
+  or `environment.containers.list({moment})` (advanced) to determine valid
+  container names.
+- **Present results clearly.** When reporting filesystem contents, include the
+  full path and listing. When reporting artifact searches, include what was
+  found and what was not.
+
+### Advanced mode only
+
 - **Inject the runtime after navigation.** After every `open` call or page
   reload, inject `assets/antithesis-debug.js` and call
   `notebook.waitForReady()` before the next method call.
 - **Retry missing-runtime errors by reinjecting.** If a command fails because
   `window.__antithesisDebug` is undefined or missing, inject the runtime and
   rerun the same method.
-- **Run queries sequentially.** Editor mutations and action authorization change
-  page state. Do not overlap them.
 - **Authorize actions one at a time.** Each `bash\`...\`` cell needs explicit
   authorization. Read the result before injecting the next cell.
-- **Do not fabricate container names.** Use `environment.containers.list({moment})`
-  or evidence from the triage report to determine valid container names.
-- **Present results clearly.** When reporting filesystem contents, include the
-  full path and listing. When reporting artifact searches, include what was
-  found and what was not.
 
 ## Self-Review
 
@@ -199,8 +268,6 @@ analysis you produced.
 Review criteria:
 
 - Every filesystem listing or artifact search was extracted from actual debugger output, not inferred or assumed
-- Container names used in commands were verified against `environment.containers.list({moment})` or report evidence
-- Action cells were authorized before reading their output — no output was fabricated
-- The evidence chain is clear: which cells were injected, what they returned, and what conclusions follow
+- The evidence chain is clear: which commands were run, what they returned, and what conclusions follow
 - The summary distinguishes between what the debugger shows and what you interpret or recommend
 - The browser session was closed at the end of the debugging run

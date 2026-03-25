@@ -51,33 +51,60 @@ is shared.
 
 ## Injecting the runtime
 
-After the page loads, inject the debugger runtime:
+After the page loads, inject the debugger runtime. This is required for **both**
+simplified and advanced modes:
 
 ```bash
 cat assets/antithesis-debug.js \
   | agent-browser --session "$SESSION" eval --stdin
 ```
 
-This registers methods on `window.__antithesisDebug`. Call those methods with
-`agent-browser eval`.
+This registers methods on `window.__antithesisDebug` with three namespaces:
+`simplified`, `notebook`, and `actions`.
 
-Then wait for the notebook to be ready:
+If `window.__antithesisDebug` is missing after a navigation or page reload,
+reinject `assets/antithesis-debug.js` and retry.
+
+## Detecting and switching modes
+
+The debugger usually opens in simplified mode, but some tenants may default to
+advanced mode. After injecting the runtime, check which mode is active:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.getMode()"
+```
+
+Returns `"simplified"` or `"advanced"`. To switch:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  'window.__antithesisDebug.switchMode("simplified")'
+```
+
+## Waiting for readiness
+
+For simplified mode:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.waitForReady()"
+```
+
+For advanced mode (notebook):
 
 ```bash
 agent-browser --session "$SESSION" eval \
   "window.__antithesisDebug.notebook.waitForReady()"
 ```
 
-The wait method polls for up to 60 seconds and returns a result object with
+Both wait methods poll for up to 60 seconds and return a result object with
 `ok`, `ready`, `attempts`, and `waitedMs`. On timeout, the result also includes
 `details`.
 
-If `window.__antithesisDebug` is missing after a navigation or page reload,
-reinject `assets/antithesis-debug.js` and retry.
-
 ## Snapshot for orientation
 
-After the runtime is ready, take a snapshot for visual context:
+After the page is ready, take a snapshot for visual context:
 
 ```bash
 agent-browser --session "$SESSION" snapshot -i -C
