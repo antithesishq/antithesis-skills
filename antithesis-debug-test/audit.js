@@ -93,6 +93,250 @@
     return report;
   }
 
+  // ===========================================================================
+  // Simplified mode phases
+  // ===========================================================================
+
+  // ---------------------------------------------------------------------------
+  // Phase: simplified-load
+  // ---------------------------------------------------------------------------
+
+  async function auditSimplifiedLoad() {
+    var runtime = window.__antithesisDebug;
+    var report = makeReport("simplified-load");
+
+    report.checks.push(
+      await runCheck("getMode", function () {
+        var mode = runtime.getMode();
+        if (mode === "simplified") return { mode: mode };
+        return { error: "expected simplified mode, got: " + mode };
+      }, function (result) {
+        return { mode: result.mode };
+      }),
+    );
+    report.checks.push(
+      await runCheck("simplified.waitForReady", function () {
+        return runtime.simplified.waitForReady();
+      }, summarizeWait),
+    );
+    report.checks.push(
+      await runCheck("simplified.loadingStatus", function () {
+        return runtime.simplified.loadingStatus();
+      }, null, { keepResult: true }),
+    );
+    report.checks.push(
+      await runCheck("simplified.loadingFinished", function () {
+        var result = runtime.simplified.loadingFinished();
+        if (result === true) return { finished: true };
+        return { error: "loadingFinished returned " + String(result) };
+      }, function (result) {
+        return { finished: result.finished };
+      }),
+    );
+    report.checks.push(
+      await runCheck("simplified.getMoment", function () {
+        return runtime.simplified.getMoment();
+      }, function (result) {
+        return { vtime: result.vtime };
+      }),
+    );
+    report.checks.push(
+      await runCheck("simplified.getContainer", function () {
+        return runtime.simplified.getContainer();
+      }, function (result) {
+        return { container: result.container };
+      }),
+    );
+    report.checks.push(
+      await runCheck("simplified.getContainers", function () {
+        return runtime.simplified.getContainers();
+      }, function (result) {
+        return { count: result.containers ? result.containers.length : 0, containers: result.containers };
+      }),
+    );
+    report.checks.push(
+      await runCheck("simplified.getVisibleLogRows", function () {
+        return runtime.simplified.getVisibleLogRows();
+      }, function (result) {
+        return {
+          visibleCount: result.rows ? result.rows.length : 0,
+          totalCount: result.totalCount,
+          hasAnchor: result.rows ? result.rows.some(function (r) { return r.isAnchor; }) : false,
+        };
+      }),
+    );
+
+    var containerCheck = report.checks.find(function (c) {
+      return c.name === "simplified.getContainers" && c.ok;
+    });
+    report.discovered.containers = containerCheck && containerCheck.summary
+      ? containerCheck.summary.containers
+      : [];
+    report.counts.containerCount = report.discovered.containers.length;
+
+    var logCheck = report.checks.find(function (c) {
+      return c.name === "simplified.getVisibleLogRows" && c.ok;
+    });
+    report.counts.visibleLogRows = logCheck && logCheck.summary
+      ? logCheck.summary.visibleCount
+      : 0;
+    report.counts.totalLogRows = logCheck && logCheck.summary
+      ? logCheck.summary.totalCount
+      : 0;
+
+    return finalize(report);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase: simplified-command
+  // ---------------------------------------------------------------------------
+
+  async function auditSimplifiedCommand() {
+    var runtime = window.__antithesisDebug;
+    var report = makeReport("simplified-command");
+
+    var tag = window.__ANTITHESIS_DEBUG_AUDIT_TAG__ || ("__AUDIT_" + Date.now());
+    var script = "echo " + tag;
+
+    report.checks.push(
+      await runCheck("simplified.runCommand", function () {
+        return runtime.simplified.runCommand(script);
+      }, function (result) {
+        return { sent: result.sent, outputCountBefore: result.outputCountBefore };
+      }, { keepResult: true }),
+    );
+
+    var runResult = report.checks.find(function (c) {
+      return c.name === "simplified.runCommand" && c.ok;
+    });
+    var countBefore = runResult && runResult.result
+      ? runResult.result.outputCountBefore
+      : 0;
+
+    report.checks.push(
+      await runCheck("simplified.waitForNewOutput", function () {
+        return runtime.simplified.waitForNewOutput(countBefore, { timeoutMs: 20000 });
+      }, function (result) {
+        return {
+          ok: result.ok,
+          header: result.header,
+          lineCount: result.lineCount,
+          linesPreview: result.lines ? result.lines.slice(0, 3) : [],
+          waitedMs: result.waitedMs,
+        };
+      }, { keepResult: true }),
+    );
+
+    report.checks.push(
+      await runCheck("simplified.getOutputCount", function () {
+        return runtime.simplified.getOutputCount();
+      }, function (result) {
+        return { count: result.count };
+      }),
+    );
+
+    report.checks.push(
+      await runCheck("simplified.getLastOutput", function () {
+        return runtime.simplified.getLastOutput();
+      }, function (result) {
+        return {
+          header: result.header,
+          lineCount: result.lineCount,
+          hasDownloadLink: !!result.downloadLink,
+        };
+      }, { keepResult: true }),
+    );
+
+    report.checks.push(
+      await runCheck("simplified.getOutputHeaders", function () {
+        return runtime.simplified.getOutputHeaders();
+      }, function (result) {
+        return { count: result.headers ? result.headers.length : 0 };
+      }),
+    );
+
+    report.discovered.tag = tag;
+    report.discovered.script = script;
+
+    return finalize(report);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase: simplified-extract
+  // ---------------------------------------------------------------------------
+
+  async function auditSimplifiedExtract() {
+    var runtime = window.__antithesisDebug;
+    var report = makeReport("simplified-extract");
+
+    var path = "/etc/hostname";
+
+    report.checks.push(
+      await runCheck("simplified.extractFile", function () {
+        return runtime.simplified.extractFile(path);
+      }, function (result) {
+        return { sent: result.sent, outputCountBefore: result.outputCountBefore };
+      }, { keepResult: true }),
+    );
+
+    var extractResult = report.checks.find(function (c) {
+      return c.name === "simplified.extractFile" && c.ok;
+    });
+    var countBefore = extractResult && extractResult.result
+      ? extractResult.result.outputCountBefore
+      : 0;
+
+    report.checks.push(
+      await runCheck("simplified.waitForNewOutput (extract)", function () {
+        return runtime.simplified.waitForNewOutput(countBefore, { timeoutMs: 20000 });
+      }, function (result) {
+        return {
+          ok: result.ok,
+          header: result.header,
+          lineCount: result.lineCount,
+          hasDownloadLink: !!result.downloadLink,
+          downloadText: result.downloadLink ? result.downloadLink.text : null,
+          waitedMs: result.waitedMs,
+        };
+      }, { keepResult: true }),
+    );
+
+    report.discovered.path = path;
+
+    return finalize(report);
+  }
+
+  // ---------------------------------------------------------------------------
+  // Phase: simplified-filter
+  // ---------------------------------------------------------------------------
+
+  async function auditSimplifiedFilter() {
+    var runtime = window.__antithesisDebug;
+    var report = makeReport("simplified-filter");
+
+    report.checks.push(
+      await runCheck("simplified.filterLogs", function () {
+        return runtime.simplified.filterLogs("ASSERTION");
+      }, function (result) {
+        return { query: result.query };
+      }),
+    );
+
+    report.checks.push(
+      await runCheck("simplified.clearFilter", function () {
+        return runtime.simplified.clearFilter();
+      }, function (result) {
+        return { ok: result.ok };
+      }),
+    );
+
+    return finalize(report);
+  }
+
+  // ===========================================================================
+  // Advanced mode phases
+  // ===========================================================================
+
   // ---------------------------------------------------------------------------
   // Phase: notebook-load
   // ---------------------------------------------------------------------------
@@ -251,7 +495,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-list
-  // List existing actions from the seeded notebook. Fast, no side effects.
   // ---------------------------------------------------------------------------
 
   async function auditActionsList() {
@@ -291,7 +534,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-inject
-  // Inject a debug cell into the notebook. Returns immediately.
   // ---------------------------------------------------------------------------
 
   async function auditActionsInject() {
@@ -318,7 +560,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-settle
-  // Wait for the injected cell to appear as an action. Quick poll.
   // ---------------------------------------------------------------------------
 
   async function auditActionsSettle() {
@@ -360,7 +601,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-authorize
-  // Authorize the injected cell. Returns immediately after click.
   // ---------------------------------------------------------------------------
 
   async function auditActionsAuthorize() {
@@ -382,7 +622,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-result
-  // Poll for the action result. Bounded to 20s to stay under CDP timeout.
   // ---------------------------------------------------------------------------
 
   async function auditActionsResult() {
@@ -391,13 +630,9 @@
 
     var tag = window.__ANTITHESIS_DEBUG_AUDIT_TAG__ || "";
 
-    // waitForResult may time out if the container doesn't exist or the command
-    // takes too long — that is a valid observation, not a test failure. We wrap
-    // it so a timeout still produces an ok check with details.
     report.checks.push(
       await runCheck("actions.waitForResult", function () {
         return runtime.actions.waitForResult(tag, { timeoutMs: 20000 }).then(function (result) {
-          // A timeout is still useful information — return it as ok with details.
           if (!result.ok) {
             return {
               ok: true,
@@ -420,7 +655,6 @@
       }, { keepResult: true }),
     );
 
-    // Also read cells for final state.
     report.checks.push(
       await runCheck("notebook.getCells (final)", function () {
         return runtime.notebook.getCells();
@@ -452,7 +686,6 @@
 
   // ---------------------------------------------------------------------------
   // Phase: actions-getresult
-  // Use the non-polling getResult to read an already-completed action.
   // ---------------------------------------------------------------------------
 
   async function auditActionsGetResult() {
@@ -464,7 +697,6 @@
     report.checks.push(
       await runCheck("actions.getResult", function () {
         var result = runtime.actions.getResult(tag);
-        // Not-yet-completed is a valid state, not an error.
         if (result && result.ok === false && result.completed === false) {
           return {
             ok: true,
@@ -486,9 +718,9 @@
     return finalize(report);
   }
 
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
   // Dispatch
-  // ---------------------------------------------------------------------------
+  // ===========================================================================
 
   if (!window.__antithesisDebug || typeof window.__antithesisDebug.info !== "function") {
     return {
@@ -498,8 +730,15 @@
     };
   }
 
-  var phase = window.__ANTITHESIS_DEBUG_AUDIT_PHASE__ || "notebook-load";
+  var phase = window.__ANTITHESIS_DEBUG_AUDIT_PHASE__ || "simplified-load";
 
+  // Simplified mode phases
+  if (phase === "simplified-load") return auditSimplifiedLoad();
+  if (phase === "simplified-command") return auditSimplifiedCommand();
+  if (phase === "simplified-extract") return auditSimplifiedExtract();
+  if (phase === "simplified-filter") return auditSimplifiedFilter();
+
+  // Advanced mode phases
   if (phase === "notebook-load") return auditNotebookLoad();
   if (phase === "notebook-write") return auditNotebookWrite();
   if (phase === "actions-list") return auditActionsList();
