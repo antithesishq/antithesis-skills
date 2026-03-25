@@ -42,10 +42,12 @@ Here are some examples starter prompts.
 /antithesis-research Research my codebase at /path/to/codebase and prepare a plan to test it with Antithesis. 
 ```
 
-This skill outputs the following research materials, relative to the project directory: 
+This skill outputs the following research materials, relative to the project directory:
 * `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas.
 * `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities.
 * `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology.
+* `antithesis/scratchbook/properties/{slug}.md` per-property evidence files capturing the reasoning, code paths, and key observations behind each property.
+* `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties.
 
 ### antithesis-setup
 ```
