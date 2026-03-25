@@ -135,9 +135,10 @@ Review criteria:
 - Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks
 - `antithesis/scratchbook/deployment-topology.md` exists and describes a minimal container topology — every container is justified
 - Every cataloged property has a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md` that captures the evidence trail, relevant code paths, and key observations
+- Open questions in evidence files have been investigated and resolved — no unresolved questions remain in evidence files for active properties
+- Properties invalidated by investigation are marked in the catalog with the reason
 - `antithesis/scratchbook/property-relationships.md` exists and groups related properties into clusters with brief notes on suspected connections and dominance
 - Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Claimed guarantees from docs, comments, or issues are represented as properties
-- Assumptions and open questions are recorded in the scratchbook, not left implicit
 - The outputs are concrete enough for `antithesis-setup` and `antithesis-workload` to use directly — no ambiguous steps or missing details

@@ -26,7 +26,7 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 
 ## Update the Antithesis scratchbook
 
-Update `antithesis/scratchbook/property-catalog.md` whenever properties are added or changed.
+Update `antithesis/scratchbook/property-catalog.md` whenever properties are added or changed. For new properties, write a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. For changed properties, update the existing evidence file to reflect the new understanding.
 
 ## Cross-Reference
 

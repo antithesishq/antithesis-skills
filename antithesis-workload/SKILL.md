@@ -19,7 +19,7 @@ keywords:
 
 Implement or improve the Antithesis workload. Success means:
 
-- Properties from the `antithesis-research` skill are mapped to concrete assertions
+- Properties from the `antithesis-research` skill are mapped to concrete assertions, using both the property catalog and per-property evidence files
 - Test commands exist under `antithesis/test/` and exercise the right behaviors
 - The first real test templates are created after setup, or existing ones are expanded
 - Triage findings turn into workload or property updates instead of staying implicit
@@ -34,7 +34,9 @@ Use the `antithesis-research` skill first to build the property catalog. Use the
 
 # Scoping
 
-Start from the existing Antithesis scratchbook, test code, and triage artifacts first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
+Start from the existing Antithesis scratchbook, test code, and triage artifacts first. For each property being implemented, read both the catalog entry and the corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. The evidence file contains the detailed context — code paths, failure scenarios, instrumentation points, and key observations — that the catalog entry summarizes.
+
+Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
 
 - The property catalog location, if it is not the standard `antithesis/scratchbook/property-catalog.md`
 - Which properties to implement, if the request is narrower than the full catalog

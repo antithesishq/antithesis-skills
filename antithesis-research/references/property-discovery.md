@@ -145,6 +145,16 @@ After all agents complete, synthesize into a single property catalog:
   evidence, code paths, or failure mechanisms into clusters. Note any suspected
   dominance (where one property likely implies another). This is lightweight —
   flag connections you noticed during synthesis, don't do deep analysis.
+- **Investigate open questions:** For each property that has open questions in
+  its evidence file, spawn an agent to investigate. Run these in parallel — one
+  agent per property with open questions. Each agent receives the evidence file
+  and codebase access. The agent reads the evidence file's explanation of why
+  each question matters, investigates the code to answer it, and returns an
+  updated evidence file with questions resolved. If the answer changes the
+  property (different invariant, different assertion type, property invalidated),
+  the updated evidence file reflects that. After all agents return, write the
+  updated evidence files to the scratchbook. If any property was invalidated,
+  mark it in the catalog with the reason.
 
 ## Single-Agent Mode
 
@@ -169,6 +179,12 @@ focuses as a sequential checklist:
    mechanisms into clusters. Note any suspected dominance relationships. This is
    lightweight — flag connections you noticed during the passes, don't do deep
    analysis.
+7. For each property with open questions in its evidence file, investigate the
+   code to answer them. Read the evidence file's explanation of why each
+   question matters, trace the code to answer it, and update the evidence file
+   with the answer and its implications. If the answer changes the property or
+   invalidates it, update accordingly. Mark invalidated properties in the
+   catalog with the reason.
 
 Treat each pass as a fresh examination. Resist the pull to skip a focus because
 earlier passes "already covered" that area — the point is to look at the same code
