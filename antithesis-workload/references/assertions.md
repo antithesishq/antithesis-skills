@@ -2,7 +2,7 @@
 
 ## Goal
 
-Map each property in the catalog to a concrete Antithesis SDK assertion. Some assertions belong in workload code; others belong inside the SUT.
+Map each property in the catalog to a concrete Antithesis SDK assertion. For each property, read the evidence file at `antithesis/scratchbook/properties/{slug}.md` alongside the catalog entry. The evidence file contains the specific code paths, failure scenarios, instrumentation points, and key observations that inform assertion design. Some assertions belong in workload code; others belong inside the SUT.
 
 ## Match the Assertion to the Property Type
 
