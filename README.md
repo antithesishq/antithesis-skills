@@ -13,6 +13,8 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 **`antithesis-research` produces planning artifacts that you should review carefully.**
 
+`antithesis-property-refinement` sits between research and workload. It takes selected properties from the research output, resolves open questions, confirms dominance relationships, and produces structured property definitions that the workload skill can implement from. This skill is under active development.
+
 `antithesis-triage` enables agents to parse and analyze the results of your Antithesis test runs.
 
 `antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) notebook — inspecting container filesystems, runtime state, and events from inside the Antithesis environment.
@@ -94,6 +96,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-setup`
    - `antithesis-triage`
    - `antithesis-workload`
+   - `antithesis-property-refinement`
    - `antithesis-debug`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.
