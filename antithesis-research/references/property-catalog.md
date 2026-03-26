@@ -1,5 +1,21 @@
 # Property Catalog
 
+## Provenance
+
+The property catalog is a snapshot — it reflects the codebase at the time of analysis. Record this provenance as YAML frontmatter at the very beginning of the output file, before any heading. This lets downstream consumers know what state the catalog reflects.
+
+```yaml
+---
+commit: <full git SHA of the codebase at time of analysis>
+updated: <ISO 8601 date of the analysis>
+---
+```
+
+- **`commit`**: The HEAD commit of the target repository when the catalog was generated or last updated. Use the full 40-character SHA.
+- **`updated`**: The date the catalog was written or last updated. ISO 8601 format (`YYYY-MM-DD`).
+
+When updating an existing catalog (adding properties, revising after triage), update both fields to reflect the current codebase state.
+
 ## Property Types
 
 - **Safety (correctness):** A bad thing never happens.
@@ -105,6 +121,6 @@ The goal is to preserve what you already know from your analysis. Don't do addit
 
 ## Output
 
-Write the catalog to `antithesis/scratchbook/property-catalog.md`.
+Write the catalog to `antithesis/scratchbook/property-catalog.md`. Include the provenance frontmatter (see "Provenance" section above).
 Write per-property evidence files to `antithesis/scratchbook/properties/{slug}.md`.
 Write the property relationships to `antithesis/scratchbook/property-relationships.md`.

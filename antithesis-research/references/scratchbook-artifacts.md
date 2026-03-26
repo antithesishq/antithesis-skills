@@ -44,9 +44,9 @@ This consistency means a slug uniquely identifies a property across all artifact
 
 The property catalog (`property-catalog.md`) is the human-readable summary of all discovered properties. It is designed for scanning and prioritization.
 
-Each property's evidence file lives at `properties/{slug}.md`, where the slug matches the property's heading in the catalog.
+The catalog carries YAML frontmatter that records provenance — the git commit and date of the codebase it was analyzed against. See `references/property-catalog.md` for the frontmatter format and the full catalog specification.
 
-See `references/property-catalog.md` for the full format specification.
+Each property's evidence file lives at `properties/{slug}.md`, where the slug matches the property's heading in the catalog.
 
 ## Per-Property Evidence Files
 

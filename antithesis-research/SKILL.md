@@ -129,7 +129,7 @@ Before declaring this skill complete, review your work against the criteria belo
 Review criteria:
 
 - `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
-- `antithesis/scratchbook/property-catalog.md` exists and lists concrete, testable properties — not vague goals like "test failover"
+- `antithesis/scratchbook/property-catalog.md` exists, has provenance frontmatter (`commit` and `updated`), and lists concrete, testable properties — not vague goals like "test failover"
 - Each property has a descriptive kebab-case slug as its canonical ID
 - Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)
 - Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks
