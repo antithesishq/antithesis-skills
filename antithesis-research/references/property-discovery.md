@@ -193,7 +193,8 @@ from different angles.
 ## Output
 
 - `antithesis/scratchbook/property-catalog.md` — using the format defined in
-  `references/property-catalog.md`
+  `references/property-catalog.md`, including provenance frontmatter with the
+  current git commit hash and date
 - `antithesis/scratchbook/properties/{slug}.md` — one per cataloged property
 - `antithesis/scratchbook/property-relationships.md` — suspected clusters and
   connections

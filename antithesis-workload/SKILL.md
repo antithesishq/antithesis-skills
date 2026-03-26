@@ -54,6 +54,8 @@ The detection task: for each property in the catalog, search the existing test a
 
 ## Present and recommend
 
+Note the catalog's provenance frontmatter (`commit` and `updated` fields) and include it when presenting status — e.g., "The property catalog is up-to-date as of `<commit short hash>` (`<date>`)." This lets the user judge whether the catalog reflects the current codebase or needs re-research.
+
 Show the user the status of each property, then recommend one to implement next. Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties. Wait for the user to confirm or choose differently before proceeding.
 
 For the chosen property, read both the catalog entry and its evidence file.
@@ -143,6 +145,6 @@ Review criteria:
 - No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
 - Helper files or directories are prefixed with `helper_` so Test Composer ignores them
-- `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope
+- `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope, with provenance frontmatter (`commit` and `updated`) reflecting the current codebase state
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
 - Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.
