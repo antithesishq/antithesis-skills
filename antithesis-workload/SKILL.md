@@ -34,12 +34,35 @@ Use the `antithesis-research` skill first to build the property catalog. Use the
 
 # Scoping
 
-Start from the existing Antithesis scratchbook, test code, and triage artifacts first. For each property being implemented, read both the catalog entry and the corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. The evidence file contains the detailed context — code paths, failure scenarios, instrumentation points, and key observations — that the catalog entry summarizes.
+Each invocation of the "Implement next property" workflow below focuses on **one property** to keep context manageable and quality high. (Post-triage iteration follows its own scoping based on triage findings.)
+
+If the user asks for multiple properties, recommend doing one at a time — explain that implementation quality degrades as context accumulates, and each property's effort is unpredictable. Ask which one they'd like to start with. If they insist on multiple, proceed — but warn them first.
+
+If the user specifies which property to work on, skip the full catalog scan — but still assess that property's status against its evidence file before proceeding. If it's already fully implemented, tell the user rather than redoing work.
+
+If the user does not specify a property, run the full detection and recommendation flow below.
+
+## Detect implementation status
+
+The detection work below is context-heavy (reading every evidence file, scanning the codebase for assertions). If your agent supports sub-agents, delegate it to a sub-agent that returns a per-property summary (status + brief rationale). This keeps the main implementation agent's context clean.
+
+The detection task: for each property in the catalog, search the existing test and SUT code for Antithesis SDK assertion calls and cross-reference them with the property's evidence file at `antithesis/scratchbook/properties/{slug}.md`. Assess whether the existing assertions cover the code paths, failure scenarios, and instrumentation points the evidence file describes. Classify each property as:
+
+- **Implemented** — assertions cover what the evidence file describes
+- **Partially implemented** — some assertions exist but coverage is incomplete
+- **Not implemented** — no related assertions found
+
+## Present and recommend
+
+Show the user the status of each property, then recommend one to implement next. Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties. Wait for the user to confirm or choose differently before proceeding.
+
+For the chosen property, read both the catalog entry and its evidence file.
+
+## Other scoping questions
 
 Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
 
 - The property catalog location, if it is not the standard `antithesis/scratchbook/property-catalog.md`
-- Which properties to implement, if the request is narrower than the full catalog
 - The project language or SDK choice, if the repo does not make it obvious
 - Triage findings or known gaps, if iterating on an existing workload
 
@@ -73,12 +96,14 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 ## Recommended Workflows
 
-### Initial workload implementation
+### Implement next property
 
-1. Read `references/component-implementation.md`
-2. Read `references/assertions.md`
-3. Read `references/test-commands.md`
-4. Implement or update `antithesis/test/` and any supporting workload code
+1. Detect implementation status and present to user (see Scoping above)
+2. Get user confirmation on which property to implement
+3. Read `references/component-implementation.md`
+4. Read `references/assertions.md`
+5. Read `references/test-commands.md`
+6. Implement the chosen property: assertions, test commands, and supporting code
 
 ### Post-triage iteration
 
@@ -97,8 +122,8 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 ## Output
 
+- Assertions for every property in scope, in workload code or carefully chosen SUT locations
 - Test commands and supporting workload code under `antithesis/test/`
-- Assertions in workload code or carefully chosen SUT locations
 - Updates to `antithesis/scratchbook/property-catalog.md` when the implemented properties change
 
 ## Self-Review
@@ -107,7 +132,7 @@ Before declaring this skill complete, review your work against the criteria belo
 
 Review criteria:
 
-- Every property in the catalog that was in scope has a corresponding SDK assertion in the workload or SUT code
+- For every property in scope, the implementation covers the code paths, failure scenarios, and instrumentation points described in its evidence file — not just "an assertion exists" but "the assertions cover what the evidence says needs to be covered"
 - Each assertion uses the correct SDK assertion type for its property's semantics (`Always`/`AlwaysOrUnreachable` for safety, `Sometimes(cond)` for liveness or meaningful semantic state, `Reachable`/`Unreachable` for path and outcome checks)
 - `Sometimes(true, ...)` assertions should be rewritten as `Reachable(...)`.
 - Assertion messages are unique across the touched code; no broad property is implemented by reusing one message at multiple unrelated callsites
@@ -118,6 +143,6 @@ Review criteria:
 - No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
 - Helper files or directories are prefixed with `helper_` so Test Composer ignores them
-- `antithesis/scratchbook/property-catalog.md` is updated to reflect which properties are now implemented
+- `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
 - Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.
