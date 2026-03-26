@@ -1,0 +1,21 @@
+{
+  "name": "antithesis-skills",
+  "version": "0.1.0",
+  "description": "Skills for using Antithesis",
+  "author": {
+    "name": "Antithesis",
+    "url": "https://antithesis.com"
+  },
+  "homepage": "https://github.com/antithesishq/antithesis-skills",
+  "repository": "https://github.com/antithesishq/antithesis-skills",
+  "license": "Apache-2.0",
+  "keywords": [
+    "antithesis",
+    "testing",
+    "reliability",
+    "workload",
+    "triage",
+    "simulation"
+  ],
+  "skills": "./"
+}

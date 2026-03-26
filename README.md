@@ -30,45 +30,50 @@ Furthermore, don't hesitate to run short 15-30 minute Antithesis test runs as sm
 
 ## Starter prompts
 
-To get the most out of the skills, we recommend that your prompts simply provide the required information for the skill. 
+To get the most out of the skills, we recommend that your prompts simply provide the required information for the skill.
 
 Here are some examples starter prompts.
 
 > [!NOTE]
-> There are many ways to invoke a skill, in the examples below, it's invoked with a /skill-name. 
+> There are many ways to invoke a skill, in the examples below, it's invoked with a /skill-name.
 
 ### antithesis-research
+
 ```
-/antithesis-research Research my codebase at /path/to/codebase and prepare a plan to test it with Antithesis. 
+/antithesis-research Research my codebase at /path/to/codebase and prepare a plan to test it with Antithesis.
 ```
 
 This skill outputs the following research materials, relative to the project directory:
-* `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas.
-* `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities.
-* `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology.
-* `antithesis/scratchbook/properties/{slug}.md` per-property evidence files capturing the reasoning, code paths, and key observations behind each property.
-* `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties.
+
+- `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas.
+- `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities.
+- `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology.
+- `antithesis/scratchbook/properties/{slug}.md` per-property evidence files capturing the reasoning, code paths, and key observations behind each property.
+- `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties.
 
 ### antithesis-setup
+
 ```
-/antithesis-setup Review the files in @antithesis/scratchbook/, build the things needed to begin testing with Antithesis, and validate the setup locally. 
+/antithesis-setup Review the files in @antithesis/scratchbook/, build the things needed to begin testing with Antithesis, and validate the setup locally.
 ```
 
-This skill initializes an `antithesis/` directory, relative to the project, and adds all newly created setup files there. 
+This skill initializes an `antithesis/` directory, relative to the project, and adds all newly created setup files there.
 
 Here's an example:
-* `antithesis/Dockerfile` performs a multi-stage build of the SUT.
-* `antithesis/config/docker-compose.yaml` orchestrates the SUT.
-* `antithesis/setup-complete.sh` emits the `setup_complete` lifecycle event.
-* `antithesis/workload-entrypoint.sh` waits for the SUT to be ready and calls `antithesis/setup_complete.sh` to signal `setup_complete`.
-* `antithesis/AGENTS.md` documents the `antithesis/` directory.
+
+- `antithesis/Dockerfile` performs a multi-stage build of the SUT.
+- `antithesis/config/docker-compose.yaml` orchestrates the SUT.
+- `antithesis/setup-complete.sh` emits the `setup_complete` lifecycle event.
+- `antithesis/workload-entrypoint.sh` waits for the SUT to be ready and calls `antithesis/setup_complete.sh` to signal `setup_complete`.
+- `antithesis/AGENTS.md` documents the `antithesis/` directory.
 
 ### antithesis-workload
+
 ```
-/antithesis-workload Review the plan for testing with Antithesis in @antithesis/scratchbook/property-catalog.md and implement the workload. 
+/antithesis-workload Review the plan for testing with Antithesis in @antithesis/scratchbook/property-catalog.md and implement the workload.
 ```
 
-This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT. 
+This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT.
 
 ## Compatibility
 
@@ -82,7 +87,19 @@ You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Sn
 
 ## Install
 
-Run the installer:
+### Claude Code plugin
+
+If you use Claude Code, you can install all of our skills as a Claude plugin:
+
+```
+/plugin marketplace add antithesishq/antithesis-skills
+/plugin install antithesis-skills@antithesis-skills
+/reload-plugins
+```
+
+### npx skills installer
+
+Alternatively, use the `npx skills` installer:
 
 ```bash
 npx skills add antithesishq/antithesis-skills
@@ -103,13 +120,7 @@ The installer presents an interactive menu. Choose the following options:
 
 Restart any open agent sessions after installing so the new skills are discovered.
 
-## Updating skills
-
-Assuming you installed the skills using `npx skills add`, updating is as simple as `npx skills update`.
-
-## Uninstalling
-
-You can use `npx skills remove` to open up an interactive menu and then select the `antithesis` prefixed skills to remove them.
+To update: `npx skills update`. To uninstall: `npx skills remove` and select the `antithesis` prefixed skills.
 
 ## Contributing
 

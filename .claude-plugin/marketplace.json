@@ -1,0 +1,15 @@
+{
+  "name": "antithesis-skills",
+  "owner": {
+    "name": "Antithesis"
+  },
+  "metadata": {
+    "description": "Skills for using Antithesis"
+  },
+  "plugins": [
+    {
+      "name": "antithesis-skills",
+      "source": "./"
+    }
+  ]
+}
