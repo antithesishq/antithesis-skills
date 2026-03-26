@@ -97,6 +97,8 @@ If you use Claude Code, you can install all of our skills as a Claude plugin:
 /reload-plugins
 ```
 
+You may need to restart Claude before skills will be visible.
+
 ### npx skills installer
 
 Alternatively, use the `npx skills` installer:
