@@ -365,6 +365,16 @@
     }
   }
 
+  function exampleCounts(container) {
+    var text = clean(container.textContent);
+    var match = text.match(/([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/);
+    if (!match) return { passingCount: null, failingCount: null };
+    return { passingCount: match[1], failingCount: match[2] };
+  }
+
+  // Assumes leaf properties are already expanded by the caller (getAllProperties
+  // and getFilteredProperties both expand all containers before calling this).
+  // Pass/fail example counts are only present in the DOM after expansion.
   function visibleLeafProperties(filterStatus) {
     return visiblePropertyContainers()
       .filter(function (container) {
@@ -372,10 +382,13 @@
         return !filterStatus || containerStatus(container) === filterStatus;
       })
       .map(function (container) {
+        var counts = exampleCounts(container);
         return {
           group: groupPath(container),
           name: nameOf(container),
           status: containerStatus(container),
+          passingCount: counts.passingCount,
+          failingCount: counts.failingCount,
         };
       });
   }
