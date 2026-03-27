@@ -75,10 +75,18 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 1. Read `references/scratchbook-setup.md`
 2. Read `references/sut-discovery.md` and `references/sut-analysis.md`
 3. Analyze the system using the ensemble or single-agent workflow from `references/sut-discovery.md`
-4. Read `references/property-discovery.md` and `references/property-catalog.md`
-5. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
-6. Read `references/deployment-topology.md`
-7. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
+4. Scan the codebase for existing Antithesis SDK assertions. Search for imports
+   of the Antithesis SDK and calls to assertion functions (`assert_always!`,
+   `assert_sometimes!`, `assert_reachable!`, `assert_unreachable!`, or their
+   non-macro equivalents). For each assertion found, record the file path, line
+   number, assertion type, and message string. Write the results to
+   `antithesis/scratchbook/existing-assertions.md`. If no assertions are found,
+   write the file with a note confirming the codebase has no existing
+   instrumentation.
+5. Read `references/property-discovery.md` and `references/property-catalog.md`
+6. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
+7. Read `references/deployment-topology.md`
+8. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
 
 ### Targeted property research
 
@@ -115,6 +123,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 ## Output
 
 - `antithesis/scratchbook/sut-analysis.md`
+- `antithesis/scratchbook/existing-assertions.md`
 - `antithesis/scratchbook/property-catalog.md`
 - `antithesis/scratchbook/deployment-topology.md`
 - `antithesis/scratchbook/property-relationships.md`
@@ -129,6 +138,8 @@ Before declaring this skill complete, review your work against the criteria belo
 Review criteria:
 
 - `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
+- `antithesis/scratchbook/existing-assertions.md` exists and lists all Antithesis SDK assertions found in the codebase (or explicitly states none were found)
+- Evidence files correctly distinguish between instrumentation that already exists in the codebase, instrumentation that is partially present, and instrumentation that is missing — no evidence file suggests adding an assertion that is already there
 - `antithesis/scratchbook/property-catalog.md` exists, has provenance frontmatter (`commit` and `updated`), and lists concrete, testable properties — not vague goals like "test failover"
 - Each property has a descriptive kebab-case slug as its canonical ID
 - Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)

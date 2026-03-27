@@ -13,6 +13,9 @@ properties in the standard catalog format defined in `references/property-catalo
 ## Prerequisites
 
 - `antithesis/scratchbook/sut-analysis.md` exists and is current
+- `antithesis/scratchbook/existing-assertions.md` exists (scan results — may
+  indicate no existing instrumentation, but must be present before agents are
+  spawned)
 
 ## Attention Focuses
 
@@ -98,6 +101,9 @@ Spawn one agent per focus. Each agent receives:
 - The contents of `antithesis/scratchbook/sut-analysis.md`
 - The property catalog format from `references/property-catalog.md`
 - One attention focus (its full description and "look for" guidance from above)
+- The path to `antithesis/scratchbook/existing-assertions.md` — read this before
+  writing evidence files; for each property, note which assertions already exist
+  vs. which are missing
 - These instructions:
 
 > Examine the codebase through the lens of your assigned attention focus. Produce
@@ -116,7 +122,10 @@ kebab-case name for the property. If a file already exists at the chosen name
 code paths examined (files, functions, line numbers), the failure scenario, key
 observations, and any open questions with context on why they matter and what the
 answer would change. Write everything a future reader would need to understand
-why this property was identified and how the code is involved.
+why this property was identified and how the code is involved. For each
+property's SUT-side instrumentation suggestions, cross-reference
+`existing-assertions.md` and explicitly note whether each suggested assertion
+already exists in the codebase, is partially present, or is missing.
 
 **Returned to synthesis:**
 
@@ -157,10 +166,13 @@ After all agents complete, synthesize into a single property catalog:
 - **Investigate open questions:** For each property that has open questions in
   its evidence file, spawn an agent to investigate. Run these in parallel — one
   agent per property with open questions. Each agent receives the path to the
-  evidence file in the scratchbook and codebase access. The agent reads the
-  evidence file's explanation of why each question matters, investigates the code
-  to answer it, and writes the updated evidence file back to the same path with
-  questions resolved. The agent returns a short structured summary (not the full
+  evidence file in the scratchbook, codebase access, and the path to
+  `antithesis/scratchbook/existing-assertions.md`. The agent reads the evidence
+  file's explanation of why each question matters, investigates the code to
+  answer it, and writes the updated evidence file back to the same path with
+  questions resolved — including correcting any instrumentation suggestions
+  against `existing-assertions.md` to accurately reflect what already exists vs.
+  what is missing. The agent returns a short structured summary (not the full
   evidence file) describing: which questions were resolved, whether the property
   changed (different invariant, different assertion type), and whether the
   property was invalidated with the reason. After all agents return, review the
@@ -173,29 +185,33 @@ If your environment does not support sub-agents, work through the attention
 focuses as a sequential checklist:
 
 1. Read the SUT analysis.
-2. For each attention focus in order, make an explicit pass through the codebase
+2. Read `antithesis/scratchbook/existing-assertions.md` so you have the full
+   picture of what's already instrumented before writing any evidence files.
+3. For each attention focus in order, make an explicit pass through the codebase
    with that lens. After each pass, add new properties to a running catalog. If a
    focus yields nothing for this system, note why and move on.
-3. After all 10 passes, review the full catalog for duplicates, gaps, and
+4. After all 10 passes, review the full catalog for duplicates, gaps, and
    consistency.
-4. Assign a descriptive kebab-case slug to each property and organize into final
+5. Assign a descriptive kebab-case slug to each property and organize into final
    form per the catalog format.
-5. For each property, write an evidence file to `properties/{slug}.md` in the
+6. For each property, write an evidence file to `properties/{slug}.md` in the
    scratchbook. Capture the supporting evidence, relevant code paths, failure
-   scenario, and key observations you encountered during your passes. Write
-   whatever context would help a future reader understand why this property was
-   identified and what code is involved.
-6. Review the complete property set and write `property-relationships.md` in the
+   scenario, and key observations you encountered during your passes. For each
+   property's SUT-side instrumentation suggestions, cross-reference
+   `existing-assertions.md` and explicitly note whether each suggested assertion
+   already exists in the codebase, is partially present, or is missing.
+7. Review the complete property set and write `property-relationships.md` in the
    scratchbook. Group properties that share evidence, code paths, or failure
    mechanisms into clusters. Note any suspected dominance relationships. This is
    lightweight — flag connections you noticed during the passes, don't do deep
    analysis.
-7. For each property with open questions in its evidence file, investigate the
+8. For each property with open questions in its evidence file, investigate the
    code to answer them. Read the evidence file's explanation of why each
    question matters, trace the code to answer it, and update the evidence file
-   with the answer and its implications. If the answer changes the property or
-   invalidates it, update accordingly. Mark invalidated properties in the
-   catalog with the reason.
+   with the answer and its implications — including correcting any instrumentation
+   suggestions against `existing-assertions.md`. If the answer changes the
+   property or invalidates it, update accordingly. Mark invalidated properties
+   in the catalog with the reason.
 
 Treat each pass as a fresh examination. Resist the pull to skip a focus because
 earlier passes "already covered" that area — the point is to look at the same code
