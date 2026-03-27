@@ -105,17 +105,25 @@ Spawn one agent per focus. Each agent receives:
 > confidence (high/medium/low) and what evidence in the codebase supports it. If
 > this focus yields no relevant properties for this system, say so and explain why.
 
-### Agent Output Format
+### Agent Output
 
-Each agent returns:
+Each agent writes detailed evidence to disk and returns a compact summary.
+
+**Written to disk:** For each property, write an evidence file to
+`properties/{slug}.md` in the scratchbook, where `{slug}` is a descriptive
+kebab-case name for the property. If a file already exists at the chosen name
+(another agent got there first), pick a different slug. Capture the specific
+code paths examined (files, functions, line numbers), the failure scenario, key
+observations, and any open questions with context on why they matter and what the
+answer would change. Write everything a future reader would need to understand
+why this property was identified and how the code is involved.
+
+**Returned to synthesis:**
 
 - Properties in catalog format (may be empty)
-- Per-property evidence: for each property, the specific code paths examined
-  (files, functions, line numbers), the failure scenario, key observations, and
-  any open questions with context on why they matter and what the answer would
-  change. This per-property evidence is the primary input for writing evidence
-  files during synthesis — capture everything a future reader would need to
-  understand why this property was identified and how the code is involved.
+- For each property, the evidence file slug and a brief rationale summary —
+  enough for synthesis to deduplicate, resolve conflicts, and evaluate assertion
+  type, but not the full evidence narrative
 - A brief note on what areas of the codebase it examined beyond specific properties
 - Assumptions made that affect multiple properties
 
@@ -130,16 +138,17 @@ After all agents complete, synthesize into a single property catalog:
 - **Resolve conflicts:** When agents disagree on assertion type or priority for
   the same property, evaluate which reasoning is stronger. Note the disagreement
   and resolution in the property's rationale.
-- **Assign slugs and organize:** Assign a descriptive kebab-case slug to each
-  property and group into categories per the catalog format. The slug is the
-  canonical ID — see `references/property-catalog.md` for details.
+- **Assign slugs and organize:** Each agent already assigned a slug and wrote
+  an evidence file. For unique properties, accept the agent's slug. For merged
+  properties, pick the best slug from the contributing agents. If the canonical
+  slug differs from an agent's file, rename the evidence file to match. Group
+  properties into categories per the catalog format. The slug is the canonical
+  ID — see `references/property-catalog.md` for details.
 - **Record provenance:** For each property, note which focus(es) surfaced it.
-- **Write evidence files:** For each property, write an evidence file to
-  `properties/{slug}.md` in the scratchbook. Capture the supporting evidence,
-  relevant code paths, failure scenario, and key observations from the agent
-  outputs. These files are freeform markdown — write whatever context would help
-  a future reader understand why this property was identified and what code is
-  involved.
+- **Merge duplicate evidence:** For properties found by multiple agents, read
+  the relevant evidence files and combine them into a single coherent file under
+  the canonical slug. Delete the extra evidence files. Unique properties already
+  have their final evidence file on disk — don't read them into context.
 - **Write property relationships:** Review the complete property set and write
   `property-relationships.md` in the scratchbook. Group properties that share
   evidence, code paths, or failure mechanisms into clusters. Note any suspected
@@ -147,14 +156,16 @@ After all agents complete, synthesize into a single property catalog:
   flag connections you noticed during synthesis, don't do deep analysis.
 - **Investigate open questions:** For each property that has open questions in
   its evidence file, spawn an agent to investigate. Run these in parallel — one
-  agent per property with open questions. Each agent receives the evidence file
-  and codebase access. The agent reads the evidence file's explanation of why
-  each question matters, investigates the code to answer it, and returns an
-  updated evidence file with questions resolved. If the answer changes the
-  property (different invariant, different assertion type, property invalidated),
-  the updated evidence file reflects that. After all agents return, write the
-  updated evidence files to the scratchbook. If any property was invalidated,
-  mark it in the catalog with the reason.
+  agent per property with open questions. Each agent receives the path to the
+  evidence file in the scratchbook and codebase access. The agent reads the
+  evidence file's explanation of why each question matters, investigates the code
+  to answer it, and writes the updated evidence file back to the same path with
+  questions resolved. The agent returns a short structured summary (not the full
+  evidence file) describing: which questions were resolved, whether the property
+  changed (different invariant, different assertion type), and whether the
+  property was invalidated with the reason. After all agents return, review the
+  summaries. If any property was invalidated or changed, update the catalog and
+  re-evaluate property relationships accordingly.
 
 ## Single-Agent Mode
 
