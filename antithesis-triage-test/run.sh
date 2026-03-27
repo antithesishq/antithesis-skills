@@ -56,7 +56,7 @@ LOGS_AUDIT_FILE="${TMP_BASE}-logs.json"
 ERROR_REPORT_AUDIT_FILE="${TMP_BASE}-error-report.json"
 
 cleanup() {
-  agent-browser --session "$SESSION" close >/dev/null 2>&1 || true
+  browser close >/dev/null 2>&1 || true
   rm -f \
     "$RUNS_AUDIT_FILE" \
     "$REPORT_CORE_AUDIT_FILE" \
@@ -68,8 +68,12 @@ cleanup() {
 }
 trap cleanup EXIT
 
+browser() {
+  agent-browser --session "$SESSION" --session-name antithesis "$@"
+}
+
 inject_runtime() {
-  cat "$RUNTIME_JS" | agent-browser --session "$SESSION" eval --stdin >/dev/null
+  cat "$RUNTIME_JS" | browser eval --stdin >/dev/null
 }
 
 expected_page_expr() {
@@ -98,11 +102,11 @@ wait_for_expected_page() {
 
   expr="$(expected_page_expr "$page")"
 
-  if agent-browser --session "$SESSION" wait --fn "$expr" >/dev/null; then
+  if browser wait --fn "$expr" >/dev/null; then
     return 0
   fi
 
-  current_url="$(agent-browser --session "$SESSION" get url 2>/dev/null || true)"
+  current_url="$(browser get url 2>/dev/null || true)"
   echo "timed out waiting for ${page} page; current url: ${current_url:-<empty>}" >&2
   return 1
 }
@@ -111,7 +115,7 @@ open_page() {
   local url="$1"
   local page="$2"
 
-  agent-browser --session "$SESSION" open "$url" >/dev/null
+  browser open "$url" >/dev/null
   wait_for_expected_page "$page"
   inject_runtime
 }
@@ -127,8 +131,8 @@ run_audit_phase() {
 
 wait_ready() {
   local namespace="$1"
-  agent-browser --session "$SESSION" eval \
-    "window.__antithesisTriage.${namespace}.waitForReady()"
+  browser eval \
+    "window.__antithesisTriage.${namespace}.waitForReady({ timeoutMs: 10000, intervalMs: 500 })"
 }
 
 write_json() {
@@ -141,7 +145,7 @@ write_json() {
 echo "session: $SESSION" >&2
 echo "runs: $RUNS_URL" >&2
 
-agent-browser --session "$SESSION" --session-name antithesis open "$RUNS_URL" >/dev/null
+browser open "$RUNS_URL" >/dev/null
 wait_for_expected_page runs
 inject_runtime
 wait_ready runs >/dev/null

@@ -780,31 +780,27 @@
     var error = requireReportPage();
     if (error) return error;
 
-    await activateTab(
-      function () {
-        return document.querySelector("a-tab._failing") || tabByPattern(/\bfailed\b/);
-      },
-      function () {
-        return visiblePropertyContainers().some(function (container) {
-          return containerStatus(container) === "failed";
-        });
-      },
-    );
+    // Reuse the failed-properties expansion path first so nested failed leaves
+    // are rendered before looking for example tables.
+    var prepared = await getFilteredProperties("failed");
+    if (prepared && prepared.error) return prepared;
 
     for (var i = 0; i < 8; i++) {
       var changed = false;
 
-      // Expand failed groups first so leaf examples tables become reachable.
+      // Failed leaves can keep their examples tables collapsed even after the
+      // failed tree itself has been expanded.
       visiblePropertyContainers().forEach(function (container) {
-        if (!isVisible(container) || !isGroup(container) || isExpanded(container)) {
+        if (!isVisible(container) || containerStatus(container) !== "failed") {
           return;
         }
 
-        if (containerStatus(container) !== "failed") {
+        if (examplesRows(container) > 0) {
           return;
         }
 
-        if (click(expanderButton(container))) {
+        var button = expanderButton(container);
+        if (button && click(button)) {
           changed = true;
         }
       });

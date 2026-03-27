@@ -41,10 +41,26 @@
   }
 
   function summarizeProperties(result) {
+    var properties = Array.isArray(result.properties) ? result.properties : [];
+    var countFieldsPresent = properties.filter(function (property) {
+      return (
+        property &&
+        Object.prototype.hasOwnProperty.call(property, "passingCount") &&
+        Object.prototype.hasOwnProperty.call(property, "failingCount")
+      );
+    }).length;
+    var nonNullCountFields = properties.filter(function (property) {
+      return (
+        property &&
+        (property.passingCount !== null || property.failingCount !== null)
+      );
+    }).length;
     return {
       expectedCount: result.expectedCount,
-      propertyCount: Array.isArray(result.properties) ? result.properties.length : 0,
+      propertyCount: properties.length,
       counts: result.counts || null,
+      countFieldsPresent: countFieldsPresent,
+      nonNullCountFields: nonNullCountFields,
     };
   }
 
@@ -354,22 +370,22 @@
     report.checks.push(
       await runCheck("report.getAllProperties", function () {
         return runtime.report.getAllProperties();
-      }, summarizeProperties),
+      }, summarizeProperties, { keepResult: true }),
     );
     report.checks.push(
       await runCheck("report.getFailedProperties", function () {
         return runtime.report.getFailedProperties();
-      }, summarizeProperties),
+      }, summarizeProperties, { keepResult: true }),
     );
     report.checks.push(
       await runCheck("report.getPassedProperties", function () {
         return runtime.report.getPassedProperties();
-      }, summarizeProperties),
+      }, summarizeProperties, { keepResult: true }),
     );
     report.checks.push(
       await runCheck("report.getUnfoundProperties", function () {
         return runtime.report.getUnfoundProperties();
-      }, summarizeProperties),
+      }, summarizeProperties, { keepResult: true }),
     );
 
     function propertyCount(checkName) {
@@ -383,10 +399,41 @@
     report.counts.failedProperties = propertyCount("report.getFailedProperties");
     report.counts.passedProperties = propertyCount("report.getPassedProperties");
     report.counts.unfoundProperties = propertyCount("report.getUnfoundProperties");
+    report.counts.propertiesWithCountFields = 0;
+    report.counts.propertiesWithNonNullCountFields = 0;
+
+    report.checks.forEach(function (check) {
+      if (!check.ok || !check.summary) return;
+      report.counts.propertiesWithCountFields += check.summary.countFieldsPresent || 0;
+      report.counts.propertiesWithNonNullCountFields +=
+        check.summary.nonNullCountFields || 0;
+    });
 
     if (report.counts.totalProperties === 0) {
       report.warnings.push("report returned zero properties");
     }
+
+    report.checks.forEach(function (check) {
+      if (!check.ok) return;
+      if (!check.result || !Array.isArray(check.result.properties)) return;
+
+      var missingCountFields = check.result.properties.filter(function (property) {
+        return !(
+          property &&
+          Object.prototype.hasOwnProperty.call(property, "passingCount") &&
+          Object.prototype.hasOwnProperty.call(property, "failingCount")
+        );
+      });
+
+      if (missingCountFields.length > 0) {
+        report.errors.push(
+          check.name +
+            ": properties missing passingCount/failingCount fields (" +
+            missingCountFields.length +
+            ")"
+        );
+      }
+    });
 
     return finalize(report);
   }
