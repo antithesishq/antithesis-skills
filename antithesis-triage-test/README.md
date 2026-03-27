@@ -37,8 +37,9 @@ antithesis-triage-test/run.sh orbitinghail
 4. **Error report** _(optional)_ — if an incomplete run was found on the runs
    page, navigates to its report and runs the `report-error` audit phase.
    Verifies that `waitForReady()` short-circuits, `getError()` returns the
-   right type (`setup_error` or `runtime_error`), and that metadata /
-   environment methods still work.
+   right type (`setup_error` or `runtime_error`), that metadata /
+   environment methods still work, and that inline error-log panes can be
+   discovered and read when the report exposes them.
 
 ## Output
 

@@ -78,12 +78,64 @@
     };
   }
 
+  function summarizeEventList(result) {
+    var events = Array.isArray(result)
+      ? result
+      : result && Array.isArray(result.events)
+        ? result.events
+        : [];
+
+    return {
+      count: events.length,
+      itemCount: result && typeof result.itemCount === "number"
+        ? result.itemCount
+        : null,
+      collectedCount: result && typeof result.collectedCount === "number"
+        ? result.collectedCount
+        : null,
+      firstEvent: events[0]
+        ? {
+            vtime: events[0].vtime,
+            source: events[0].source,
+            text: clean(events[0].text).slice(0, 160),
+            highlighted: !!events[0].highlighted,
+          }
+        : null,
+    };
+  }
+
+  function summarizeInlineLogViews(result) {
+    var views = Array.isArray(result) ? result : [];
+    return {
+      count: views.length,
+      firstView: views[0]
+        ? {
+            index: views[0].index,
+            itemCount: views[0].itemCount,
+            visibleEvents: views[0].visibleEvents,
+            firstEvent: views[0].firstEvent
+              ? {
+                  vtime: views[0].firstEvent.vtime,
+                  source: views[0].firstEvent.source,
+                  text: clean(views[0].firstEvent.text).slice(0, 160),
+                }
+              : null,
+          }
+        : null,
+    };
+  }
+
   function firstNonEmptyLogsUrl(exampleUrls) {
     if (!Array.isArray(exampleUrls)) return null;
     var row = exampleUrls.find(function (item) {
       return item && typeof item.logsUrl === "string" && item.logsUrl !== "";
     });
     return row ? row.logsUrl : null;
+  }
+
+  function hasRunStatus(run, needle) {
+    var status = clean(run && run.status).toLowerCase();
+    return status.indexOf(String(needle).toLowerCase()) >= 0;
   }
 
   async function runCheck(name, fn, summarize, options) {
@@ -172,12 +224,17 @@
       }, function (result) {
         var runs = Array.isArray(result.runs) ? result.runs : [];
         var completed = runs.filter(function (run) {
-          return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
+          return !!run.triageUrl && hasRunStatus(run, "completed");
+        });
+        var incomplete = runs.filter(function (run) {
+          return !!run.triageUrl && hasRunStatus(run, "incomplete");
         });
         return {
           count: result.count,
           completedReports: completed.length,
+          incompleteReports: incomplete.length,
           latestCompletedReportUrl: completed[0] ? completed[0].triageUrl : null,
+          latestIncompleteReportUrl: incomplete[0] ? incomplete[0].triageUrl : null,
         };
       }, { keepResult: true }),
     );
@@ -189,18 +246,18 @@
       ? runsCheck.result.runs
       : [];
     var latestCompleted = runs.find(function (run) {
-      return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
+      return !!run.triageUrl && hasRunStatus(run, "completed");
     });
     var latestIncomplete = runs.find(function (run) {
-      return !!run.triageUrl && /\bincomplete\b/i.test(run.status);
+      return !!run.triageUrl && hasRunStatus(run, "incomplete");
     });
 
     report.counts.totalRuns = runs.length;
     report.counts.completedReports = runs.filter(function (run) {
-      return !!run.triageUrl && /\bcompleted\b/i.test(run.status);
+      return !!run.triageUrl && hasRunStatus(run, "completed");
     }).length;
     report.counts.incompleteReports = runs.filter(function (run) {
-      return !!run.triageUrl && /\bincomplete\b/i.test(run.status);
+      return !!run.triageUrl && hasRunStatus(run, "incomplete");
     }).length;
     report.discovered.latestCompletedReportUrl = latestCompleted
       ? latestCompleted.triageUrl
@@ -478,6 +535,12 @@
       }, summarizeImages, { keepResult: true }),
     );
 
+    report.checks.push(
+      await runCheck("report.getInlineErrorLogViews", function () {
+        return runtime.report.getInlineErrorLogViews();
+      }, summarizeInlineLogViews, { keepResult: true }),
+    );
+
     // For runtime errors, properties and utilization should still work.
     if (!detectedError || detectedError.type === "runtime_error") {
       report.checks.push(
@@ -497,6 +560,90 @@
     report.discovered.errorSummary = detectedError ? detectedError.summary : null;
     report.discovered.errorDetails = detectedError ? detectedError.details : null;
     report.counts.waitedMs = waitResult.waitedMs || 0;
+
+    var inlineViewsCheck = report.checks.find(function (check) {
+      return check.name === "report.getInlineErrorLogViews" && check.ok;
+    });
+    var inlineViews = inlineViewsCheck && Array.isArray(inlineViewsCheck.result)
+      ? inlineViewsCheck.result
+      : [];
+    var inlineView = inlineViews.find(function (view) {
+      return view && typeof view.itemCount === "number" && view.itemCount > 0;
+    }) || inlineViews[0] || null;
+
+    report.counts.inlineErrorLogViews = inlineViews.length;
+    report.discovered.inlineErrorLogIndex = inlineView ? inlineView.index : null;
+    report.discovered.inlineErrorLogItemCount = inlineView
+      ? inlineView.itemCount
+      : null;
+
+    if (inlineView) {
+      report.checks.push(
+        await runCheck("report.readInlineErrorLog", function () {
+          return runtime.report.readInlineErrorLog(inlineView.index, 10);
+        }, summarizeEventList, { keepResult: true }),
+      );
+
+      var readInlineCheck = report.checks.find(function (check) {
+        return check.name === "report.readInlineErrorLog" && check.ok;
+      });
+      var readInlineResult = readInlineCheck && readInlineCheck.result;
+      var readInlineEvents = readInlineResult && Array.isArray(readInlineResult.events)
+        ? readInlineResult.events
+        : [];
+
+      report.counts.inlineErrorLogVisibleEvents = readInlineEvents.length;
+      report.discovered.firstInlineErrorLogEvent = readInlineEvents[0]
+        ? {
+            vtime: readInlineEvents[0].vtime,
+            source: readInlineEvents[0].source,
+            text: clean(readInlineEvents[0].text).slice(0, 160),
+          }
+        : null;
+
+      if (inlineView.itemCount > 0 && readInlineEvents.length === 0) {
+        report.warnings.push(
+          "inline error log view was discovered but readInlineErrorLog returned zero events"
+        );
+      }
+
+      if (
+        typeof inlineView.itemCount === "number" &&
+        inlineView.itemCount > (inlineView.visibleEvents || 0)
+      ) {
+        report.checks.push(
+          await runCheck("report.collectInlineErrorLog", function () {
+            return runtime.report.collectInlineErrorLog(inlineView.index, {
+              maxItems: Math.min(inlineView.itemCount, 50),
+            });
+          }, summarizeEventList, { keepResult: true }),
+        );
+
+        var collectInlineCheck = report.checks.find(function (check) {
+          return check.name === "report.collectInlineErrorLog" && check.ok;
+        });
+        var collectInlineResult = collectInlineCheck && collectInlineCheck.result;
+
+        report.counts.inlineErrorLogCollectedEvents =
+          collectInlineResult && typeof collectInlineResult.collectedCount === "number"
+            ? collectInlineResult.collectedCount
+            : 0;
+
+        if (
+          collectInlineResult &&
+          typeof collectInlineResult.collectedCount === "number" &&
+          collectInlineResult.collectedCount < readInlineEvents.length
+        ) {
+          report.warnings.push(
+            "collectInlineErrorLog returned fewer events than readInlineErrorLog"
+          );
+        }
+      }
+    } else if (detectedError) {
+      report.warnings.push(
+        "error report did not expose any inline error log panes"
+      );
+    }
 
     if (!detectedError) {
       report.warnings.push(

@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.1.0";
+  var VERSION = "1.2.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -72,6 +72,13 @@
     var direct = lastTextNode(el);
     if (direct) return direct;
     return clean(el && el.textContent);
+  }
+
+  function parseItemCount(text) {
+    var matches = Array.from((text || "").matchAll(/(\d[\d,]*)\s*items?\b/gi));
+    return matches.length
+      ? Number(matches[matches.length - 1][1].replace(/,/g, ""))
+      : null;
   }
 
   function hasLoadingText(text) {
@@ -391,6 +398,165 @@
     if (direct) return direct;
 
     return clean(output && output.textContent).replace(/^event\.output_text\s*/i, "");
+  }
+
+  function serializeLogEvent(ev) {
+    return {
+      vtime: lastText(ev.querySelector(".event__vtime")),
+      source: lastText(ev.querySelector(".event__source_name")),
+      text: extractLogEvent(ev),
+      highlighted:
+        ev.classList.contains("_emphasized_blue") ||
+        ev.classList.contains("_emphasized"),
+    };
+  }
+
+  function readEventsFromWrapper(wrapper, limit) {
+    var maxItems = typeof limit === "number" && limit > 0 ? limit : 20;
+
+    return Array.from(wrapper.querySelectorAll(".event"))
+      .slice(0, maxItems)
+      .map(function (ev) {
+        return serializeLogEvent(ev);
+      });
+  }
+
+  function errorSection() {
+    return findSectionByHeading("Error");
+  }
+
+  function inlineErrorLogWrappers() {
+    var section = errorSection();
+    if (!section) return [];
+
+    return Array.from(section.querySelectorAll(".sequence_printer_wrapper")).filter(
+      isVisible,
+    );
+  }
+
+  function requireInlineErrorLogs() {
+    var navError = requireReportPage();
+    if (navError) return navError;
+
+    var err = detectError();
+    if (!err) {
+      return {
+        error: "expected error report with inline logs",
+        url: window.location.href,
+      };
+    }
+
+    var wrappers = inlineErrorLogWrappers();
+    if (!wrappers.length) {
+      return {
+        error: "no inline error log panes found",
+        errorType: err.type,
+        url: window.location.href,
+      };
+    }
+
+    return null;
+  }
+
+  function inlineErrorLogViews() {
+    return inlineErrorLogWrappers().map(function (wrapper, index) {
+      var counterText = clean(
+        wrapper.querySelector(".sequence_toolbar__items-counter") &&
+          wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
+      );
+      var events = Array.from(wrapper.querySelectorAll(".event"));
+      var firstEvent = events.length ? serializeLogEvent(events[0]) : null;
+
+      return {
+        index: index,
+        itemCount: parseItemCount(counterText),
+        visibleEvents: events.filter(isVisible).length,
+        firstEvent: firstEvent,
+      };
+    });
+  }
+
+  async function collectEventsFromWrapper(wrapper, options) {
+    var scroller = wrapper.querySelector(".vscroll");
+    if (!scroller) return { error: "log scroller not found" };
+
+    var maxItems =
+      options && typeof options.maxItems === "number" && options.maxItems > 0
+        ? options.maxItems
+        : null;
+    var stepPx =
+      options && typeof options.stepPx === "number" && options.stepPx > 0
+        ? options.stepPx
+        : Math.max(Math.floor(scroller.clientHeight * 0.8), 200);
+    var settleMs =
+      options && typeof options.settleMs === "number" && options.settleMs >= 0
+        ? options.settleMs
+        : 100;
+    var maxScrolls =
+      options && typeof options.maxScrolls === "number" && options.maxScrolls > 0
+        ? options.maxScrolls
+        : 500;
+
+    var startTop = scroller.scrollTop;
+    var seen = {};
+    var events = [];
+
+    function recordVisible() {
+      Array.from(wrapper.querySelectorAll(".event")).forEach(function (ev) {
+        var entry = serializeLogEvent(ev);
+        var key = [entry.vtime, entry.source, entry.text].join("\n");
+        if (!entry.vtime && !entry.source && !entry.text) return;
+        if (seen[key]) return;
+        seen[key] = true;
+        events.push(entry);
+      });
+    }
+
+    scroller.scrollTop = 0;
+    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+    await wait(settleMs);
+
+    var previousCount = -1;
+    for (var i = 0; i < maxScrolls; i++) {
+      recordVisible();
+      if (maxItems && events.length >= maxItems) break;
+
+      var atBottom =
+        Math.ceil(scroller.scrollTop + scroller.clientHeight) >=
+        Math.floor(scroller.scrollHeight);
+      if (atBottom && events.length === previousCount) break;
+      previousCount = events.length;
+
+      var nextTop = Math.min(
+        scroller.scrollTop + stepPx,
+        Math.max(scroller.scrollHeight - scroller.clientHeight, 0),
+      );
+
+      if (nextTop === scroller.scrollTop) {
+        if (atBottom) break;
+        nextTop = scroller.scrollHeight;
+      }
+
+      scroller.scrollTop = nextTop;
+      scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+      await wait(settleMs);
+    }
+
+    recordVisible();
+    scroller.scrollTop = startTop;
+    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+
+    return {
+      itemCount: parseItemCount(
+        clean(
+          wrapper.querySelector(".sequence_toolbar__items-counter") &&
+            wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
+        ),
+      ),
+      collectedCount: events.length,
+      truncated: !!(maxItems && events.length >= maxItems),
+      events: maxItems ? events.slice(0, maxItems) : events,
+    };
   }
 
   function tooltipMap(tooltip) {
@@ -901,6 +1067,60 @@
       return detectError();
     },
 
+    getInlineErrorLogViews: function () {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+      return inlineErrorLogViews();
+    },
+
+    readInlineErrorLog: function (index, limit) {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+
+      var wrappers = inlineErrorLogWrappers();
+      var target = typeof index === "number" ? index : 0;
+      var wrapper = wrappers[target];
+      if (!wrapper) {
+        return {
+          error: "inline error log pane not found",
+          index: target,
+          available: wrappers.length,
+        };
+      }
+
+      return {
+        index: target,
+        itemCount: parseItemCount(
+          clean(
+            wrapper.querySelector(".sequence_toolbar__items-counter") &&
+              wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
+          ),
+        ),
+        events: readEventsFromWrapper(wrapper, limit),
+      };
+    },
+
+    collectInlineErrorLog: async function (index, options) {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+
+      var wrappers = inlineErrorLogWrappers();
+      var target = typeof index === "number" ? index : 0;
+      var wrapper = wrappers[target];
+      if (!wrapper) {
+        return {
+          error: "inline error log pane not found",
+          index: target,
+          available: wrappers.length,
+        };
+      }
+
+      var result = await collectEventsFromWrapper(wrapper, options || {});
+      if (result.error) return result;
+      result.index = target;
+      return result;
+    },
+
     getRunMetadata: function () {
       var error = requireReportPage();
       if (error) return error;
@@ -1080,8 +1300,8 @@
         document.querySelector(".sequence_toolbar__items-counter") &&
           document.querySelector(".sequence_toolbar__items-counter").textContent,
       );
-      var matches = Array.from(counterText.matchAll(/(\d[\d,]*)\s*items?\b/gi));
-      return matches.length ? matches[matches.length - 1][1] : "unknown";
+      var count = parseItemCount(counterText);
+      return count === null ? "unknown" : String(count);
     },
 
     filter: function (query) {
@@ -1107,19 +1327,7 @@
     readVisibleEvents: function (limit) {
       var error = requireLogsPage();
       if (error) return error;
-
-      var maxItems = typeof limit === "number" && limit > 0 ? limit : 20;
-
-      return Array.from(document.querySelectorAll(".event"))
-        .slice(0, maxItems)
-        .map(function (ev) {
-          return {
-            vtime: lastText(ev.querySelector(".event__vtime")),
-            source: lastText(ev.querySelector(".event__source_name")),
-            text: extractLogEvent(ev),
-            highlighted: ev.classList.contains("_emphasized_blue"),
-          };
-        });
+      return readEventsFromWrapper(document, limit);
     },
 
     findHighlightedEvent: function (beforeCount, afterCount) {
@@ -1141,12 +1349,7 @@
       var end = Math.min(events.length, highlightedIndex + after);
 
       return events.slice(start, end).map(function (ev) {
-        return {
-          vtime: lastText(ev.querySelector(".event__vtime")),
-          source: lastText(ev.querySelector(".event__source_name")),
-          text: extractLogEvent(ev),
-          highlighted: ev.classList.contains("_emphasized_blue"),
-        };
+        return serializeLogEvent(ev);
       });
     },
 

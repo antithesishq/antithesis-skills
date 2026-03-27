@@ -1,6 +1,13 @@
 # Logs
 
-Logs are accessed per-example from the triage report. Each example row in an expanded property has a "get logs" link that opens a timeline-specific log viewer on the search page.
+Logs can come from two places:
+
+1. **Per-example logs** from failed property examples. Each example row in an
+   expanded property has a "get logs" link that opens a timeline-specific log
+   viewer on the search page.
+2. **Inline error-report logs** embedded directly in setup-failure reports.
+   These stay on the main report page under the `Error` section and use the
+   same `sequence_printer` widget as the `/search?get_logs=true` page.
 
 **Important:** If a `logsUrl` redirects away from the search page or fails to
 load, do a full interactive login first.
@@ -13,6 +20,51 @@ If `window.__antithesisTriage` is missing, inject again and retry. After every
 `open` call or any navigation, use `agent-browser wait --fn` to confirm that
 the browser is on the expected page, inject again, then call the
 matching `*.waitForReady()` method before the next page-specific method call.
+
+## Reading inline logs from an error report
+
+When `window.__antithesisTriage.report.waitForReady()` returns an `error`,
+check whether the report exposes inline log panes:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getInlineErrorLogViews()"
+```
+
+This returns one entry per visible log pane with:
+
+- `index`: zero-based pane index
+- `itemCount`: total rows reported by the widget
+- `visibleEvents`: rows currently rendered in the DOM
+- `firstEvent`: first visible `{ vtime, source, text, highlighted }` row
+
+Read the currently visible rows from a pane:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.readInlineErrorLog(0, 20)"
+```
+
+Best-effort collection from a pane by scrolling its virtualized viewport:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.collectInlineErrorLog(0)"
+```
+
+Optional limits can be passed as an object:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.collectInlineErrorLog(1, { maxItems: 200 })"
+```
+
+Use the inline-pane workflow for setup/runtime error reports that surface logs
+on the main report page. Use the `/search?get_logs=true` workflow only when you
+need logs for a specific property example.
+
+If an inline pane only exposes a preview, use the report UI's `Maximize` or
+`Expand for full, unfiltered logs` controls before trying to read more rows.
 
 ## Getting log URLs from triage report examples
 
