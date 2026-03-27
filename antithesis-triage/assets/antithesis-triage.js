@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -399,25 +399,69 @@
     ).length;
   }
 
-  function extractLogEvent(ev) {
+  function cleanLogOutput(text) {
+    return clean(text).replace(/^event\.output_text\s*/i, "");
+  }
+
+  function extractLogOutput(varyingPart) {
+    var output = varyingPart && varyingPart.querySelector(".event__output_text");
+    var direct = cleanLogOutput(lastTextNode(output));
+    if (direct) return direct;
+    return cleanLogOutput(output && output.textContent);
+  }
+
+  function extractLogDirectText(varyingPart) {
+    return clean(
+      Array.from((varyingPart && varyingPart.childNodes) || [])
+        .filter(function (node) {
+          return node.nodeType === Node.TEXT_NODE;
+        })
+        .map(function (node) {
+          return node.textContent;
+        })
+        .join(" "),
+    );
+  }
+
+  function extractLogDetails(ev) {
     // Assertion rows and regular log rows render their useful text differently.
     var assertion = ev.querySelector(".sdk-assertion__meta");
-    if (assertion) {
-      return clean(assertion.textContent);
+    var assertionText = clean(assertion && assertion.textContent);
+    if (assertionText) {
+      return {
+        assertionText: assertionText,
+        directText: "",
+        outputText: "",
+        text: assertionText,
+      };
     }
 
-    var output = ev.querySelector(".event__varying-part .event__output_text");
-    var direct = lastTextNode(output);
-    if (direct) return direct;
+    var varyingPart = ev.querySelector(".event__varying-part");
+    var directText = extractLogDirectText(varyingPart);
+    var outputText = extractLogOutput(varyingPart);
+    var text = outputText || directText;
 
-    return clean(output && output.textContent).replace(/^event\.output_text\s*/i, "");
+    if (directText && outputText && directText !== outputText) {
+      text = directText + " | " + outputText;
+    }
+
+    return {
+      assertionText: "",
+      directText: directText,
+      outputText: outputText,
+      text: text,
+    };
   }
 
   function serializeLogEvent(ev) {
+    var details = extractLogDetails(ev);
+
     return {
       vtime: lastText(ev.querySelector(".event__vtime")),
       source: lastText(ev.querySelector(".event__source_name")),
-      text: extractLogEvent(ev),
+      text: details.text,
+      directText: details.directText,
+      outputText: details.outputText,
       highlighted:
         ev.classList.contains("_emphasized_blue") ||
         ev.classList.contains("_emphasized"),
@@ -515,14 +559,24 @@
     var events = [];
 
     function recordVisible() {
+      var limitReached = false;
+
       Array.from(wrapper.querySelectorAll(".event")).forEach(function (ev) {
+        if (limitReached) return;
+
         var entry = serializeLogEvent(ev);
         var key = [entry.vtime, entry.source, entry.text].join("\n");
         if (!entry.vtime && !entry.source && !entry.text) return;
         if (seen[key]) return;
+        if (maxItems && events.length >= maxItems) {
+          limitReached = true;
+          return;
+        }
         seen[key] = true;
         events.push(entry);
       });
+
+      return limitReached;
     }
 
     scroller.scrollTop = 0;
@@ -531,8 +585,7 @@
 
     var previousCount = -1;
     for (var i = 0; i < maxScrolls; i++) {
-      recordVisible();
-      if (maxItems && events.length >= maxItems) break;
+      if (recordVisible() || (maxItems && events.length >= maxItems)) break;
 
       var atBottom =
         Math.ceil(scroller.scrollTop + scroller.clientHeight) >=
@@ -1337,6 +1390,16 @@
       var error = requireLogsPage();
       if (error) return error;
       return readEventsFromWrapper(document, limit);
+    },
+
+    collectEvents: async function (options) {
+      var error = requireLogsPage();
+      if (error) return error;
+
+      var wrapper = document.querySelector(".sequence_printer_wrapper");
+      if (!wrapper) return { error: "log viewer not found" };
+
+      return collectEventsFromWrapper(wrapper, options || {});
     },
 
     findHighlightedEvent: function (beforeCount, afterCount) {

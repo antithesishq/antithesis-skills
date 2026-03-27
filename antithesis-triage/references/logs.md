@@ -85,7 +85,8 @@ works but returns a flat list without property context.
 
 ## Navigate to logs for a specific example
 
-Use the `logsUrl` from the example row to open the log viewer:
+Use the exact `logsUrl` from the example row to open the log viewer. Do not
+rewrite query parameters unless you have a specific reason:
 
 ```
 agent-browser --session "$SESSION" open "<logsUrl>"
@@ -132,16 +133,44 @@ agent-browser --session "$SESSION" eval \
 
 ## Read visible log entries
 
-Each `.event` element contains tooltip children (`<a-tooltip>`) followed by a
-text node with the actual value. Use `lastText()` to extract the visible text,
-skipping tooltip prefixes.
+`readVisibleEvents()` returns the rows that are currently rendered in the DOM.
+Each row includes:
+
+- `text`: best-effort combined message text
+- `directText`: text nodes directly under `.event__varying-part`
+- `outputText`: text extracted from `.event__output_text`
 
 ```bash
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.logs.readVisibleEvents()"
 ```
 
-Note: logs use virtual scrolling — only ~50-70 rows render at a time. Scroll within `div.vscroll` to load more.
+This matters for fault injector and other structured events because some rows
+store their useful content in direct text nodes rather than in
+`.event__output_text`.
+
+Logs use virtual scrolling, so only ~50-70 rows render at a time. If you need
+more than the current viewport, use the collector instead of relying on manual
+scrolling:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.collectEvents()"
+```
+
+Optional limits can be passed as an object:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.collectEvents({ maxItems: 200 })"
+```
+
+The collector walks the virtual scroller and returns:
+
+- `itemCount`: rows reported by the viewer
+- `collectedCount`: rows actually captured
+- `truncated`: whether `maxItems` stopped collection early
+- `events`: serialized rows with `vtime`, `source`, `text`, `directText`, `outputText`, and `highlighted`
 
 ## Find the highlighted assertion event
 
@@ -164,6 +193,8 @@ agent-browser --session "$SESSION" eval \
 ```
 
 The search count is displayed next to the search input (e.g., "1 / 30").
+If you need to read beyond the currently rendered rows after filtering or
+searching, run `collectEvents()` again on the updated view.
 
 ## Parsing Logs
 
