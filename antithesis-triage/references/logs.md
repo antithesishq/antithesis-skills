@@ -2,9 +2,9 @@
 
 Logs can come from two places:
 
-1. **Per-example logs** from failed property examples. Each example row in an
-   expanded property has a "get logs" link that opens a timeline-specific log
-   viewer on the search page.
+1. **Per-example logs** from property examples. Passing and failing property
+   example rows can both expose a "get logs" link that opens a
+   timeline-specific log viewer on the search page.
 2. **Inline error-report logs** embedded directly in setup-failure reports.
    These stay on the main report page under the `Error` section and use the
    same `sequence_printer` widget as the `/search?get_logs=true` page.
@@ -68,20 +68,23 @@ If an inline pane only exposes a preview, use the report UI's `Maximize` or
 
 ## Getting log URLs from triage report examples
 
-Use `getFailedPropertyExamples()` to expand failed properties and collect
-examples grouped by property in one call:
+Use `getPropertyExamples()` to expand properties that expose example tables and
+collect examples grouped by property in one call:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getFailedPropertyExamples()"
+  "window.__antithesisTriage.report.getPropertyExamples()"
 ```
 
 Each property in the result includes its `group`, `name`, `status`, and an
 `examples` array with `{ status, time, logsUrl }` entries. Use the `logsUrl`
 from a specific example to navigate to its log viewer.
 
-The older two-step flow (`expandFailedExamples()` then `getExampleUrls()`) still
-works but returns a flat list without property context.
+Use `getFailedPropertyExamples()` only when you specifically want to restrict
+the results to failed properties.
+
+The older two-step flow (`expandExamples()` then `getExampleUrls()`) still works
+but returns a flat list without property context.
 
 ## Navigate to logs for a specific example
 
@@ -133,12 +136,17 @@ agent-browser --session "$SESSION" eval \
 
 ## Read visible log entries
 
-`readVisibleEvents()` returns the rows that are currently rendered in the DOM.
-Each row includes:
+Each log event has four columns: virtual time, source (command name), container,
+and message text. The runtime methods extract these into objects with fields
+`vtime`, `container`, `source`, `text`, `directText`, `outputText`, and
+`highlighted`. The `container` field
+identifies which Docker container produced the event (e.g., `nsq-workload-2`),
+which is important for correlating faults with errors in multi-container setups.
 
-- `text`: best-effort combined message text
-- `directText`: text nodes directly under `.event__varying-part`
-- `outputText`: text extracted from `.event__output_text`
+`readVisibleEvents()` returns the rows that are currently rendered in the DOM.
+`text` is the best-effort combined message text, while `directText` and
+`outputText` preserve the two underlying extraction paths used for structured
+rows.
 
 ```bash
 agent-browser --session "$SESSION" eval \
@@ -170,7 +178,7 @@ The collector walks the virtual scroller and returns:
 - `itemCount`: rows reported by the viewer
 - `collectedCount`: rows actually captured
 - `truncated`: whether `maxItems` stopped collection early
-- `events`: serialized rows with `vtime`, `source`, `text`, `directText`, `outputText`, and `highlighted`
+- `events`: serialized rows with `vtime`, `container`, `source`, `text`, `directText`, `outputText`, and `highlighted`
 
 ## Find the highlighted assertion event
 

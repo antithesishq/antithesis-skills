@@ -458,6 +458,7 @@
 
     return {
       vtime: lastText(ev.querySelector(".event__vtime")),
+      container: lastText(ev.querySelector(".event__container")),
       source: lastText(ev.querySelector(".event__source_name")),
       text: details.text,
       directText: details.directText,
@@ -829,61 +830,12 @@
     };
   }
 
-  async function expandFailedExamples() {
-    var error = requireReportPage();
-    if (error) return error;
-
-    // Reuse the failed-properties expansion path first so nested failed leaves
-    // are rendered before looking for example tables.
-    var prepared = await getFilteredProperties("failed");
-    if (prepared && prepared.error) return prepared;
-
-    for (var i = 0; i < 8; i++) {
-      var changed = false;
-
-      // Failed leaves can keep their examples tables collapsed even after the
-      // failed tree itself has been expanded.
-      visiblePropertyContainers().forEach(function (container) {
-        if (!isVisible(container) || containerStatus(container) !== "failed") {
-          return;
-        }
-
-        if (examplesRows(container) > 0) {
-          return;
-        }
-
-        var button = expanderButton(container);
-        if (button && click(button)) {
-          changed = true;
-        }
-      });
-
-      if (changed) await wait(250);
-
-      // Then expand failed leaves until example rows render.
-      visiblePropertyContainers().forEach(function (container) {
-        if (!isVisible(container) || isGroup(container)) return;
-        if (containerStatus(container) !== "failed" || examplesRows(container) > 0) {
-          return;
-        }
-
-        if (click(expanderButton(container))) {
-          changed = true;
-        }
-      });
-
-      if (changed) {
-        await wait(250);
-      } else {
-        break;
-      }
-    }
-
-    var expandedProperties = visiblePropertyContainers()
+  function expandedPropertiesWithExamples(statuses) {
+    return visiblePropertyContainers()
       .filter(function (container) {
         return (
           !isGroup(container) &&
-          containerStatus(container) === "failed" &&
+          statuses.indexOf(containerStatus(container)) >= 0 &&
           examplesRows(container) > 0
         );
       })
@@ -891,20 +843,75 @@
         return {
           group: groupPath(container),
           name: nameOf(container),
+          status: containerStatus(container),
           exampleRows: examplesRows(container),
         };
       })
       .filter(function (property) {
         return property.name;
       });
+  }
+
+  async function expandExamplesForStatuses(targetStatuses) {
+    var error = requireReportPage();
+    if (error) return error;
+
+    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
+      ? targetStatuses.slice()
+      : ["failed", "passed"];
+    var expandedProperties = [];
+
+    for (var si = 0; si < statuses.length; si++) {
+      var status = statuses[si];
+      if (status !== "failed" && status !== "passed" && status !== "unfound") {
+        continue;
+      }
+
+      var prepared = await getFilteredProperties(status);
+      if (prepared && prepared.error) return prepared;
+
+      for (var i = 0; i < 8; i++) {
+        var changed = false;
+
+        visiblePropertyContainers().forEach(function (container) {
+          if (!isVisible(container) || isGroup(container)) return;
+          if (containerStatus(container) !== status || examplesRows(container) > 0) {
+            return;
+          }
+
+          var button = expanderButton(container);
+          if (button && click(button)) {
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          await wait(250);
+        } else {
+          break;
+        }
+      }
+
+      expandedProperties = expandedProperties.concat(
+        expandedPropertiesWithExamples([status]),
+      );
+    }
 
     return {
-      filter: "failed",
+      filter: statuses.join(","),
       expandedProperties: expandedProperties,
       totalExampleRows: expandedProperties.reduce(function (sum, property) {
         return sum + property.exampleRows;
       }, 0),
     };
+  }
+
+  async function expandExamples(targetStatuses) {
+    return expandExamplesForStatuses(targetStatuses);
+  }
+
+  async function expandFailedExamples() {
+    return expandExamplesForStatuses(["failed"]);
   }
 
   function getExampleUrls() {
@@ -940,40 +947,54 @@
     });
   }
 
-  async function getFailedPropertyExamples() {
+  async function getPropertyExamples(targetStatuses) {
     var error = requireReportPage();
     if (error) return error;
 
-    var expanded = await expandFailedExamples();
-    if (expanded && expanded.error) return expanded;
+    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
+      ? targetStatuses.slice()
+      : ["failed", "passed"];
+    var properties = [];
 
-    var properties = visiblePropertyContainers()
-      .filter(function (container) {
-        return (
-          !isGroup(container) &&
-          containerStatus(container) === "failed" &&
-          examplesRows(container) > 0
-        );
-      })
-      .map(function (container) {
-        return {
-          group: groupPath(container),
-          name: nameOf(container),
-          status: containerStatus(container),
-          examples: examplesForContainer(container),
-        };
-      })
-      .filter(function (property) {
-        return property.name;
-      });
+    for (var si = 0; si < statuses.length; si++) {
+      var status = statuses[si];
+      var expanded = await expandExamplesForStatuses([status]);
+      if (expanded && expanded.error) return expanded;
+
+      properties = properties.concat(
+        visiblePropertyContainers()
+          .filter(function (container) {
+            return (
+              !isGroup(container) &&
+              containerStatus(container) === status &&
+              examplesRows(container) > 0
+            );
+          })
+          .map(function (container) {
+            return {
+              group: groupPath(container),
+              name: nameOf(container),
+              status: containerStatus(container),
+              examples: examplesForContainer(container),
+            };
+          })
+          .filter(function (property) {
+            return property.name;
+          }),
+      );
+    }
 
     return {
-      filter: "failed",
+      filter: statuses.join(","),
       properties: properties,
       totalExamples: properties.reduce(function (sum, property) {
         return sum + property.examples.length;
       }, 0),
     };
+  }
+
+  async function getFailedPropertyExamples() {
+    return getPropertyExamples(["failed"]);
   }
 
   var reportApi = {
@@ -1293,8 +1314,10 @@
     getUnfoundProperties: function () {
       return getFilteredProperties("unfound");
     },
+    expandExamples: expandExamples,
     expandFailedExamples: expandFailedExamples,
     getExampleUrls: getExampleUrls,
+    getPropertyExamples: getPropertyExamples,
     getFailedPropertyExamples: getFailedPropertyExamples,
   };
 

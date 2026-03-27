@@ -48,12 +48,12 @@ agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getUnfoundProperties()"
 ```
 
-To expand visible failed leaf properties until their example tables are
-available for log extraction, use:
+To expand visible leaf properties that expose example tables until those rows
+are available for log extraction, use:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.expandFailedExamples()"
+  "window.__antithesisTriage.report.expandExamples()"
 ```
 
 ## Property summary text (pass/fail counts)
@@ -107,12 +107,20 @@ The ratio of passing to failing examples is a strong signal for root cause:
 - **Roughly even split** — The property may be sensitive to configuration or
   timing. Check whether passing vs failing correlates with fault intensity.
 
-To expand failed properties and collect their examples in one structured call:
+To expand properties with example tables and collect their examples in one
+structured call:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getPropertyExamples()"
+```
+
+This returns each matching property with its `group`, `name`, `status`, and
+`examples` array containing `{ status, time, logsUrl }` entries.
+
+If you specifically want failed properties only, use:
 
 ```bash
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getFailedPropertyExamples()"
 ```
-
-This returns each failed property with its `group`, `name`, `status`, and
-`examples` array containing `{ status, time, logsUrl }` entries.

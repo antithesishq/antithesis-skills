@@ -154,6 +154,56 @@
     return status.indexOf(String(needle).toLowerCase()) >= 0;
   }
 
+  function delay(ms) {
+    return new Promise(function (resolve) {
+      setTimeout(resolve, ms);
+    });
+  }
+
+  function skipCheck(name, reason) {
+    return {
+      name: name,
+      ok: true,
+      status: "skipped",
+      durationMs: 0,
+      reason: reason,
+      summary: null,
+    };
+  }
+
+  function tokensFromText(text) {
+    return clean(text)
+      .split(/[^A-Za-z0-9_:-]+/)
+      .map(function (token) {
+        return token.trim();
+      })
+      .filter(function (token) {
+        return /[A-Za-z]/.test(token) && token.length >= 3;
+      });
+  }
+
+  function deriveLogsQuery(events) {
+    var seen = {};
+    var fields = [];
+
+    (Array.isArray(events) ? events : []).forEach(function (event) {
+      if (!event) return;
+      fields.push(event.source, event.container, event.text);
+    });
+
+    for (var i = 0; i < fields.length; i++) {
+      var tokens = tokensFromText(fields[i]);
+      for (var j = 0; j < tokens.length; j++) {
+        var key = tokens[j].toLowerCase();
+        if (seen[key]) continue;
+        seen[key] = true;
+        return tokens[j];
+      }
+    }
+
+    return "";
+  }
+
   async function runCheck(name, fn, summarize, options) {
     var startedAt = now();
     var keepResult = !!(options && options.keepResult);
@@ -164,6 +214,7 @@
         return {
           name: name,
           ok: false,
+          status: "failed",
           durationMs: now() - startedAt,
           error: result.error,
           result: keepResult ? clone(result) : undefined,
@@ -173,6 +224,7 @@
       return {
         name: name,
         ok: true,
+        status: "passed",
         durationMs: now() - startedAt,
         summary: summarize ? summarize(result) : null,
         result: keepResult ? clone(result) : undefined,
@@ -181,6 +233,7 @@
       return {
         name: name,
         ok: false,
+        status: "failed",
         durationMs: now() - startedAt,
         error: error && error.message ? error.message : String(error),
       };
@@ -443,8 +496,8 @@
     var report = makeReport("report-examples");
 
     report.checks.push(
-      await runCheck("report.expandFailedExamples", function () {
-        return runtime.report.expandFailedExamples();
+      await runCheck("report.expandExamples", function () {
+        return runtime.report.expandExamples();
       }, function (result) {
         return {
           expandedProperties: Array.isArray(result.expandedProperties)
@@ -466,6 +519,26 @@
     );
 
     report.checks.push(
+      await runCheck("report.getPropertyExamples", function () {
+        return runtime.report.getPropertyExamples();
+      }, function (result) {
+        var properties = Array.isArray(result.properties) ? result.properties : [];
+        return {
+          propertyCount: properties.length,
+          totalExamples: result.totalExamples || 0,
+          firstProperty: properties.length > 0
+            ? {
+                group: properties[0].group,
+                name: properties[0].name,
+                status: properties[0].status,
+                examples: properties[0].examples.length,
+              }
+            : null,
+        };
+      }, { keepResult: true }),
+    );
+
+    report.checks.push(
       await runCheck("report.getFailedPropertyExamples", function () {
         return runtime.report.getFailedPropertyExamples();
       }, function (result) {
@@ -481,12 +554,15 @@
     );
 
     var expandedCheck = report.checks.find(function (check) {
-      return check.name === "report.expandFailedExamples" && check.ok;
+      return check.name === "report.expandExamples" && check.ok;
     });
     var urlsCheck = report.checks.find(function (check) {
       return check.name === "report.getExampleUrls" && check.ok;
     });
-    var propertyExamplesCheck = report.checks.find(function (check) {
+    var allPropertyExamplesCheck = report.checks.find(function (check) {
+      return check.name === "report.getPropertyExamples" && check.ok;
+    });
+    var failedPropertyExamplesCheck = report.checks.find(function (check) {
       return check.name === "report.getFailedPropertyExamples" && check.ok;
     });
 
@@ -506,14 +582,22 @@
           return !!(item && item.logsUrl);
         }).length
       : 0;
-    report.counts.failedPropertyExamples = propertyExamplesCheck && propertyExamplesCheck.result
-      ? propertyExamplesCheck.result.totalExamples || 0
+    report.counts.propertyExamples = allPropertyExamplesCheck && allPropertyExamplesCheck.result
+      ? allPropertyExamplesCheck.result.totalExamples || 0
+      : 0;
+    report.counts.failedPropertyExamples =
+      failedPropertyExamplesCheck && failedPropertyExamplesCheck.result
+        ? failedPropertyExamplesCheck.result.totalExamples || 0
       : 0;
     report.discovered.firstExampleLogsUrl = urlsCheck
       ? firstNonEmptyLogsUrl(urlsCheck.result)
       : null;
-    if (!report.discovered.firstExampleLogsUrl && propertyExamplesCheck && propertyExamplesCheck.result) {
-      var properties = propertyExamplesCheck.result.properties || [];
+    if (
+      !report.discovered.firstExampleLogsUrl &&
+      allPropertyExamplesCheck &&
+      allPropertyExamplesCheck.result
+    ) {
+      var properties = allPropertyExamplesCheck.result.properties || [];
       for (var pi = 0; pi < properties.length; pi++) {
         var examples = properties[pi].examples || [];
         for (var ei = 0; ei < examples.length; ei++) {
@@ -526,7 +610,14 @@
       }
     }
 
-    if (!report.discovered.firstExampleLogsUrl) {
+    if (
+      !report.discovered.firstExampleLogsUrl &&
+      (report.counts.propertyExamples > 0 || report.counts.totalExampleRows > 0)
+    ) {
+      report.errors.push(
+        "property examples were present but none exposed an example logs url"
+      );
+    } else if (!report.discovered.firstExampleLogsUrl) {
       report.warnings.push("report did not expose an example logs url");
     }
 
@@ -654,41 +745,50 @@
         );
       }
 
+      report.checks.push(
+        await runCheck("report.collectInlineErrorLog", function () {
+          var options = {};
+          if (typeof inlineView.itemCount === "number" && inlineView.itemCount > 0) {
+            options.maxItems = Math.min(inlineView.itemCount, 50);
+          }
+          return runtime.report.collectInlineErrorLog(inlineView.index, options);
+        }, summarizeEventList, { keepResult: true }),
+      );
+
+      var collectInlineCheck = report.checks.find(function (check) {
+        return check.name === "report.collectInlineErrorLog" && check.ok;
+      });
+      var collectInlineResult = collectInlineCheck && collectInlineCheck.result;
+
+      report.counts.inlineErrorLogCollectedEvents =
+        collectInlineResult && typeof collectInlineResult.collectedCount === "number"
+          ? collectInlineResult.collectedCount
+          : 0;
+
       if (
-        typeof inlineView.itemCount === "number" &&
-        inlineView.itemCount > (inlineView.visibleEvents || 0)
+        collectInlineResult &&
+        typeof collectInlineResult.collectedCount === "number" &&
+        collectInlineResult.collectedCount < readInlineEvents.length
       ) {
-        report.checks.push(
-          await runCheck("report.collectInlineErrorLog", function () {
-            return runtime.report.collectInlineErrorLog(inlineView.index, {
-              maxItems: Math.min(inlineView.itemCount, 50),
-            });
-          }, summarizeEventList, { keepResult: true }),
+        report.warnings.push(
+          "collectInlineErrorLog returned fewer events than readInlineErrorLog"
         );
-
-        var collectInlineCheck = report.checks.find(function (check) {
-          return check.name === "report.collectInlineErrorLog" && check.ok;
-        });
-        var collectInlineResult = collectInlineCheck && collectInlineCheck.result;
-
-        report.counts.inlineErrorLogCollectedEvents =
-          collectInlineResult && typeof collectInlineResult.collectedCount === "number"
-            ? collectInlineResult.collectedCount
-            : 0;
-
-        if (
-          collectInlineResult &&
-          typeof collectInlineResult.collectedCount === "number" &&
-          collectInlineResult.collectedCount < readInlineEvents.length
-        ) {
-          report.warnings.push(
-            "collectInlineErrorLog returned fewer events than readInlineErrorLog"
-          );
-        }
       }
     } else if (detectedError) {
       report.warnings.push(
         "error report did not expose any inline error log panes"
+      );
+      report.checks.push(
+        skipCheck(
+          "report.readInlineErrorLog",
+          "error report did not expose any inline error log panes",
+        ),
+      );
+      report.checks.push(
+        skipCheck(
+          "report.collectInlineErrorLog",
+          "error report did not expose any inline error log panes",
+        ),
       );
     }
 
@@ -743,6 +843,11 @@
       }, { keepResult: true }),
     );
     report.checks.push(
+      await runCheck("logs.collectEvents", function () {
+        return runtime.logs.collectEvents({ maxItems: 50 });
+      }, summarizeEventList, { keepResult: true }),
+    );
+    report.checks.push(
       await runCheck("logs.findHighlightedEvent", function () {
         return runtime.logs.findHighlightedEvent();
       }, function (result) {
@@ -767,6 +872,23 @@
     var highlightedCheck = report.checks.find(function (check) {
       return check.name === "logs.findHighlightedEvent" && check.ok;
     });
+    var collectedEventsCheck = report.checks.find(function (check) {
+      return check.name === "logs.collectEvents" && check.ok;
+    });
+
+    var queryEvents = [];
+    if (visibleEventsCheck && Array.isArray(visibleEventsCheck.result)) {
+      queryEvents = queryEvents.concat(visibleEventsCheck.result);
+    }
+    if (
+      collectedEventsCheck &&
+      collectedEventsCheck.result &&
+      Array.isArray(collectedEventsCheck.result.events)
+    ) {
+      queryEvents = queryEvents.concat(collectedEventsCheck.result.events);
+    }
+    var logsQuery = deriveLogsQuery(queryEvents);
+    report.discovered.logsQuery = logsQuery || null;
 
     report.counts.itemCount = itemCountCheck
       ? summarizeStringMetric(itemCountCheck.result).numeric
@@ -774,12 +896,119 @@
     report.counts.visibleEvents = visibleEventsCheck && Array.isArray(visibleEventsCheck.result)
       ? visibleEventsCheck.result.length
       : 0;
+    report.counts.collectedEvents =
+      collectedEventsCheck &&
+      collectedEventsCheck.result &&
+      typeof collectedEventsCheck.result.collectedCount === "number"
+        ? collectedEventsCheck.result.collectedCount
+        : 0;
     report.counts.highlightedWindow = highlightedCheck && Array.isArray(highlightedCheck.result)
       ? highlightedCheck.result.length
       : 0;
 
+    if (logsQuery) {
+      report.checks.push(
+        await runCheck("logs.filter", async function () {
+          var result = runtime.logs.filter(logsQuery);
+          if (isMethodError(result)) return result;
+          await delay(250);
+
+          var visible = runtime.logs.readVisibleEvents(10);
+          if (isMethodError(visible)) return visible;
+
+          return {
+            query: logsQuery,
+            filterValue: clean(
+              document.querySelector(".sequence_filter__input") &&
+                document.querySelector(".sequence_filter__input").value,
+            ),
+            itemCount: runtime.logs.getItemCount(),
+            visibleEvents: visible,
+          };
+        }, function (result) {
+          return {
+            query: result.query,
+            filterValue: result.filterValue,
+            itemCount: result.itemCount,
+            visibleEvents: Array.isArray(result.visibleEvents)
+              ? result.visibleEvents.length
+              : 0,
+          };
+        }, { keepResult: true }),
+      );
+      report.checks.push(
+        await runCheck("logs.clearFilter", async function () {
+          var result = runtime.logs.clearFilter();
+          if (isMethodError(result)) return result;
+          await delay(250);
+
+          var visible = runtime.logs.readVisibleEvents(10);
+          if (isMethodError(visible)) return visible;
+
+          return {
+            filterValue: clean(
+              document.querySelector(".sequence_filter__input") &&
+                document.querySelector(".sequence_filter__input").value,
+            ),
+            itemCount: runtime.logs.getItemCount(),
+            visibleEvents: visible,
+          };
+        }, function (result) {
+          return {
+            filterValue: result.filterValue,
+            itemCount: result.itemCount,
+            visibleEvents: Array.isArray(result.visibleEvents)
+              ? result.visibleEvents.length
+              : 0,
+          };
+        }, { keepResult: true }),
+      );
+      report.checks.push(
+        await runCheck("logs.search", async function () {
+          var result = runtime.logs.search(logsQuery);
+          if (isMethodError(result)) return result;
+          await delay(250);
+
+          return {
+            query: logsQuery,
+            searchValue: clean(
+              document.querySelector(".sequence_search__input") &&
+                document.querySelector(".sequence_search__input").value,
+            ),
+          };
+        }, function (result) {
+          return {
+            query: result.query,
+            searchValue: result.searchValue,
+          };
+        }, { keepResult: true }),
+      );
+    } else {
+      report.checks.push(
+        skipCheck(
+          "logs.filter",
+          "could not derive a stable search term from the visible log events",
+        ),
+      );
+      report.checks.push(
+        skipCheck(
+          "logs.clearFilter",
+          "could not derive a stable search term from the visible log events",
+        ),
+      );
+      report.checks.push(
+        skipCheck(
+          "logs.search",
+          "could not derive a stable search term from the visible log events",
+        ),
+      );
+    }
+
     if (report.counts.visibleEvents === 0) {
       report.warnings.push("logs page returned zero visible events");
+    }
+    if (report.counts.collectedEvents === 0) {
+      report.warnings.push("logs collector returned zero events");
     }
 
     return finalize(report);

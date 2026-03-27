@@ -290,7 +290,7 @@ again.
   subset of rows, use the page's `Maximize` or `Expand for full, unfiltered
   logs` controls before extracting more.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
-- **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, and log text.
+- **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
 
