@@ -80,9 +80,11 @@ agent-browser --session "$SESSION" eval \
 
 ## Read visible log entries
 
-Each `.event` element contains tooltip children (`<a-tooltip>`) followed by a
-text node with the actual value. Use `lastText()` to extract the visible text,
-skipping tooltip prefixes.
+Each log event has four columns: virtual time, source (command name), container,
+and message text. The runtime methods extract these into objects with fields
+`vtime`, `container`, `source`, `text`, and `highlighted`. The `container` field
+identifies which Docker container produced the event (e.g., `nsq-workload-2`),
+which is important for correlating faults with errors in multi-container setups.
 
 ```bash
 agent-browser --session "$SESSION" eval \

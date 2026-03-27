@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.2.0";
+  var VERSION = "1.3.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -1128,6 +1128,7 @@
         .map(function (ev) {
           return {
             vtime: lastText(ev.querySelector(".event__vtime")),
+            container: lastText(ev.querySelector(".event__container")),
             source: lastText(ev.querySelector(".event__source_name")),
             text: extractLogEvent(ev),
             highlighted: ev.classList.contains("_emphasized_blue"),
@@ -1156,6 +1157,7 @@
       return events.slice(start, end).map(function (ev) {
         return {
           vtime: lastText(ev.querySelector(".event__vtime")),
+          container: lastText(ev.querySelector(".event__container")),
           source: lastText(ev.querySelector(".event__source_name")),
           text: extractLogEvent(ev),
           highlighted: ev.classList.contains("_emphasized_blue"),
