@@ -141,6 +141,22 @@
     };
   }
 
+  function summarizePropertyExamples(result) {
+    var properties = Array.isArray(result.properties) ? result.properties : [];
+    return {
+      propertyCount: properties.length,
+      totalExamples: result.totalExamples || 0,
+      firstProperty: properties.length > 0
+        ? {
+            group: properties[0].group,
+            name: properties[0].name,
+            status: properties[0].status,
+            examples: properties[0].examples.length,
+          }
+        : null,
+    };
+  }
+
   function firstNonEmptyLogsUrl(exampleUrls) {
     if (!Array.isArray(exampleUrls)) return null;
     var row = exampleUrls.find(function (item) {
@@ -157,6 +173,12 @@
   function delay(ms) {
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
+    });
+  }
+
+  function findCheck(checks, name) {
+    return checks.find(function (check) {
+      return check.name === name && check.ok;
     });
   }
 
@@ -308,32 +330,17 @@
       }, { keepResult: true }),
     );
 
-    var runsCheck = report.checks.find(function (check) {
-      return check.name === "runs.getRecentRuns" && check.ok;
-    });
+    var runsCheck = findCheck(report.checks, "runs.getRecentRuns");
+    var runsSummary = runsCheck && runsCheck.summary ? runsCheck.summary : {};
     var runs = runsCheck && runsCheck.result && Array.isArray(runsCheck.result.runs)
       ? runsCheck.result.runs
       : [];
-    var latestCompleted = runs.find(function (run) {
-      return !!run.triageUrl && hasRunStatus(run, "completed");
-    });
-    var latestIncomplete = runs.find(function (run) {
-      return !!run.triageUrl && hasRunStatus(run, "incomplete");
-    });
 
     report.counts.totalRuns = runs.length;
-    report.counts.completedReports = runs.filter(function (run) {
-      return !!run.triageUrl && hasRunStatus(run, "completed");
-    }).length;
-    report.counts.incompleteReports = runs.filter(function (run) {
-      return !!run.triageUrl && hasRunStatus(run, "incomplete");
-    }).length;
-    report.discovered.latestCompletedReportUrl = latestCompleted
-      ? latestCompleted.triageUrl
-      : null;
-    report.discovered.latestIncompleteReportUrl = latestIncomplete
-      ? latestIncomplete.triageUrl
-      : null;
+    report.counts.completedReports = runsSummary.completedReports || 0;
+    report.counts.incompleteReports = runsSummary.incompleteReports || 0;
+    report.discovered.latestCompletedReportUrl = runsSummary.latestCompletedReportUrl || null;
+    report.discovered.latestIncompleteReportUrl = runsSummary.latestIncompleteReportUrl || null;
 
     if (report.counts.totalRuns === 0) {
       report.warnings.push("runs page returned zero runs");
@@ -386,15 +393,9 @@
       }, summarizeStringMetric, { keepResult: true }),
     );
 
-    var metadataCheck = report.checks.find(function (check) {
-      return check.name === "report.getRunMetadata" && check.ok;
-    });
-    var imagesCheck = report.checks.find(function (check) {
-      return check.name === "report.getEnvironmentSourceImages" && check.ok;
-    });
-    var findingsCheck = report.checks.find(function (check) {
-      return check.name === "report.getFindingsGrouped" && check.ok;
-    });
+    var metadataCheck = findCheck(report.checks, "report.getRunMetadata");
+    var imagesCheck = findCheck(report.checks, "report.getEnvironmentSourceImages");
+    var findingsCheck = findCheck(report.checks, "report.getFindingsGrouped");
 
     report.discovered.title = metadataCheck ? metadataCheck.result.title : "";
     report.counts.environmentImages = imagesCheck && Array.isArray(imagesCheck.result)
@@ -442,9 +443,7 @@
     );
 
     function propertyCount(checkName) {
-      var check = report.checks.find(function (c) {
-        return c.name === checkName;
-      });
+      var check = findCheck(report.checks, checkName);
       return check && check.summary ? check.summary.propertyCount : 0;
     }
 
@@ -521,50 +520,19 @@
     report.checks.push(
       await runCheck("report.getPropertyExamples", function () {
         return runtime.report.getPropertyExamples();
-      }, function (result) {
-        var properties = Array.isArray(result.properties) ? result.properties : [];
-        return {
-          propertyCount: properties.length,
-          totalExamples: result.totalExamples || 0,
-          firstProperty: properties.length > 0
-            ? {
-                group: properties[0].group,
-                name: properties[0].name,
-                status: properties[0].status,
-                examples: properties[0].examples.length,
-              }
-            : null,
-        };
-      }, { keepResult: true }),
+      }, summarizePropertyExamples, { keepResult: true }),
     );
 
     report.checks.push(
       await runCheck("report.getFailedPropertyExamples", function () {
         return runtime.report.getFailedPropertyExamples();
-      }, function (result) {
-        var properties = Array.isArray(result.properties) ? result.properties : [];
-        return {
-          propertyCount: properties.length,
-          totalExamples: result.totalExamples || 0,
-          firstProperty: properties.length > 0
-            ? { group: properties[0].group, name: properties[0].name, examples: properties[0].examples.length }
-            : null,
-        };
-      }, { keepResult: true }),
+      }, summarizePropertyExamples, { keepResult: true }),
     );
 
-    var expandedCheck = report.checks.find(function (check) {
-      return check.name === "report.expandExamples" && check.ok;
-    });
-    var urlsCheck = report.checks.find(function (check) {
-      return check.name === "report.getExampleUrls" && check.ok;
-    });
-    var allPropertyExamplesCheck = report.checks.find(function (check) {
-      return check.name === "report.getPropertyExamples" && check.ok;
-    });
-    var failedPropertyExamplesCheck = report.checks.find(function (check) {
-      return check.name === "report.getFailedPropertyExamples" && check.ok;
-    });
+    var expandedCheck = findCheck(report.checks, "report.expandExamples");
+    var urlsCheck = findCheck(report.checks, "report.getExampleUrls");
+    var allPropertyExamplesCheck = findCheck(report.checks, "report.getPropertyExamples");
+    var failedPropertyExamplesCheck = findCheck(report.checks, "report.getFailedPropertyExamples");
 
     report.counts.expandedProperties = expandedCheck && expandedCheck.result
       ? Array.isArray(expandedCheck.result.expandedProperties)
@@ -699,9 +667,7 @@
     report.discovered.errorDetails = detectedError ? detectedError.details : null;
     report.counts.waitedMs = waitResult.waitedMs || 0;
 
-    var inlineViewsCheck = report.checks.find(function (check) {
-      return check.name === "report.getInlineErrorLogViews" && check.ok;
-    });
+    var inlineViewsCheck = findCheck(report.checks, "report.getInlineErrorLogViews");
     var inlineViews = inlineViewsCheck && Array.isArray(inlineViewsCheck.result)
       ? inlineViewsCheck.result
       : [];
@@ -722,9 +688,7 @@
         }, summarizeEventList, { keepResult: true }),
       );
 
-      var readInlineCheck = report.checks.find(function (check) {
-        return check.name === "report.readInlineErrorLog" && check.ok;
-      });
+      var readInlineCheck = findCheck(report.checks, "report.readInlineErrorLog");
       var readInlineResult = readInlineCheck && readInlineCheck.result;
       var readInlineEvents = readInlineResult && Array.isArray(readInlineResult.events)
         ? readInlineResult.events
@@ -755,9 +719,7 @@
         }, summarizeEventList, { keepResult: true }),
       );
 
-      var collectInlineCheck = report.checks.find(function (check) {
-        return check.name === "report.collectInlineErrorLog" && check.ok;
-      });
+      var collectInlineCheck = findCheck(report.checks, "report.collectInlineErrorLog");
       var collectInlineResult = collectInlineCheck && collectInlineCheck.result;
 
       report.counts.inlineErrorLogCollectedEvents =
@@ -863,18 +825,10 @@
       }, { keepResult: true }),
     );
 
-    var itemCountCheck = report.checks.find(function (check) {
-      return check.name === "logs.getItemCount" && check.ok;
-    });
-    var visibleEventsCheck = report.checks.find(function (check) {
-      return check.name === "logs.readVisibleEvents" && check.ok;
-    });
-    var highlightedCheck = report.checks.find(function (check) {
-      return check.name === "logs.findHighlightedEvent" && check.ok;
-    });
-    var collectedEventsCheck = report.checks.find(function (check) {
-      return check.name === "logs.collectEvents" && check.ok;
-    });
+    var itemCountCheck = findCheck(report.checks, "logs.getItemCount");
+    var visibleEventsCheck = findCheck(report.checks, "logs.readVisibleEvents");
+    var highlightedCheck = findCheck(report.checks, "logs.findHighlightedEvent");
+    var collectedEventsCheck = findCheck(report.checks, "logs.collectEvents");
 
     var queryEvents = [];
     if (visibleEventsCheck && Array.isArray(visibleEventsCheck.result)) {

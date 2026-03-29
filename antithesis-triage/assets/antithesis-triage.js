@@ -71,7 +71,10 @@
   function lastText(el) {
     var direct = lastTextNode(el);
     if (direct) return direct;
-    return clean(el && el.textContent);
+    // Only fall back to full textContent when no child elements exist;
+    // otherwise the tooltip label (e.g. "event.container") leaks through.
+    if (el && !el.querySelector("*")) return clean(el.textContent);
+    return "";
   }
 
   function parseItemCount(text) {
@@ -179,10 +182,8 @@
     return Array.from(document.querySelectorAll("section")).find(function (
       section,
     ) {
-      return (
-        clean(section.querySelector("h1, h2, h3, h4, h5, h6") && section.querySelector("h1, h2, h3, h4, h5, h6").textContent) ===
-        heading
-      );
+      var h = section.querySelector("h1, h2, h3, h4, h5, h6");
+      return clean(h && h.textContent) === heading;
     });
   }
 
@@ -231,10 +232,8 @@
   }
 
   function nameOf(container) {
-    return clean(
-      container.querySelector(":scope > .property .property__name_label") &&
-        container.querySelector(":scope > .property .property__name_label").textContent,
-    );
+    var label = container.querySelector(":scope > .property .property__name_label");
+    return clean(label && label.textContent);
   }
 
   function directChildren(container) {
@@ -518,10 +517,8 @@
 
   function inlineErrorLogViews() {
     return inlineErrorLogWrappers().map(function (wrapper, index) {
-      var counterText = clean(
-        wrapper.querySelector(".sequence_toolbar__items-counter") &&
-          wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
-      );
+      var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
+      var counterText = clean(counterEl && counterEl.textContent);
       var events = Array.from(wrapper.querySelectorAll(".event"));
       var firstEvent = events.length ? serializeLogEvent(events[0]) : null;
 
@@ -613,13 +610,9 @@
     scroller.scrollTop = startTop;
     scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
 
+    var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
     return {
-      itemCount: parseItemCount(
-        clean(
-          wrapper.querySelector(".sequence_toolbar__items-counter") &&
-            wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
-        ),
-      ),
+      itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
       collectedCount: events.length,
       truncated: !!(maxItems && events.length >= maxItems),
       events: maxItems ? events.slice(0, maxItems) : events,
@@ -711,14 +704,17 @@
     var nameMeta = tooltipMap(nameTooltip);
     var creatorMeta = tooltipMap(creatorTooltip);
 
+    var nameMutedEl = nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text");
+    var nameTooltipTextEl = nameCell && nameCell.querySelector(".runs_table_tooltip_text");
+
     return {
       name:
         nameMeta.Name ||
-        clean(nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text") && nameCell.querySelector(".runs_table_muted_tooltip_text").textContent) ||
+        clean(nameMutedEl && nameMutedEl.textContent) ||
         clean(nameCell && nameCell.textContent),
       description:
         nameMeta.Description ||
-        clean(nameCell && nameCell.querySelector(".runs_table_tooltip_text") && nameCell.querySelector(".runs_table_tooltip_text").textContent),
+        clean(nameTooltipTextEl && nameTooltipTextEl.textContent),
       creatorSource: clean(creatorSource && creatorSource.textContent),
       creatorName:
         ownText(creatorName && creatorName.querySelector("div")) ||
@@ -920,30 +916,28 @@
 
     return Array.from(document.querySelectorAll(".examples_table__row")).map(
       function (row) {
-        var example = row.querySelector(".example_failing, .example_passing");
-        var getLogsLink = row.querySelector("a[href*='search']");
-
-        return {
-          status: example ? example.className.replace("example_", "") : "",
-          time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
-          logsUrl: getLogsLink ? getLogsLink.href : null,
-        };
+        return parseExampleRow(row);
       },
     );
+  }
+
+  function parseExampleRow(row) {
+    var example = row.querySelector(".example_failing, .example_passing");
+    var getLogsLink = row.querySelector("a[href*='search']");
+    var timeCell = row.querySelectorAll("td")[1];
+
+    return {
+      status: example ? example.className.replace("example_", "") : "",
+      time: timeCell && clean(timeCell.textContent),
+      logsUrl: getLogsLink ? getLogsLink.href : null,
+    };
   }
 
   function examplesForContainer(container) {
     return Array.from(
       container.querySelectorAll(":scope > .property__details .examples_table__row"),
     ).map(function (row) {
-      var example = row.querySelector(".example_failing, .example_passing");
-      var getLogsLink = row.querySelector("a[href*='search']");
-
-      return {
-        status: example ? example.className.replace("example_", "") : "",
-        time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
-        logsUrl: getLogsLink ? getLogsLink.href : null,
-      };
+      return parseExampleRow(row);
     });
   }
 
@@ -1106,18 +1100,18 @@
         "section.section_properties:not(.section_findings)",
       );
       var findingsSection = document.querySelector("section.section_findings");
+      var titleEl = document.querySelector(".branded_title");
+      var metadataEl = document.querySelector(".branded_metadata");
+      var metricEl = document.querySelector(".utilization-summary__metric");
 
       return {
-        title: clean(document.querySelector(".branded_title") && document.querySelector(".branded_title").textContent),
-        metadata: clean(document.querySelector(".branded_metadata") && document.querySelector(".branded_metadata").textContent),
+        title: clean(titleEl && titleEl.textContent),
+        metadata: clean(metadataEl && metadataEl.textContent),
         readyState: document.readyState,
         environmentImages: document.querySelectorAll(
           ".presentation_environment__source_image",
         ).length,
-        utilizationMetric: clean(
-          document.querySelector(".utilization-summary__metric") &&
-            document.querySelector(".utilization-summary__metric").textContent,
-        ),
+        utilizationMetric: clean(metricEl && metricEl.textContent),
         propertyTabs: document.querySelectorAll("a-tab").length,
         propertyContainers: document.querySelectorAll(".property-container").length,
         findingsDetails: findingsSection
@@ -1171,14 +1165,10 @@
         };
       }
 
+      var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
       return {
         index: target,
-        itemCount: parseItemCount(
-          clean(
-            wrapper.querySelector(".sequence_toolbar__items-counter") &&
-              wrapper.querySelector(".sequence_toolbar__items-counter").textContent,
-          ),
-        ),
+        itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
         events: readEventsFromWrapper(wrapper, limit),
       };
     },
@@ -1208,14 +1198,10 @@
       var error = requireReportPage();
       if (error) return error;
 
-      var title = clean(
-        document.querySelector(".branded_title") &&
-          document.querySelector(".branded_title").textContent,
-      );
-      var metadataText = clean(
-        document.querySelector(".branded_metadata") &&
-          document.querySelector(".branded_metadata").textContent,
-      );
+      var titleEl = document.querySelector(".branded_title");
+      var metadataEl = document.querySelector(".branded_metadata");
+      var title = clean(titleEl && titleEl.textContent);
+      var metadataText = clean(metadataEl && metadataEl.textContent);
       var metadataMatch = metadataText.match(
         /^Conducted on\s+(.+?)(?:\s*Source:\s*(.+))?$/,
       );
@@ -1264,10 +1250,8 @@
       // Re-query after expansion in case the DOM changed.
       return Array.from(document.querySelectorAll("details.findings_section_details"))
         .map(function (section) {
-          var summary = clean(
-            (section.querySelector("summary") && section.querySelector("summary").textContent) ||
-              section.textContent,
-          );
+          var summaryEl = section.querySelector("summary");
+          var summary = clean((summaryEl && summaryEl.textContent) || section.textContent);
           var dateMatch = summary.match(
             /^[A-Z][a-z]{2} \d{2} [A-Z][a-z]{2,3} \d{2}:\d{2}/,
           );
@@ -1348,20 +1332,16 @@
     },
 
     loadingStatus: function () {
+      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
       return {
         url: window.location.href,
         wrapperVisible: isVisible(document.querySelector(".sequence_printer_wrapper")),
         filterVisible: isVisible(document.querySelector(".sequence_filter__input")),
         searchVisible: isVisible(document.querySelector(".sequence_search__input")),
-        counterVisible: isVisible(
-          document.querySelector(".sequence_toolbar__items-counter"),
-        ),
+        counterVisible: isVisible(counterEl),
         visibleEvents: Array.from(document.querySelectorAll(".event")).filter(isVisible)
           .length,
-        itemCounter: clean(
-          document.querySelector(".sequence_toolbar__items-counter") &&
-            document.querySelector(".sequence_toolbar__items-counter").textContent,
-        ),
+        itemCounter: clean(counterEl && counterEl.textContent),
       };
     },
 
@@ -1381,11 +1361,8 @@
       var error = requireLogsPage();
       if (error) return error;
 
-      var counterText = clean(
-        document.querySelector(".sequence_toolbar__items-counter") &&
-          document.querySelector(".sequence_toolbar__items-counter").textContent,
-      );
-      var count = parseItemCount(counterText);
+      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
+      var count = parseItemCount(clean(counterEl && counterEl.textContent));
       return count === null ? "unknown" : String(count);
     },
 

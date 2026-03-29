@@ -127,6 +127,16 @@ wait_ready() {
     >/dev/null
 }
 
+make_temp() {
+  local prefix="$1"
+  local content="$2"
+  local file
+  file="$(mktemp "$TMP_DIR/${prefix}.XXXXXX.json")"
+  TEMP_FILES+=("$file")
+  printf '%s\n' "$content" > "$file"
+  printf '%s' "$file"
+}
+
 build_report_audit() {
   local report_url="$1"
   local core properties examples
@@ -141,14 +151,9 @@ build_report_audit() {
   wait_ready report
   examples="$(run_audit_phase report-examples)"
 
-  core_file="$(mktemp "$TMP_DIR/report-core.XXXXXX.json")"
-  properties_file="$(mktemp "$TMP_DIR/report-properties.XXXXXX.json")"
-  examples_file="$(mktemp "$TMP_DIR/report-examples.XXXXXX.json")"
-  TEMP_FILES+=("$core_file" "$properties_file" "$examples_file")
-
-  printf '%s\n' "$core" > "$core_file"
-  printf '%s\n' "$properties" > "$properties_file"
-  printf '%s\n' "$examples" > "$examples_file"
+  core_file="$(make_temp report-core "$core")"
+  properties_file="$(make_temp report-properties "$properties")"
+  examples_file="$(make_temp report-examples "$examples")"
 
   jq -n \
     --slurpfile core_file "$core_file" \
@@ -210,24 +215,11 @@ build_final_json() {
     error_json="null"
   fi
 
-  runs_audit_file="$(mktemp "$TMP_DIR/runs-audit.XXXXXX.json")"
-  report_audit_file="$(mktemp "$TMP_DIR/report-audit.XXXXXX.json")"
-  logs_audit_file="$(mktemp "$TMP_DIR/logs-audit.XXXXXX.json")"
-  error_report_audit_file="$(mktemp "$TMP_DIR/error-report-audit.XXXXXX.json")"
-  logs_source_report_audit_file="$(mktemp "$TMP_DIR/logs-source-report-audit.XXXXXX.json")"
-  TEMP_FILES+=(
-    "$runs_audit_file"
-    "$report_audit_file"
-    "$logs_audit_file"
-    "$error_report_audit_file"
-    "$logs_source_report_audit_file"
-  )
-
-  printf '%s\n' "$RUNS_AUDIT" > "$runs_audit_file"
-  printf '%s\n' "$REPORT_AUDIT" > "$report_audit_file"
-  printf '%s\n' "${LOGS_AUDIT:-null}" > "$logs_audit_file"
-  printf '%s\n' "${ERROR_REPORT_AUDIT:-null}" > "$error_report_audit_file"
-  printf '%s\n' "${LOGS_SOURCE_REPORT_AUDIT:-null}" > "$logs_source_report_audit_file"
+  runs_audit_file="$(make_temp runs-audit "$RUNS_AUDIT")"
+  report_audit_file="$(make_temp report-audit "$REPORT_AUDIT")"
+  logs_audit_file="$(make_temp logs-audit "${LOGS_AUDIT:-null}")"
+  error_report_audit_file="$(make_temp error-report-audit "${ERROR_REPORT_AUDIT:-null}")"
+  logs_source_report_audit_file="$(make_temp logs-source-report-audit "${LOGS_SOURCE_REPORT_AUDIT:-null}")"
 
   jq -n \
     --arg tenant "$TENANT" \
