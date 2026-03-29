@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.1.0";
+  var VERSION = "1.3.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -71,7 +71,17 @@
   function lastText(el) {
     var direct = lastTextNode(el);
     if (direct) return direct;
-    return clean(el && el.textContent);
+    // Only fall back to full textContent when no child elements exist;
+    // otherwise the tooltip label (e.g. "event.container") leaks through.
+    if (el && !el.querySelector("*")) return clean(el.textContent);
+    return "";
+  }
+
+  function parseItemCount(text) {
+    var matches = Array.from((text || "").matchAll(/(\d[\d,]*)\s*items?\b/gi));
+    return matches.length
+      ? Number(matches[matches.length - 1][1].replace(/,/g, ""))
+      : null;
   }
 
   function hasLoadingText(text) {
@@ -172,10 +182,8 @@
     return Array.from(document.querySelectorAll("section")).find(function (
       section,
     ) {
-      return (
-        clean(section.querySelector("h1, h2, h3, h4, h5, h6") && section.querySelector("h1, h2, h3, h4, h5, h6").textContent) ===
-        heading
-      );
+      var h = section.querySelector("h1, h2, h3, h4, h5, h6");
+      return clean(h && h.textContent) === heading;
     });
   }
 
@@ -224,10 +232,8 @@
   }
 
   function nameOf(container) {
-    return clean(
-      container.querySelector(":scope > .property .property__name_label") &&
-        container.querySelector(":scope > .property .property__name_label").textContent,
-    );
+    var label = container.querySelector(":scope > .property .property__name_label");
+    return clean(label && label.textContent);
   }
 
   function directChildren(container) {
@@ -358,6 +364,16 @@
     }
   }
 
+  function exampleCounts(container) {
+    var text = clean(container.textContent);
+    var match = text.match(/([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/);
+    if (!match) return { passingCount: null, failingCount: null };
+    return { passingCount: match[1], failingCount: match[2] };
+  }
+
+  // Assumes leaf properties are already expanded by the caller (getAllProperties
+  // and getFilteredProperties both expand all containers before calling this).
+  // Pass/fail example counts are only present in the DOM after expansion.
   function visibleLeafProperties(filterStatus) {
     return visiblePropertyContainers()
       .filter(function (container) {
@@ -365,10 +381,13 @@
         return !filterStatus || containerStatus(container) === filterStatus;
       })
       .map(function (container) {
+        var counts = exampleCounts(container);
         return {
           group: groupPath(container),
           name: nameOf(container),
           status: containerStatus(container),
+          passingCount: counts.passingCount,
+          failingCount: counts.failingCount,
         };
       });
   }
@@ -379,18 +398,225 @@
     ).length;
   }
 
-  function extractLogEvent(ev) {
+  function cleanLogOutput(text) {
+    return clean(text).replace(/^event\.output_text\s*/i, "");
+  }
+
+  function extractLogOutput(varyingPart) {
+    var output = varyingPart && varyingPart.querySelector(".event__output_text");
+    var direct = cleanLogOutput(lastTextNode(output));
+    if (direct) return direct;
+    return cleanLogOutput(output && output.textContent);
+  }
+
+  function extractLogDirectText(varyingPart) {
+    return clean(
+      Array.from((varyingPart && varyingPart.childNodes) || [])
+        .filter(function (node) {
+          return node.nodeType === Node.TEXT_NODE;
+        })
+        .map(function (node) {
+          return node.textContent;
+        })
+        .join(" "),
+    );
+  }
+
+  function extractLogDetails(ev) {
     // Assertion rows and regular log rows render their useful text differently.
     var assertion = ev.querySelector(".sdk-assertion__meta");
-    if (assertion) {
-      return clean(assertion.textContent);
+    var assertionText = clean(assertion && assertion.textContent);
+    if (assertionText) {
+      return {
+        assertionText: assertionText,
+        directText: "",
+        outputText: "",
+        text: assertionText,
+      };
     }
 
-    var output = ev.querySelector(".event__varying-part .event__output_text");
-    var direct = lastTextNode(output);
-    if (direct) return direct;
+    var varyingPart = ev.querySelector(".event__varying-part");
+    var directText = extractLogDirectText(varyingPart);
+    var outputText = extractLogOutput(varyingPart);
+    var text = outputText || directText;
 
-    return clean(output && output.textContent).replace(/^event\.output_text\s*/i, "");
+    if (directText && outputText && directText !== outputText) {
+      text = directText + " | " + outputText;
+    }
+
+    return {
+      assertionText: "",
+      directText: directText,
+      outputText: outputText,
+      text: text,
+    };
+  }
+
+  function serializeLogEvent(ev) {
+    var details = extractLogDetails(ev);
+
+    return {
+      vtime: lastText(ev.querySelector(".event__vtime")),
+      container: lastText(ev.querySelector(".event__container")),
+      source: lastText(ev.querySelector(".event__source_name")),
+      text: details.text,
+      directText: details.directText,
+      outputText: details.outputText,
+      highlighted:
+        ev.classList.contains("_emphasized_blue") ||
+        ev.classList.contains("_emphasized"),
+    };
+  }
+
+  function readEventsFromWrapper(wrapper, limit) {
+    var maxItems = typeof limit === "number" && limit > 0 ? limit : 20;
+
+    return Array.from(wrapper.querySelectorAll(".event"))
+      .slice(0, maxItems)
+      .map(function (ev) {
+        return serializeLogEvent(ev);
+      });
+  }
+
+  function errorSection() {
+    return findSectionByHeading("Error");
+  }
+
+  function inlineErrorLogWrappers() {
+    var section = errorSection();
+    if (!section) return [];
+
+    return Array.from(section.querySelectorAll(".sequence_printer_wrapper")).filter(
+      isVisible,
+    );
+  }
+
+  function requireInlineErrorLogs() {
+    var navError = requireReportPage();
+    if (navError) return navError;
+
+    var err = detectError();
+    if (!err) {
+      return {
+        error: "expected error report with inline logs",
+        url: window.location.href,
+      };
+    }
+
+    var wrappers = inlineErrorLogWrappers();
+    if (!wrappers.length) {
+      return {
+        error: "no inline error log panes found",
+        errorType: err.type,
+        url: window.location.href,
+      };
+    }
+
+    return null;
+  }
+
+  function inlineErrorLogViews() {
+    return inlineErrorLogWrappers().map(function (wrapper, index) {
+      var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
+      var counterText = clean(counterEl && counterEl.textContent);
+      var events = Array.from(wrapper.querySelectorAll(".event"));
+      var firstEvent = events.length ? serializeLogEvent(events[0]) : null;
+
+      return {
+        index: index,
+        itemCount: parseItemCount(counterText),
+        visibleEvents: events.filter(isVisible).length,
+        firstEvent: firstEvent,
+      };
+    });
+  }
+
+  async function collectEventsFromWrapper(wrapper, options) {
+    var scroller = wrapper.querySelector(".vscroll");
+    if (!scroller) return { error: "log scroller not found" };
+
+    var maxItems =
+      options && typeof options.maxItems === "number" && options.maxItems > 0
+        ? options.maxItems
+        : null;
+    var stepPx =
+      options && typeof options.stepPx === "number" && options.stepPx > 0
+        ? options.stepPx
+        : Math.max(Math.floor(scroller.clientHeight * 0.8), 200);
+    var settleMs =
+      options && typeof options.settleMs === "number" && options.settleMs >= 0
+        ? options.settleMs
+        : 100;
+    var maxScrolls =
+      options && typeof options.maxScrolls === "number" && options.maxScrolls > 0
+        ? options.maxScrolls
+        : 500;
+
+    var startTop = scroller.scrollTop;
+    var seen = {};
+    var events = [];
+
+    function recordVisible() {
+      var limitReached = false;
+
+      Array.from(wrapper.querySelectorAll(".event")).forEach(function (ev) {
+        if (limitReached) return;
+
+        var entry = serializeLogEvent(ev);
+        var key = [entry.vtime, entry.source, entry.text].join("\n");
+        if (!entry.vtime && !entry.source && !entry.text) return;
+        if (seen[key]) return;
+        if (maxItems && events.length >= maxItems) {
+          limitReached = true;
+          return;
+        }
+        seen[key] = true;
+        events.push(entry);
+      });
+
+      return limitReached;
+    }
+
+    scroller.scrollTop = 0;
+    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+    await wait(settleMs);
+
+    var previousCount = -1;
+    for (var i = 0; i < maxScrolls; i++) {
+      if (recordVisible() || (maxItems && events.length >= maxItems)) break;
+
+      var atBottom =
+        Math.ceil(scroller.scrollTop + scroller.clientHeight) >=
+        Math.floor(scroller.scrollHeight);
+      if (atBottom && events.length === previousCount) break;
+      previousCount = events.length;
+
+      var nextTop = Math.min(
+        scroller.scrollTop + stepPx,
+        Math.max(scroller.scrollHeight - scroller.clientHeight, 0),
+      );
+
+      if (nextTop === scroller.scrollTop) {
+        if (atBottom) break;
+        nextTop = scroller.scrollHeight;
+      }
+
+      scroller.scrollTop = nextTop;
+      scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+      await wait(settleMs);
+    }
+
+    recordVisible();
+    scroller.scrollTop = startTop;
+    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
+
+    var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
+    return {
+      itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
+      collectedCount: events.length,
+      truncated: !!(maxItems && events.length >= maxItems),
+      events: maxItems ? events.slice(0, maxItems) : events,
+    };
   }
 
   function tooltipMap(tooltip) {
@@ -478,14 +704,17 @@
     var nameMeta = tooltipMap(nameTooltip);
     var creatorMeta = tooltipMap(creatorTooltip);
 
+    var nameMutedEl = nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text");
+    var nameTooltipTextEl = nameCell && nameCell.querySelector(".runs_table_tooltip_text");
+
     return {
       name:
         nameMeta.Name ||
-        clean(nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text") && nameCell.querySelector(".runs_table_muted_tooltip_text").textContent) ||
+        clean(nameMutedEl && nameMutedEl.textContent) ||
         clean(nameCell && nameCell.textContent),
       description:
         nameMeta.Description ||
-        clean(nameCell && nameCell.querySelector(".runs_table_tooltip_text") && nameCell.querySelector(".runs_table_tooltip_text").textContent),
+        clean(nameTooltipTextEl && nameTooltipTextEl.textContent),
       creatorSource: clean(creatorSource && creatorSource.textContent),
       creatorName:
         ownText(creatorName && creatorName.querySelector("div")) ||
@@ -597,133 +826,12 @@
     };
   }
 
-  async function expandFailedExamples() {
-    var error = requireReportPage();
-    if (error) return error;
-
-    await activateTab(
-      function () {
-        return document.querySelector("a-tab._failing") || tabByPattern(/\bfailed\b/);
-      },
-      function () {
-        return visiblePropertyContainers().some(function (container) {
-          return containerStatus(container) === "failed";
-        });
-      },
-    );
-
-    for (var i = 0; i < 8; i++) {
-      var changed = false;
-
-      // Expand failed groups first so leaf examples tables become reachable.
-      visiblePropertyContainers().forEach(function (container) {
-        if (!isVisible(container) || !isGroup(container) || isExpanded(container)) {
-          return;
-        }
-
-        if (containerStatus(container) !== "failed") {
-          return;
-        }
-
-        if (click(expanderButton(container))) {
-          changed = true;
-        }
-      });
-
-      if (changed) await wait(250);
-
-      // Then expand failed leaves until example rows render.
-      visiblePropertyContainers().forEach(function (container) {
-        if (!isVisible(container) || isGroup(container)) return;
-        if (containerStatus(container) !== "failed" || examplesRows(container) > 0) {
-          return;
-        }
-
-        if (click(expanderButton(container))) {
-          changed = true;
-        }
-      });
-
-      if (changed) {
-        await wait(250);
-      } else {
-        break;
-      }
-    }
-
-    var expandedProperties = visiblePropertyContainers()
+  function expandedPropertiesWithExamples(statuses) {
+    return visiblePropertyContainers()
       .filter(function (container) {
         return (
           !isGroup(container) &&
-          containerStatus(container) === "failed" &&
-          examplesRows(container) > 0
-        );
-      })
-      .map(function (container) {
-        return {
-          group: groupPath(container),
-          name: nameOf(container),
-          exampleRows: examplesRows(container),
-        };
-      })
-      .filter(function (property) {
-        return property.name;
-      });
-
-    return {
-      filter: "failed",
-      expandedProperties: expandedProperties,
-      totalExampleRows: expandedProperties.reduce(function (sum, property) {
-        return sum + property.exampleRows;
-      }, 0),
-    };
-  }
-
-  function getExampleUrls() {
-    var error = requireReportPage();
-    if (error) return error;
-
-    return Array.from(document.querySelectorAll(".examples_table__row")).map(
-      function (row) {
-        var example = row.querySelector(".example_failing, .example_passing");
-        var getLogsLink = row.querySelector("a[href*='search']");
-
-        return {
-          status: example ? example.className.replace("example_", "") : "",
-          time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
-          logsUrl: getLogsLink ? getLogsLink.href : null,
-        };
-      },
-    );
-  }
-
-  function examplesForContainer(container) {
-    return Array.from(
-      container.querySelectorAll(":scope > .property__details .examples_table__row"),
-    ).map(function (row) {
-      var example = row.querySelector(".example_failing, .example_passing");
-      var getLogsLink = row.querySelector("a[href*='search']");
-
-      return {
-        status: example ? example.className.replace("example_", "") : "",
-        time: row.querySelectorAll("td")[1] && clean(row.querySelectorAll("td")[1].textContent),
-        logsUrl: getLogsLink ? getLogsLink.href : null,
-      };
-    });
-  }
-
-  async function getFailedPropertyExamples() {
-    var error = requireReportPage();
-    if (error) return error;
-
-    var expanded = await expandFailedExamples();
-    if (expanded && expanded.error) return expanded;
-
-    var properties = visiblePropertyContainers()
-      .filter(function (container) {
-        return (
-          !isGroup(container) &&
-          containerStatus(container) === "failed" &&
+          statuses.indexOf(containerStatus(container)) >= 0 &&
           examplesRows(container) > 0
         );
       })
@@ -732,20 +840,155 @@
           group: groupPath(container),
           name: nameOf(container),
           status: containerStatus(container),
-          examples: examplesForContainer(container),
+          exampleRows: examplesRows(container),
         };
       })
       .filter(function (property) {
         return property.name;
       });
+  }
+
+  async function expandExamplesForStatuses(targetStatuses) {
+    var error = requireReportPage();
+    if (error) return error;
+
+    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
+      ? targetStatuses.slice()
+      : ["failed", "passed"];
+    var expandedProperties = [];
+
+    for (var si = 0; si < statuses.length; si++) {
+      var status = statuses[si];
+      if (status !== "failed" && status !== "passed" && status !== "unfound") {
+        continue;
+      }
+
+      var prepared = await getFilteredProperties(status);
+      if (prepared && prepared.error) return prepared;
+
+      for (var i = 0; i < 8; i++) {
+        var changed = false;
+
+        visiblePropertyContainers().forEach(function (container) {
+          if (!isVisible(container) || isGroup(container)) return;
+          if (containerStatus(container) !== status || examplesRows(container) > 0) {
+            return;
+          }
+
+          var button = expanderButton(container);
+          if (button && click(button)) {
+            changed = true;
+          }
+        });
+
+        if (changed) {
+          await wait(250);
+        } else {
+          break;
+        }
+      }
+
+      expandedProperties = expandedProperties.concat(
+        expandedPropertiesWithExamples([status]),
+      );
+    }
 
     return {
-      filter: "failed",
+      filter: statuses.join(","),
+      expandedProperties: expandedProperties,
+      totalExampleRows: expandedProperties.reduce(function (sum, property) {
+        return sum + property.exampleRows;
+      }, 0),
+    };
+  }
+
+  async function expandExamples(targetStatuses) {
+    return expandExamplesForStatuses(targetStatuses);
+  }
+
+  async function expandFailedExamples() {
+    return expandExamplesForStatuses(["failed"]);
+  }
+
+  function getExampleUrls() {
+    var error = requireReportPage();
+    if (error) return error;
+
+    return Array.from(document.querySelectorAll(".examples_table__row")).map(
+      function (row) {
+        return parseExampleRow(row);
+      },
+    );
+  }
+
+  function parseExampleRow(row) {
+    var example = row.querySelector(".example_failing, .example_passing");
+    var getLogsLink = row.querySelector("a[href*='search']");
+    var timeCell = row.querySelectorAll("td")[1];
+
+    return {
+      status: example ? example.className.replace("example_", "") : "",
+      time: timeCell && clean(timeCell.textContent),
+      logsUrl: getLogsLink ? getLogsLink.href : null,
+    };
+  }
+
+  function examplesForContainer(container) {
+    return Array.from(
+      container.querySelectorAll(":scope > .property__details .examples_table__row"),
+    ).map(function (row) {
+      return parseExampleRow(row);
+    });
+  }
+
+  async function getPropertyExamples(targetStatuses) {
+    var error = requireReportPage();
+    if (error) return error;
+
+    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
+      ? targetStatuses.slice()
+      : ["failed", "passed"];
+    var properties = [];
+
+    for (var si = 0; si < statuses.length; si++) {
+      var status = statuses[si];
+      var expanded = await expandExamplesForStatuses([status]);
+      if (expanded && expanded.error) return expanded;
+
+      properties = properties.concat(
+        visiblePropertyContainers()
+          .filter(function (container) {
+            return (
+              !isGroup(container) &&
+              containerStatus(container) === status &&
+              examplesRows(container) > 0
+            );
+          })
+          .map(function (container) {
+            return {
+              group: groupPath(container),
+              name: nameOf(container),
+              status: containerStatus(container),
+              examples: examplesForContainer(container),
+            };
+          })
+          .filter(function (property) {
+            return property.name;
+          }),
+      );
+    }
+
+    return {
+      filter: statuses.join(","),
       properties: properties,
       totalExamples: properties.reduce(function (sum, property) {
         return sum + property.examples.length;
       }, 0),
     };
+  }
+
+  async function getFailedPropertyExamples() {
+    return getPropertyExamples(["failed"]);
   }
 
   var reportApi = {
@@ -857,18 +1100,18 @@
         "section.section_properties:not(.section_findings)",
       );
       var findingsSection = document.querySelector("section.section_findings");
+      var titleEl = document.querySelector(".branded_title");
+      var metadataEl = document.querySelector(".branded_metadata");
+      var metricEl = document.querySelector(".utilization-summary__metric");
 
       return {
-        title: clean(document.querySelector(".branded_title") && document.querySelector(".branded_title").textContent),
-        metadata: clean(document.querySelector(".branded_metadata") && document.querySelector(".branded_metadata").textContent),
+        title: clean(titleEl && titleEl.textContent),
+        metadata: clean(metadataEl && metadataEl.textContent),
         readyState: document.readyState,
         environmentImages: document.querySelectorAll(
           ".presentation_environment__source_image",
         ).length,
-        utilizationMetric: clean(
-          document.querySelector(".utilization-summary__metric") &&
-            document.querySelector(".utilization-summary__metric").textContent,
-        ),
+        utilizationMetric: clean(metricEl && metricEl.textContent),
         propertyTabs: document.querySelectorAll("a-tab").length,
         propertyContainers: document.querySelectorAll(".property-container").length,
         findingsDetails: findingsSection
@@ -901,18 +1144,64 @@
       return detectError();
     },
 
+    getInlineErrorLogViews: function () {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+      return inlineErrorLogViews();
+    },
+
+    readInlineErrorLog: function (index, limit) {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+
+      var wrappers = inlineErrorLogWrappers();
+      var target = typeof index === "number" ? index : 0;
+      var wrapper = wrappers[target];
+      if (!wrapper) {
+        return {
+          error: "inline error log pane not found",
+          index: target,
+          available: wrappers.length,
+        };
+      }
+
+      var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
+      return {
+        index: target,
+        itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
+        events: readEventsFromWrapper(wrapper, limit),
+      };
+    },
+
+    collectInlineErrorLog: async function (index, options) {
+      var error = requireInlineErrorLogs();
+      if (error) return error;
+
+      var wrappers = inlineErrorLogWrappers();
+      var target = typeof index === "number" ? index : 0;
+      var wrapper = wrappers[target];
+      if (!wrapper) {
+        return {
+          error: "inline error log pane not found",
+          index: target,
+          available: wrappers.length,
+        };
+      }
+
+      var result = await collectEventsFromWrapper(wrapper, options || {});
+      if (result.error) return result;
+      result.index = target;
+      return result;
+    },
+
     getRunMetadata: function () {
       var error = requireReportPage();
       if (error) return error;
 
-      var title = clean(
-        document.querySelector(".branded_title") &&
-          document.querySelector(".branded_title").textContent,
-      );
-      var metadataText = clean(
-        document.querySelector(".branded_metadata") &&
-          document.querySelector(".branded_metadata").textContent,
-      );
+      var titleEl = document.querySelector(".branded_title");
+      var metadataEl = document.querySelector(".branded_metadata");
+      var title = clean(titleEl && titleEl.textContent);
+      var metadataText = clean(metadataEl && metadataEl.textContent);
       var metadataMatch = metadataText.match(
         /^Conducted on\s+(.+?)(?:\s*Source:\s*(.+))?$/,
       );
@@ -961,10 +1250,8 @@
       // Re-query after expansion in case the DOM changed.
       return Array.from(document.querySelectorAll("details.findings_section_details"))
         .map(function (section) {
-          var summary = clean(
-            (section.querySelector("summary") && section.querySelector("summary").textContent) ||
-              section.textContent,
-          );
+          var summaryEl = section.querySelector("summary");
+          var summary = clean((summaryEl && summaryEl.textContent) || section.textContent);
           var dateMatch = summary.match(
             /^[A-Z][a-z]{2} \d{2} [A-Z][a-z]{2,3} \d{2}:\d{2}/,
           );
@@ -1011,8 +1298,10 @@
     getUnfoundProperties: function () {
       return getFilteredProperties("unfound");
     },
+    expandExamples: expandExamples,
     expandFailedExamples: expandFailedExamples,
     getExampleUrls: getExampleUrls,
+    getPropertyExamples: getPropertyExamples,
     getFailedPropertyExamples: getFailedPropertyExamples,
   };
 
@@ -1043,20 +1332,16 @@
     },
 
     loadingStatus: function () {
+      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
       return {
         url: window.location.href,
         wrapperVisible: isVisible(document.querySelector(".sequence_printer_wrapper")),
         filterVisible: isVisible(document.querySelector(".sequence_filter__input")),
         searchVisible: isVisible(document.querySelector(".sequence_search__input")),
-        counterVisible: isVisible(
-          document.querySelector(".sequence_toolbar__items-counter"),
-        ),
+        counterVisible: isVisible(counterEl),
         visibleEvents: Array.from(document.querySelectorAll(".event")).filter(isVisible)
           .length,
-        itemCounter: clean(
-          document.querySelector(".sequence_toolbar__items-counter") &&
-            document.querySelector(".sequence_toolbar__items-counter").textContent,
-        ),
+        itemCounter: clean(counterEl && counterEl.textContent),
       };
     },
 
@@ -1076,12 +1361,9 @@
       var error = requireLogsPage();
       if (error) return error;
 
-      var counterText = clean(
-        document.querySelector(".sequence_toolbar__items-counter") &&
-          document.querySelector(".sequence_toolbar__items-counter").textContent,
-      );
-      var matches = Array.from(counterText.matchAll(/(\d[\d,]*)\s*items?\b/gi));
-      return matches.length ? matches[matches.length - 1][1] : "unknown";
+      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
+      var count = parseItemCount(clean(counterEl && counterEl.textContent));
+      return count === null ? "unknown" : String(count);
     },
 
     filter: function (query) {
@@ -1107,19 +1389,17 @@
     readVisibleEvents: function (limit) {
       var error = requireLogsPage();
       if (error) return error;
+      return readEventsFromWrapper(document, limit);
+    },
 
-      var maxItems = typeof limit === "number" && limit > 0 ? limit : 20;
+    collectEvents: async function (options) {
+      var error = requireLogsPage();
+      if (error) return error;
 
-      return Array.from(document.querySelectorAll(".event"))
-        .slice(0, maxItems)
-        .map(function (ev) {
-          return {
-            vtime: lastText(ev.querySelector(".event__vtime")),
-            source: lastText(ev.querySelector(".event__source_name")),
-            text: extractLogEvent(ev),
-            highlighted: ev.classList.contains("_emphasized_blue"),
-          };
-        });
+      var wrapper = document.querySelector(".sequence_printer_wrapper");
+      if (!wrapper) return { error: "log viewer not found" };
+
+      return collectEventsFromWrapper(wrapper, options || {});
     },
 
     findHighlightedEvent: function (beforeCount, afterCount) {
@@ -1141,12 +1421,7 @@
       var end = Math.min(events.length, highlightedIndex + after);
 
       return events.slice(start, end).map(function (ev) {
-        return {
-          vtime: lastText(ev.querySelector(".event__vtime")),
-          source: lastText(ev.querySelector(".event__source_name")),
-          text: extractLogEvent(ev),
-          highlighted: ev.classList.contains("_emphasized_blue"),
-        };
+        return serializeLogEvent(ev);
       });
     },
 
