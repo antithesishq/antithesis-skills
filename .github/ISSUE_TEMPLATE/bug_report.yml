@@ -1,0 +1,75 @@
+name: Bug Report
+description: Report a problem with the Antithesis skills
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to file a bug report!
+
+        **Tip:** Before filling this out, try asking your agent: *"Why did you do that? What went wrong?"*
+        The agent's self-assessment is often surprisingly useful for diagnosing the issue — paste it into the context section below.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened?
+      description: Describe the bug. What did you do, and what went wrong?
+      placeholder: |
+        I asked the agent to triage my test run and it ...
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: What did you expect?
+      description: What behavior were you expecting instead?
+    validations:
+      required: true
+
+  - type: input
+    id: skill
+    attributes:
+      label: Skill
+      description: Which skill were you using?
+      placeholder: "e.g. antithesis-triage, antithesis-debug, antithesis-setup"
+    validations:
+      required: true
+
+  - type: input
+    id: skill-version
+    attributes:
+      label: Skill version
+      description: A commit SHA, version tag, or any identifier for the skills you have installed. If you're not sure, describe how you installed them (e.g. "cloned from main on March 20").
+      placeholder: "e.g. 76637b7, v1.2.0, or 'installed via plugin marketplace on March 20'"
+    validations:
+      required: false
+
+  - type: input
+    id: agent
+    attributes:
+      label: Agent and version
+      description: Which agent are you using and what version?
+      placeholder: "e.g. Claude Code 1.0.20"
+    validations:
+      required: false
+
+  - type: textarea
+    id: agent-explanation
+    attributes:
+      label: Agent's explanation
+      description: |
+        Ask your agent *"Why did you do that?"* or *"What went wrong?"* and paste its response here.
+        This is often the most useful diagnostic information.
+      placeholder: Paste the agent's self-assessment here...
+    validations:
+      required: false
+
+  - type: textarea
+    id: context
+    attributes:
+      label: Additional context
+      description: Any other context — screenshots, logs, URLs, or relevant details.
+    validations:
+      required: false
