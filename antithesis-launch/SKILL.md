@@ -49,7 +49,7 @@ Launch an Antithesis run in this order only:
   - `--duration`: the user-provided duration
   - `--source`: repo name
   - `--test-name`: repo name plus branch or config name
-  - `--description`: short, readable description of the run, including details such as the branch name, currentl goal, or what you changed since the last run.
+  - `--description`: short, readable description of the run, including details such as the branch name, currently goal, or what you changed since the last run.
 
 ## Execution
 

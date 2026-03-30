@@ -1,6 +1,6 @@
 # antithesis-skills
 
-Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. Other workflows coming soon.
+Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, and launch Antithesis runs. Other workflows coming soon.
 
 `antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills.
 
@@ -17,6 +17,8 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 `antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) notebook — inspecting container filesystems, runtime state, and events from inside the Antithesis environment.
 
+`antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty run` with sensible metadata once the harness is ready.
+
 > [!NOTE]
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
 
@@ -24,9 +26,9 @@ Enable AI agents to set up Antithesis and bootstrap your first Antithesis test. 
 
 We recommend that you run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
 
-We also recommend running `docker/podman compose build` + `snouty validate` after the setup and workload skills to ensure that everything is working well.
+Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty run` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
 
-Furthermore, don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
+Don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
 
 ## Starter prompts
 
@@ -75,6 +77,14 @@ Here's an example:
 
 This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT.
 
+### antithesis-launch
+
+```
+/antithesis-launch Launch an Antithesis run from this repo for 30 minutes.
+```
+
+This skill discovers the Antithesis config, builds the harness, validates it with `snouty validate`, and only submits `snouty run` if validation succeeds.
+
 ## Compatibility
 
 **Platform**: macOS or Linux.
@@ -116,6 +126,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-triage`
    - `antithesis-workload`
    - `antithesis-debug`
+   - `antithesis-launch`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.
 4. **Install find-skills skill** — choose **No**.
