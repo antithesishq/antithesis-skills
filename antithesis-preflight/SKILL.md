@@ -40,10 +40,10 @@ This skill does not write files to the target repository. The verdict is present
 The evaluation is a single pass through four lenses, in order. Stop early if a disqualifier is found.
 
 1. **Check disqualifiers** — scan the codebase for hard-no signals. If any are found, present the verdict and stop.
-2. **Assess suitability** — evaluate the project's business context, architectural complexity, and how well it maps to Antithesis's strengths.
-3. **Assess existing testing and containerization** — scan for test infrastructure, CI/CD, container images, and orchestration.
-4. **Estimate effort and risk** — based on what exists and what's missing, characterize the work ahead.
-5. **Present the verdict** — deliver the qualification to the user using the output format below.
+2. **Assess project and architecture** — understand what the project is, who uses it, and evaluate its distributed architecture and Antithesis fit.
+3. **Assess readiness** — scan for test infrastructure, container images, orchestration, SDK support, and API surface.
+4. **Estimate path to Antithesis** — based on what exists and what's missing, characterize the effort, risks, and next step.
+5. **Present the verdict** — deliver the report to the user using the output format below.
 
 If your agent supports sub-agents, steps 2 and 3 can run in parallel since they examine different aspects of the codebase.
 
@@ -69,251 +69,217 @@ These are hard stops. If any of these are true, the verdict is **not suitable** 
 - **Monorepo containing both libraries and services**: evaluate the services, not the libraries.
 - **System that _could_ be distributed but is deployed as a single process**: note the gap. The project may be suitable if it has a multi-service deployment mode.
 
-## Technical Suitability Assessment
+## Project Overview
 
-Evaluate the project across the following dimensions. For each, record specific evidence — not guesses.
+Understand what the project does, who uses it, and whether finding bugs in it matters. Use repo inspection and web search:
 
-### Business Context and Reach
+- **What it does** — read README, docs, marketing site. One-sentence value proposition.
+- **Who uses it** — production adopters, customers, stated user base. Look for ADOPTERS files, case studies, "used by" sections.
+- **GitHub signal** — stars, forks, contributor count, release cadence, recent activity. Rough proxies for reach.
+- **Business criticality** — infrastructure where bugs cause outages? Financial software where bugs cause data loss? Higher blast radius = better Antithesis fit.
+- **License** — open-source (easier onboarding) vs. proprietary (closer collaboration needed).
 
-Understand what the project does, who uses it, and whether finding bugs in it matters. Use a combination of repo inspection and web search:
+No hard threshold — a small but critical project can be highly suitable despite low star count.
 
-- **What the project does** — read the README, docs, and marketing site. Summarize the product's value proposition in one sentence. A web search for the project or company name can surface business context not in the repo.
-- **Who uses it** — production adopters, known customers, or stated user base. Look for ADOPTERS files, case studies, or "used by" sections in docs.
-- **GitHub signal** — stars, forks, contributor count, release cadence, recent commit activity. These are rough proxies for reach and maintenance health.
-- **Business criticality** — is this infrastructure software (databases, message brokers, orchestrators) where bugs cause outages? Financial software where bugs cause data loss? The higher the blast radius of a bug, the better the Antithesis fit.
-- **Open source vs. proprietary** — check for a LICENSE file. Open-source projects are easier to onboard (full code visibility, public issue trackers). Proprietary projects require closer customer collaboration.
+## Architecture & Suitability
 
-Record what you find. There is no hard threshold — a small but critical infrastructure project (e.g., a consensus library used by a major database) can be highly suitable despite low star count. Use judgment.
+The most important analysis. Evaluate the project's distributed architecture and how well it maps to Antithesis's strengths.
 
-### Architectural Complexity
+### What to look for
 
-This is the most important dimension. Antithesis is strongest when the system has:
+- **Multiple communicating services** — the #1 signal. docker-compose with >1 service, internal RPCs, message queues, service mesh. Count services and note communication patterns (HTTP, gRPC, message bus, shared database).
+- **Persistent distributed state** — replication, distributed caches, consensus protocols, shared storage. More state crossing process boundaries = more interesting failure modes.
+- **Claimed safety or liveness guarantees** — "exactly-once", "no data loss", "linearizable", "leader election", "consistent reads", "at-least-once delivery". Directly testable with Antithesis assertions.
+- **Failure and recovery logic** — retries, failover, circuit breakers, leader re-election, replica promotion, graceful degradation.
+- **Timing-sensitive operations** — timeouts, TTLs, leases, distributed locks, heartbeats. Antithesis's clock skew injection targets these.
 
-- **Multiple communicating services** — the #1 signal. Look for: docker-compose with >1 service, microservice architecture, internal RPCs, message queues, service mesh. Count the services and note how they communicate (HTTP, gRPC, message bus, shared database).
-- **Persistent distributed state** — databases with replication, distributed caches, consensus protocols, shared storage. The more state that crosses process boundaries, the more interesting the failure modes.
-- **Claimed safety or liveness guarantees** — documentation, comments, or issue discussions mentioning "exactly-once", "no data loss", "linearizable", "leader election", "consistent reads", "at-least-once delivery". These are directly testable with Antithesis assertions.
-- **Concurrency with shared mutable state** — goroutines, thread pools, async workers accessing shared data, lock ordering, channels. Antithesis's deterministic scheduling can find races that conventional testing misses.
-- **Failure and recovery logic** — retries, failover, circuit breakers, leader re-election, replica promotion, graceful degradation. This code is notoriously hard to test conventionally and is exactly where Antithesis shines.
-- **Timing-sensitive operations** — timeouts, TTLs, leases, distributed locks, heartbeats. Antithesis's clock skew injection targets these directly.
+### Architectural fit
 
-Score the overall architectural fit:
-- **Strong fit**: multiple services with distributed state and claimed guarantees
-- **Moderate fit**: 2-3 services with some distributed behavior, or a single service with embedded distributed protocols (e.g., built-in raft, paxos, or gossip — not just goroutines and mutexes)
-- **Weak fit**: limited distribution, mostly request/response with no interesting failure modes
+- **Strong**: multiple services with distributed state and claimed guarantees
+- **Moderate**: 2-3 services with some distributed behavior, or a single service with embedded distributed protocols (built-in raft, paxos, gossip — not just goroutines and mutexes)
+- **Weak**: limited distribution, mostly request/response with no interesting failure modes
 
-### Use-Case Fit
+### Use-case fit
 
-Characterize the primary use case to assess Antithesis alignment:
+- **Strong**: distributed consensus, data replication, leader election, transaction processing, distributed coordination, message delivery guarantees
+- **Moderate**: CRUD services with multiple backends, event-driven architectures, workflow orchestration
+- **Weak**: eventually consistent with no stronger guarantees, pure business logic, performance/benchmarking
 
-- **Strong use cases**: distributed consensus, data replication, leader election, transaction processing, distributed coordination, message delivery guarantees
-- **Moderate use cases**: CRUD services with multiple backends, event-driven architectures, workflow orchestration
-- **Weak use cases**: eventually consistent systems with no stronger guarantees, pure business logic, performance/benchmarking, load testing
+### Candidate Properties
 
-### SDK and Language Support
-
-Identify the primary language(s) used by the SUT. Antithesis has SDK and instrumentation support for: **Go, Rust, C, C++, Java, .NET, Python, JavaScript**. If the project uses an unsupported language, note this as a risk — it does not disqualify the project but limits instrumentation options.
-
-### Candidate Properties Gut-Check
-
-Before scoring suitability, attempt to name 2–3 candidate `Always` or `Sometimes` properties for this system based on what you've seen so far. These do not need to be precise — rough invariants are fine. Examples:
+Attempt to name 2–3 candidate `Always` or `Sometimes` properties. Rough invariants are fine:
 
 - "A committed transaction is never lost after a leader failover"
 - "All replicas converge to the same state within N seconds of a write"
 - "A job accepted by the scheduler is eventually executed exactly once"
 
-If you cannot name any candidate properties after reviewing the architecture and claimed guarantees, that is a strong signal the system is **not suitable** or at best **limited** — even if it is architecturally distributed. A system with no articulable invariants gives Antithesis nothing to assert against.
+If you cannot name any, that is a strong signal the system is **not suitable** or at best **limited**. A system with no articulable invariants gives Antithesis nothing to assert against. These will be refined during `antithesis-research`.
 
-Record the candidate properties in the output. They will be refined during `antithesis-research`.
+## Readiness
 
-## Existing Testing and Containerization
+Scan the codebase for existing infrastructure that accelerates Antithesis onboarding.
 
-Scan the codebase to understand the project's current testing maturity and container readiness. These directly affect the effort to onboard to Antithesis and the gap Antithesis fills.
+### Testing
 
-### Testing Methodology
-
-Scan for existing test infrastructure. The goal is to understand what testing exists today and where Antithesis adds value versus duplicating effort.
-
-- **Unit tests** — look for `*_test.go`, `*_test.py`, `*.test.ts`, `*.spec.js`, `tests/unit/`, `src/test/`, etc. Note the framework (go test, pytest, jest, JUnit, etc.) and rough coverage.
-- **Integration tests** — look for `tests/integration/`, `e2e/`, `tests/e2e/`, or test files that spin up real dependencies (database connections, HTTP clients hitting other services). These are the most relevant to Antithesis — they show what behaviors the team already considers important.
-- **End-to-end tests** — look for tests that exercise the full system through external APIs. These often reveal the workload patterns Antithesis test commands should mimic.
-- **Other testing methods** — look for fuzzing configs (`fuzz_test.go`, `corpus/`, `oss-fuzz`), load testing (`k6`, `locust`, `gatling`), chaos testing (`chaos-mesh`, `litmus`, `toxiproxy`). Existing chaos or property-based testing is a strong signal the team already thinks in Antithesis-compatible terms.
-- **CI/CD pipeline** — check `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`, `.circleci/`. Note what tests run automatically and at what cadence. A project with strong CI but no fault testing has a clear gap Antithesis fills.
-- **Testing focus** — is the testing focused on correctness and safety, or on performance and benchmarks? Performance-focused testing (benchmarks, load tests, latency measurement) is not well-suited for Antithesis. Correctness-focused testing (invariants, assertions, integration contracts) aligns well.
+- **Unit tests** — `*_test.go`, `*_test.py`, `*.test.ts`, `*.spec.js`, `tests/unit/`, `src/test/`. Note framework and rough coverage.
+- **Integration tests** — `tests/integration/`, `e2e/`, test files spinning up real dependencies. Most relevant to Antithesis.
+- **End-to-end tests** — tests exercising the full system through external APIs. Reveal workload patterns.
+- **Other methods** — fuzzing (`fuzz_test.go`, `oss-fuzz`), chaos testing (`chaos-mesh`, `litmus`, `toxiproxy`). Existing chaos/property-based testing = team already thinks in Antithesis terms.
+- **CI/CD** — `.github/workflows/`, `.gitlab-ci.yml`, `Jenkinsfile`. Strong CI + no fault testing = clear Antithesis gap.
+- **Testing focus** — correctness (invariants, assertions, contracts) aligns well. Performance (benchmarks, load, latency) does not.
 
 ### Containerization
 
-Determine what container infrastructure already exists:
+- **Dockerfiles** — `Dockerfile`, `Dockerfile.*`, `*.dockerfile` in root and subdirectories. Note which services have images.
+- **Public registry** — Docker Hub, GHCR, etc. Published images simplify setup.
+- **Orchestration** — docker-compose files, Kubernetes manifests (`k8s/`, `helm/`, `charts/`, `deploy/`). Also check `infra/`, `.docker/`, `ops/`.
+- **Dependencies** — list infrastructure deps. Standard images (postgres, redis, kafka, minio) are fine. Proprietary binaries need flagging.
+- **Custom orchestration** — Kurtosis, Earthly, Tilt, Skaffold. If this is the _only_ orchestration, flag prominently — often a no-go for short engagements.
+- **Health endpoints** — `/health`, `/ping`, `/ready`, gRPC health check. Needed for `setup_complete` wiring.
 
-- **Container images** — look for Dockerfiles: `Dockerfile`, `Dockerfile.*`, `*.dockerfile`, in repo root and subdirectories. Note which services have images and which don't.
-- **Public registry** — check if images are published to Docker Hub, GHCR, or other registries. Look for CI steps that push images, or references in README. Published images simplify Antithesis setup.
-- **Orchestration** — scan for docker-compose files (`docker-compose.yaml`, `docker-compose.yml`, `compose.yaml`, `compose.yml`) and Kubernetes manifests (`k8s/`, `helm/`, `charts/`, `manifests/`, `deploy/`). Check `infra/`, `.docker/`, `ops/` as well — these are often buried.
-- **Dependencies containerizable** — list the infrastructure dependencies (databases, caches, message brokers). Standard images (postgres, redis, kafka, minio) are fine. Proprietary or licensed binaries need special handling — flag these.
-- **Other orchestration** — note if the project uses Kurtosis, Earthly, Tilt, Skaffold, or similar. These indicate container maturity but require translation to a compose-based topology for Antithesis. If custom orchestration is the _only_ orchestration (no compose, no k8s), flag this prominently — in practice, custom-only orchestration often translates to a no-go for a short engagement unless the team is willing to help produce a compose equivalent.
-- **Health or readiness endpoints** — `/health`, `/ping`, `/ready`, gRPC health check. These are needed for `setup_complete` wiring in Antithesis.
-### Containerization readiness verdict
+Readiness: **Ready** (compose + Dockerfiles + standard deps) / **Partial** (some artifacts, clear gaps) / **Needs creation** (nothing exists).
 
-- **Ready**: docker-compose with all services, Dockerfiles exist, standard dependencies
-- **Partial**: some deployment artifacts exist, gaps are clear and fillable
-- **Needs creation**: no container orchestration, Dockerfiles need to be written from scratch
+### SDK and Language
 
-## Effort and Risk Estimation
+Antithesis SDK and instrumentation support: **Go, Rust, C, C++, Java, .NET, Python, JavaScript**. Unsupported language = risk (not a disqualifier) that limits instrumentation.
 
-Based on the assessment above, characterize the work ahead. This is not a time estimate — it describes what work needs to happen and what might go wrong.
+### API Surface
+
+Check for a documented API (REST, gRPC, CLI, client library) an external workload can drive. Clean documented API = straightforward workloads. Undocumented proprietary protocol = significant workload risk.
+
+## Path to Antithesis
+
+Characterize the work ahead — what needs to happen and what might go wrong.
 
 ### Setup effort
 
-Factors that increase effort:
-- No existing container orchestration (need to create docker-compose from scratch)
-- Many services (each needs a Dockerfile, instrumentation, and inclusion in the topology)
-- Polyglot codebase (multiple languages means multiple instrumentation paths)
-- Complex initialization sequence (services with ordering dependencies, migrations, seed data)
-- Cloud provider coupling (AWS SDK calls, GCP Pub/Sub, Azure services that need local substitutes)
-- No health endpoints (need to add them or find alternative readiness signals)
-- Large system footprint (20+ containers puts pressure on Antithesis environment resources)
+Increases effort: no container orchestration, many services, polyglot codebase, complex init sequence, cloud provider coupling, no health endpoints, large footprint (20+ containers).
 
-Factors that decrease effort:
-- Clean docker-compose already exists
-- Single language across all services
-- Standard infrastructure dependencies (Postgres, Redis, Kafka)
-- Health endpoints already exist
-- Images already published to a public registry
+Decreases effort: clean docker-compose exists, single language, standard dependencies, health endpoints exist, images published to registry.
 
 ### Workload effort
 
-- **Existing tests are portable** — if integration or e2e tests exist and can be adapted into test commands with minor refactoring, workload creation is straightforward.
-- **Tests need major rework** — if existing tests are tightly coupled to CI, mock everything, or don't exercise real service interactions, new workload code needs to be written.
-- **No relevant tests exist** — workload must be built from scratch based on API analysis. Higher effort but also higher Antithesis value (the testing gap is wide).
-- **API surface accessibility** — regardless of existing tests, check whether the system has a documented API (REST, gRPC, CLI, client library) that an external workload can drive traffic through. A system with a clean, documented API is straightforward to build workloads for even if no tests exist. A system with an undocumented proprietary binary protocol or no external-facing API is significantly harder — flag this as a workload risk.
+- **Low** — integration/e2e tests adaptable with minor refactoring
+- **Medium** — tests tightly coupled to CI or mock-heavy, need significant rework
+- **High** — no relevant tests, build from scratch based on API analysis (but high Antithesis value — testing gap is wide)
 
 ### Risks
 
-Flag any of the following if present:
-- **Complex dependency chain** — external or internal dependencies the evaluating team may not control or fully understand
-- **Kubernetes-only orchestration** — the project only has k8s manifests, no docker-compose. Antithesis supports both but compose is simpler to start with.
-- **Custom orchestration** — the project uses custom scripts or tools (Kurtosis, Earthly, etc.) to bring up containers. May need translation to docker-compose.
-- **Large system footprint** — estimate the container count. 20-30+ containers correlates with higher resource usage in Antithesis.
-- **No readily available workloads** — no existing tests that can be adapted, workload must be built from scratch.
-- **No external API surface** — no documented API, CLI, or client library to drive traffic through. Workload creation will be significantly harder.
-- **Custom-only orchestration** — the project uses only custom scripts or tools (Kurtosis, Earthly, etc.) to bring up containers. This often requires significant translation effort and may be a no-go for a short engagement.
+Flag if present:
+- **Complex dependency chain** — dependencies the team may not control
+- **Kubernetes-only orchestration** — no docker-compose, only k8s manifests
+- **Custom-only orchestration** — only Kurtosis/Earthly/etc. Often a no-go for short engagements.
+- **Large system footprint** — 20-30+ containers
+- **No available workloads** — must build from scratch
+- **No external API surface** — no documented API to drive traffic through
 
 ## Verdict Categories
 
 ### Suitable
 
-Passes all disqualifier checks. Architectural fit is moderate or strong. Containerization is at least partial. SDK support covers the primary services. At least 2–3 candidate properties can be articulated. Workload path is identifiable (existing tests to adapt, or clean API to target).
+Passes all disqualifiers. Architectural fit moderate or strong. Containerization at least partial. SDK covers primary services. 2–3 candidate properties articulable. Workload path identifiable.
 
 ### Limited
 
-Passes all disqualifier checks, but has significant caveats that constrain the engagement. Canonical examples:
-
-- Suitable architecture but non-hermetic dependencies that are theoretically mockable but obviously high-effort to stub out.
-- Single-service deployment with embedded distributed protocol (raft, etc.) but no meaningful failure-handling code exercised yet.
-- Strong architecture but no workloads and no documented API surface, so workload creation dominates the effort.
-- Custom-only orchestration that would need substantial translation to compose.
-- Cannot articulate more than one rough candidate property despite distributed architecture.
+Passes all disqualifiers, but significant caveats:
+- Non-hermetic dependencies that are theoretically mockable but high-effort
+- Embedded distributed protocol but no failure-handling code exercised
+- Strong architecture but no workloads and no documented API
+- Custom-only orchestration needing substantial translation
+- Cannot articulate more than one rough candidate property
 
 ### Not suitable
 
-Any disqualifier is triggered. Alternatively, the system technically passes all disqualifier checks but is practically impossible to run in Antithesis (e.g., dozens of proprietary dependencies with no local substitutes, even though no single one is a hard blocker).
+Any disqualifier triggered. Or: technically passes all checks but practically impossible to run (e.g., dozens of proprietary dependencies with no local substitutes).
 
 ## Output
 
 Present the verdict directly to the user. Do not write files to the target repository. Use the following structure:
 
 ```
-# Antithesis Qualification
+# Antithesis Preflight: {project name}
 
 ## Verdict: {suitable | limited | not suitable}
 
 {1-2 sentence summary of the verdict and primary reasoning.}
 
-## Disqualifier Check
+| Dimension | Rating |
+|---|---|
+| Architectural Fit | {Strong / Moderate / Weak} |
+| Use-Case Fit | {Strong / Moderate / Weak} |
+| Containerization | {Ready / Partial / Needs creation} |
+| SDK/Language | {Supported / Partial / Unsupported} |
+| Setup Effort | {Low / Medium / High} |
+| Workload Effort | {Low / Medium / High} |
 
-{For each disqualifier, state whether it applies and the evidence.
-If a disqualifier applies, this section explains why and what would need to change.}
+## Project Overview
 
-## Technical Suitability
+{What the project does, primary language(s), license, notable adoption/reach.
+Business criticality — why finding bugs here matters. 4-6 lines max.}
 
-### Business Context and Reach
-{What the project does, who uses it, business criticality, open source status.}
+## Architecture & Suitability
 
-### Architectural Complexity
-{Services found, communication patterns, distributed state, claimed guarantees.
-Overall fit: strong/moderate/weak.}
-
-### Use-Case Fit
-{Primary use case and Antithesis alignment: strong/moderate/weak.}
-
-### SDK and Language Support
-{Primary language(s), SDK availability.}
+{Services found and how they communicate, distributed state and replication,
+claimed guarantees, failure/recovery logic, timing-sensitive operations.
+Architectural fit (strong/moderate/weak) and use-case fit (strong/moderate/weak) with reasoning.}
 
 ### Candidate Properties
-{2-3 rough Always/Sometimes properties, or note that none could be identified.}
 
-## Existing Testing and Containerization
+{2-3 rough Always/Sometimes properties for this system.
+If none can be articulated, note this as a suitability concern.}
 
-### Testing Methodology
-{What tests exist (unit/integration/e2e/other), frameworks, CI pipeline, testing focus.
-Where does Antithesis add value vs. duplicate effort?}
+## Readiness
 
-### Containerization
-{What container artifacts exist, where, orchestration type.
-Overall: ready/partial/needs creation.}
+{What exists today that accelerates Antithesis onboarding:
+- **Testing**: types found (unit/integration/e2e/chaos), frameworks, CI, testing focus. Where does Antithesis add value vs. duplicate existing coverage?
+- **Containerization**: Dockerfiles, compose/k8s artifacts (with paths). Ready / Partial / Needs creation.
+- **SDK**: primary language(s) vs. Antithesis supported list.
+- **API surface**: documented API an external workload can drive traffic through?}
 
-## Effort and Risk
+## Path to Antithesis
 
-### Setup Effort
-{What work is needed to get the system running in Antithesis.}
+{What work lies ahead, what might go wrong, and the concrete next step:
+- **Setup**: what needs to be created or adapted. Factors that increase or decrease effort.
+- **Workload**: adapt existing tests or build from scratch? Low / Medium / High.
+- **Risks**: dependency chains, k8s-only orchestration, large footprint, missing API surface, custom-only orchestration, etc.
+- **Next step**: if suitable, proceed with `antithesis-research`. If limited, proceed with caveats. If not suitable, what would need to change.}
 
-### Workload Effort
-{How much work to create test commands and assertions. Low/medium/high.
-Can existing tests be adapted, or must workload be built from scratch?
-Is there a usable API surface?}
+## Disqualifier Checklist
 
-### Risks
-{Dependency chain issues, orchestration complexity, footprint, workload gaps.}
+| Disqualifier | Status | Evidence |
+|---|---|---|
+| Single-process | {Pass / FAIL} | {one-line evidence} |
+| Pure library | {Pass / FAIL} | {one-line evidence} |
+| Cannot run hermetically | {Pass / FAIL} | {one-line evidence} |
+| Frontend-only | {Pass / FAIL} | {one-line evidence} |
+| LLM-driven core | {Pass / FAIL} | {one-line evidence} |
+| Cannot target x86-64 | {Pass / FAIL} | {one-line evidence} |
 
-## Recommendation
-
-{Concrete next step. If suitable: proceed with `antithesis-research`.
-If limited: proceed with caveats noted.
-If not suitable: what would need to change, or suggest the project is not a fit.}
-
-## Presales Intake Fields (Manual)
-
-{List any presales intake form fields that require human input and could not
-be determined from the codebase. For example: team knowledge of build process
-and architecture, system guarantee knowledge, debugging sophistication.}
 ```
+
+If the verdict is **not suitable** because a disqualifier fired, keep the report short: include the Verdict (with summary table), Project Overview, a brief explanation of the disqualifier and what would need to change, and the Disqualifier Checklist. Skip the detailed Architecture, Readiness, and Path sections.
 
 ## General Guidance
 
-- Be specific. Every claim in the verdict should point to a file, directory, or pattern found in the codebase. "The project has 3 services" is not enough — "The project has 3 services: `api-server`, `worker`, and `scheduler`, communicating via Redis Pub/Sub (see `docker-compose.yaml:L12-40`)" is.
-- Do not over-research. This is a preflight check, not the full `antithesis-research` pass. Skim the architecture, don't trace every code path.
-- A web search for the project name, company, or domain can surface business context (funding, customer base, industry) that is not in the repo. Use this to inform the business context section, but keep it brief.
-- If a disqualifier applies, the verdict is **not suitable**. Do not soften it to **limited**. The disqualifiers exist precisely to prevent wasted effort. Reserve **limited** for projects that pass all disqualifier checks but have weak suitability signals or deployment gaps.
-- If the project has an `antithesis/` directory already, note what exists — but do not treat prior Antithesis work as evidence of suitability. The prior work may have been a mistake or an incomplete attempt. Run the disqualifier checks regardless.
-- Popularity alone does not make a project suitable. A popular single-process library is still not a fit.
-- Complexity alone does not make a project suitable. A complex system that cannot run hermetically is still not deployable in Antithesis.
+- Be specific. Every claim should point to a file, directory, or pattern found in the codebase. "The project has 3 services" is not enough — "3 services: `api-server`, `worker`, `scheduler`, communicating via Redis Pub/Sub (see `docker-compose.yaml:L12-40`)" is.
+- Do not over-research. This is a preflight check, not `antithesis-research`. Skim the architecture, don't trace every code path.
+- A web search for the project name or company can surface business context not in the repo. Keep it brief.
+- If a disqualifier applies, the verdict is **not suitable**. Do not soften it to **limited**. Reserve **limited** for projects that pass all disqualifier checks but have weak suitability signals or deployment gaps.
+- If the project has an `antithesis/` directory already, note what exists — but do not treat prior Antithesis work as evidence of suitability. Run disqualifier checks regardless.
+- Popularity alone does not make a project suitable. Complexity alone does not make a project suitable.
 
 ## Self-Review
 
-Before declaring this skill complete, verify:
+Before presenting the report, verify:
 
 - The verdict was presented to the user, not written to a file in the repo
 - The verdict is one of: **suitable**, **limited**, or **not suitable**
-- Every disqualifier was explicitly checked with evidence, not skipped
+- The summary table ratings are consistent with the detailed sections
+- Every disqualifier was checked — the checklist table has no empty rows
 - Suitability claims reference specific files, directories, or patterns in the codebase
-- SDK/language support was checked against the supported language list
-- At least 2–3 candidate Always/Sometimes properties were identified (or their absence was noted as a suitability concern)
-- Existing testing methodology was scanned — not just "tests exist" but what kind and what's missing
-- Containerization assessment names actual artifacts found (or their absence) with paths
-- Orchestration type is explicitly categorized (compose / k8s-only / custom-only / none)
-- Use-case fit is categorized as strong, moderate, or weak with reasoning
-- API surface accessibility was checked — can an external workload drive traffic into this system?
-- If the verdict is **not suitable**, the qualification explains what would need to change
-- If the verdict is **limited**, the caveats are specific enough for the user to evaluate
-- The effort estimation describes work needed, not time predictions
-- Risks are flagged with specific evidence
-- The "Presales Intake Fields (Manual)" section lists fields that require human input
+- At least 2–3 candidate Always/Sometimes properties were identified (or their absence noted)
+- Containerization names actual artifacts found (with paths)
+- API surface accessibility was checked
+- If **not suitable**: the report explains what would need to change
+- If **limited**: the caveats are specific enough for the user to evaluate
 - No section contains speculative claims without evidence from the codebase
