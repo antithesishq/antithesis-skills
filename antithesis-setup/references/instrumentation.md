@@ -1,6 +1,6 @@
-# Instrumentation
+# Instrumentation & SDK Integration
 
-How to decide whether the SUT needs Antithesis instrumentation, how to enable it, how to install the relevant SDK into the SUT dependency graph, and how to provide symbols for triage.
+How to decide whether the SUT needs Antithesis instrumentation, how to enable it, how to install the relevant SDK into the SUT dependency graph, and how to provide symbols for triage. Use this reference for both instrumentation and SDK questions—they are often one and the same.
 
 ## Goal
 
