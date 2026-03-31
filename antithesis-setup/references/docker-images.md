@@ -23,17 +23,28 @@ Apply the `references/instrumentation.md` decisions while you adapt images:
 - Prefer symlinks into `/symbols/` when the original debug files already exist elsewhere in the image and the docs permit it.
 - Keep instrumentation-only toolchain changes out of unrelated production image paths when practical by using Antithesis-specific build stages.
 
+### Image Naming
+
+Image names must include a prefix derived from the SUT's project name so that images are immediately identifiable. For example, if the project is called `foobar`:
+
+- `foobar-server:latest`
+- `foobar-workload:latest`
+- `foobar-config:latest`
+
+Do not use generic names like `server`, `workload`, or `config` without the project prefix.
+
 Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag). Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. Without this, builds on ARM hosts (e.g. macOS Apple Silicon) will produce images with the wrong architecture.
 
 ```yaml
 services:
-  myapp:
+  server:
+    container_name: foobar-server
     platform: linux/amd64
     build:
       context: ../..
       dockerfile: antithesis/Dockerfile
-      target: myapp    # if using multi-stage builds
-    image: myapp:latest
+      target: server
+    image: foobar-server:latest
 ```
 
 ## Clients

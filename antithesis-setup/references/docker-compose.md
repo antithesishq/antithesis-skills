@@ -6,6 +6,14 @@ How to write the docker-compose.yaml.
 
 Create a working Docker Compose config at `antithesis/config/docker-compose.yaml`.
 
+## Project Name
+
+Set the top-level `name:` field to the SUT's project name. This controls the Compose project name and auto-prefixes service containers, networks, and volumes. For example, for a project called `foobar`:
+
+```yaml
+name: foobar
+```
+
 ## Image References
 
 Services use one of two patterns:
@@ -17,15 +25,19 @@ Every service must include `platform: linux/amd64` because Antithesis runs on x8
 
 Example:
 ```yaml
+name: foobar
+
 services:
-  myapp:
+  server:
+    container_name: foobar-server
     platform: linux/amd64
     build:
       context: ../..
       dockerfile: Dockerfile
-    image: myapp:latest
+    image: foobar-server:latest
 
   postgres:
+    container_name: foobar-postgres
     platform: linux/amd64
     image: docker.io/library/postgres:17.2
 ```
