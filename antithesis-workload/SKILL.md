@@ -24,7 +24,7 @@ Implement or improve the Antithesis workload. Success means:
 - The first real test templates are created after setup, or existing ones are expanded
 - Triage findings turn into workload or property updates instead of staying implicit
 
-Use the `antithesis-research` skill first to build the property catalog. Use the `antithesis-setup` skill to scaffold the infrastructure. Use the `antithesis-triage` skill to review runs, then return here to improve the workload.
+Use the `antithesis-research` skill first to build the property catalog. Use the `antithesis-setup` skill to scaffold the infrastructure. Use the `antithesis-triage` skill to review runs, then return here to improve the workload. If the user asks to submit or launch a run, use the `antithesis-launch` skill — do not run `snouty run` directly.
 
 ## Prerequisites
 
