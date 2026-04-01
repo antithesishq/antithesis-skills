@@ -104,6 +104,42 @@ synchronization, assumptions about message ordering. These are often the most
 productive Antithesis targets because they represent conditions the developers never
 tested.
 
+### 12. Wildcard
+
+The other 11 focuses have fixed lenses — they see what their descriptions tell
+them to look for. This focus has no fixed lens. Its job is to find what they will
+all miss: the weird, the novel, the thing that doesn't fit any category but matters
+anyway. These are not principles — this focus is deliberately unconstrained.
+
+1. **Know the covered territory.** The orchestrator provides a one-line summary of
+   each other focus. Understand their territory. Your job starts where theirs ends.
+
+2. **Look for the non-obvious.** System characteristics that are surprising,
+   unusual, or don't fit standard categories. A component that's architecturally
+   bizarre but works. A dependency relationship that seems backwards. A design
+   choice that's technically sound but fragile in ways nobody discusses.
+
+3. **Find missing concepts.** Not missing state management (Focus 2 handles that)
+   or missing failure modes (Focus 8 handles that) — but missing *ideas*. A failure
+   mode that doesn't fit any standard category. A system behavior that only emerges
+   from the interaction of multiple components. A deployment assumption nobody
+   documents.
+
+4. **Cross-cut.** Issues that span multiple focuses but belong to none. Where
+   concurrency assumptions interact with persistence guarantees. Where external
+   dependency behavior affects the failure model in ways neither focus would surface
+   alone. Where the test strategy creates false confidence about a guarantee.
+
+5. **Question the frame.** The other focuses accept the system as presented and
+   analyze its characteristics. You can question the presentation. Is the documented
+   architecture how it actually works? Are there implicit invariants the system
+   depends on that nobody states? Is there a subsystem everyone treats as reliable
+   that probably isn't?
+
+6. **Report what's odd.** If something strikes you as unusual, unexpected, or
+   suspicious but you can't fully articulate why — report it anyway with your best
+   attempt at why it feels wrong. A vague signal from the wildcard is still signal.
+
 ## Ensemble Mode
 
 If your environment supports spawning sub-agents, run SUT discovery as an
@@ -122,6 +158,18 @@ Spawn one agent per focus. Each agent receives:
 > general methodology in `references/sut-analysis.md` as a guide. Produce concrete,
 > specific findings — not vague summaries. If your focus yields little for this
 > system, say so and explain why.
+
+**Wildcard agent:** The wildcard agent (Focus 12) runs in parallel with the others
+but receives different context. Instead of a "look for" list, it receives:
+
+- The general SUT analysis methodology from `references/sut-analysis.md`
+- The wildcard directives from its focus description above
+- A one-line summary of each other focus, derived from the focus names and opening
+  sentences above (e.g., "Focus 1: Architecture and Data Flow — maps components,
+  service boundaries, communication protocols, and request paths"). Do not include
+  the detailed "Look for:" lists — the wildcard should know what territory is
+  covered, not how the others search it.
+- Access to the codebase, documentation, and issue tracker
 
 ### Agent Output Format
 
@@ -152,15 +200,20 @@ If your environment does not support sub-agents, work through the attention
 focuses as a sequential checklist:
 
 1. Read `references/sut-analysis.md` for general methodology.
-2. For each attention focus in order, make an explicit pass through the codebase,
-   docs, and issues with that lens. After each pass, add findings to a running
-   analysis document. If a focus yields little for this system, note why and move on.
-3. After all 11 passes, review the full analysis for gaps and consistency.
-4. Organize into the final SUT analysis.
+2. For each attention focus 1–11 in order, make an explicit pass through the
+   codebase, docs, and issues with that lens. After each pass, add findings to a
+   running analysis document. If a focus yields little for this system, note why
+   and move on.
+3. Run the wildcard pass (Focus 12) last. Unlike the other passes, the wildcard is
+   not a fresh examination — it deliberately builds on awareness of what the
+   previous passes covered, looking for what they missed.
+4. After all 12 passes, review the full analysis for gaps and consistency.
+5. Organize into the final SUT analysis.
 
-Treat each pass as a fresh examination. Resist the pull to skip a focus because
-earlier passes "already covered" that area — the point is to look at the same
-system from different angles.
+Treat each pass (1–11) as a fresh examination. Resist the pull to skip a focus
+because earlier passes "already covered" that area — the point is to look at the
+same system from different angles. The wildcard pass is the exception — it runs
+last and uses knowledge of the covered territory to find gaps.
 
 ## Output
 

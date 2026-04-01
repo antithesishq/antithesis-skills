@@ -89,6 +89,41 @@ compatibility guarantees, deprecation boundary correctness. Look for: changed
 serialization formats, removed/renamed fields, different default values across
 versions, protocol negotiation failures.
 
+### 11. Wildcard
+
+The other 10 focuses have fixed lenses — they see what their descriptions tell
+them to look for. This focus has no fixed lens. Its job is to find what they will
+all miss: the weird, the novel, the property that doesn't fit any category but
+matters anyway. These are not principles — this focus is deliberately unconstrained.
+
+1. **Know the covered territory.** The orchestrator provides a one-line summary of
+   each other focus. Understand their territory. Your job starts where theirs ends.
+
+2. **Look for the non-obvious.** Properties that emerge from behaviors nobody would
+   think to check. The system works, the standard invariants hold, but something
+   about the interaction pattern is surprising. Trust that instinct and turn it into
+   a testable property.
+
+3. **Find missing concepts.** Not missing data integrity checks (Focus 1 handles
+   that) or missing concurrency properties (Focus 2 handles that) — but missing
+   *angles*. A failure scenario nobody considers. A guarantee the system implicitly
+   provides but never claims. A property that only matters under a specific
+   combination of conditions that no single focus would construct.
+
+4. **Cross-cut.** Properties that live at the intersection of multiple focus areas.
+   Where failure recovery interacts with idempotency in ways neither focus captures
+   alone. Where resource exhaustion triggers a protocol violation. Where a lifecycle
+   transition exposes a concurrency bug that only manifests during version upgrades.
+
+5. **Question the frame.** The other focuses look for properties within their
+   domains. You can question whether the domains are complete. Is there an entire
+   class of failure that the focus set doesn't cover? Is there a property the system
+   *should* have but nobody would think to assert because it seems too obvious?
+
+6. **Report what's odd.** If a code path feels like it would produce an interesting
+   property but you can't fully specify the invariant, describe the intuition. A
+   vague signal from the wildcard is still signal.
+
 ## Ensemble Mode
 
 If your environment supports spawning sub-agents, run property discovery as an
@@ -110,6 +145,20 @@ Spawn one agent per focus. Each agent receives:
 > properties in the standard catalog format. For each property, include your
 > confidence (high/medium/low) and what evidence in the codebase supports it. If
 > this focus yields no relevant properties for this system, say so and explain why.
+
+**Wildcard agent:** The wildcard agent (Focus 11) runs in parallel with the others
+but receives different context. Instead of a "look for" list, it receives:
+
+- The contents of `antithesis/scratchbook/sut-analysis.md`
+- The property catalog format from `references/property-catalog.md`
+- The wildcard directives from its focus description above
+- A one-line summary of each other focus, derived from the focus names and opening
+  sentences above (e.g., "Focus 1: Data Integrity — consistency guarantees,
+  invariants on stored state, corruption paths"). Do not include the detailed
+  "Look for:" lists — the wildcard should know what territory is covered, not how
+  the others search it.
+- The path to `antithesis/scratchbook/existing-assertions.md`
+- Access to the codebase
 
 ### Agent Output
 
@@ -187,25 +236,28 @@ focuses as a sequential checklist:
 1. Read the SUT analysis.
 2. Read `antithesis/scratchbook/existing-assertions.md` so you have the full
    picture of what's already instrumented before writing any evidence files.
-3. For each attention focus in order, make an explicit pass through the codebase
-   with that lens. After each pass, add new properties to a running catalog. If a
-   focus yields nothing for this system, note why and move on.
-4. After all 10 passes, review the full catalog for duplicates, gaps, and
+3. For each attention focus 1–10 in order, make an explicit pass through the
+   codebase with that lens. After each pass, add new properties to a running
+   catalog. If a focus yields nothing for this system, note why and move on.
+4. Run the wildcard pass (Focus 11) last. Unlike the other passes, the wildcard is
+   not a fresh examination — it deliberately builds on awareness of what the
+   previous passes covered, looking for properties they missed.
+5. After all 11 passes, review the full catalog for duplicates, gaps, and
    consistency.
-5. Assign a descriptive kebab-case slug to each property and organize into final
+6. Assign a descriptive kebab-case slug to each property and organize into final
    form per the catalog format.
-6. For each property, write an evidence file to `properties/{slug}.md` in the
+7. For each property, write an evidence file to `properties/{slug}.md` in the
    scratchbook. Capture the supporting evidence, relevant code paths, failure
    scenario, and key observations you encountered during your passes. For each
    property's SUT-side instrumentation suggestions, cross-reference
    `existing-assertions.md` and explicitly note whether each suggested assertion
    already exists in the codebase, is partially present, or is missing.
-7. Review the complete property set and write `property-relationships.md` in the
+8. Review the complete property set and write `property-relationships.md` in the
    scratchbook. Group properties that share evidence, code paths, or failure
    mechanisms into clusters. Note any suspected dominance relationships. This is
    lightweight — flag connections you noticed during the passes, don't do deep
    analysis.
-8. For each property with open questions in its evidence file, investigate the
+9. For each property with open questions in its evidence file, investigate the
    code to answer them. Read the evidence file's explanation of why each
    question matters, trace the code to answer it, and update the evidence file
    with the answer and its implications — including correcting any instrumentation
@@ -213,9 +265,10 @@ focuses as a sequential checklist:
    property or invalidates it, update accordingly. Mark invalidated properties
    in the catalog with the reason.
 
-Treat each pass as a fresh examination. Resist the pull to skip a focus because
-earlier passes "already covered" that area — the point is to look at the same code
-from different angles.
+Treat each pass (1–10) as a fresh examination. Resist the pull to skip a focus
+because earlier passes "already covered" that area — the point is to look at the
+same code from different angles. The wildcard pass is the exception — it runs last
+and uses knowledge of the covered territory to find gaps.
 
 ## Output
 
