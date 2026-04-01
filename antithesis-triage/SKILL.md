@@ -253,8 +253,10 @@ again.
 ### Investigate a failing property
 
 1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/properties.md` — list properties, filter to failed, get examples grouped by property
-3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, download the log to a file, and inspect the log file locally.
+2. Read `references/properties.md` — Filter for failed properties or search for
+   the property name. Do not use findings.
+3. Read `references/logs.md` — navigate to a specific example's `logsUrl`,
+   download the log to a file, and inspect the log file locally.
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
 **Important:** Do not draw conclusions about why a property failed until you have downloaded and reviewed any attached logs. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.

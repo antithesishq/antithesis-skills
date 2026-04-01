@@ -1,6 +1,7 @@
 # Logs
 
-Antithesis renders logs in the web UI using a `div.sequence_printer_wrapper` component.
+Antithesis renders logs in the web UI using a `div.sequence_printer_wrapper`
+component.
 
 Logs can appear in a few places:
 
@@ -13,11 +14,12 @@ Logs can appear in a few places:
    viewer appears on the right side after selecting a candidate moment in the
    search results.
 
-## Downloading logs from a log viewer
+## Downloading logs
 
 ### Check agent-browser version
 
-Downloading logs to a file requires `agent-browser` v0.23.4 or above. Check before attempting a download:
+Downloading logs to a file requires `agent-browser` v0.23.4 or above. Check
+before attempting a download:
 
 ```bash
 agent-browser --version
@@ -40,212 +42,291 @@ agent-browser --session "$SESSION" eval \
 Returns an array with one entry per viewer:
 
 - `index`: zero-based viewer index (pass to `prepareDownload`)
-- `label`: text from the preceding element (e.g., `"Filtered logs:"`) or `null`
+- `label`: text from the preceding element (e.g., `"Filtered logs:"`) or
+  `null`
 - `itemCount`: number of items in the viewer
 - `visible`: whether the viewer is currently rendered
 
-If a desired log viewer is not visible, you may need to expand it's containing section to view it. Look for elements containing `Expand for full, unfiltered logs` or other section headers.
+### Download the logs
 
-### Download logs from a log viewer
+**Default to JSON format.** JSON preserves full event structure — fault data,
+source metadata, and timestamps are all properly typed fields. Use TXT or CSV
+only when explicitely asked for it.
 
-To download logs from a log viewer you need to run two agent-browser commands sequentially. These commands MUST NOT run in parallel as the second depends on the first.
+To download logs from a log viewer, run two `agent-browser` commands
+sequentially. These commands MUST NOT run in parallel as the second depends
+on the first.
 
-First, you need to execute `prepareDownload` specifying which format you want as well as the log viewer index. The first viewer index is 0.
+Step 1 — prepare the download link:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  'window.__antithesisTriage.logs.prepareDownload("txt", 0)'
+  'window.__antithesisTriage.logs.prepareDownload("json", 0)'
 ```
 
-Then, once that command completes, you need to run download. Download takes two arguments. The first is the selector returned by the previous command, and the second is the output file path on your local filesystem.
+The first argument is the format (`json`, `txt`, or `csv`). The second is the
+viewer index (0 for the first/only viewer).
+
+Step 2 — download the file:
 
 ```bash
 agent-browser --session "$SESSION" download \
   'a.sequence_printer_menu_button[data-triage-dl]' "$OUTPUT_PATH"
 ```
 
-You should download log files using unique names to a temporary directory unless
-a specific directory has been specified by the user. Make sure to generate
-unique names for log files so as to not collide with other processes running on
-the same machine or older log files.
+Step 3 (JSON only) — strip ANSI escape codes. Application `output_text`
+fields contain terminal color codes that break text search and clutter output.
+This rewrites only `output_text` fields, leaving all other event data intact:
 
-The file is written directly to the specified path. For TXT format, each line
-is a log event in the format:
-
-```
-[<vtime>] [<source>] [<stream>] <message>
+```bash
+python3 assets/strip-log-escapes.py "$OUTPUT_PATH" -o "$CLEAN_PATH"
 ```
 
-`[<vtime>]` is the virtual time of the message. Messages from all containers are interleaved into a single global order by their deterministic vtime.
-`[<source>]` represents the source of the log, usually a docker container name for SUT messages.
-`[<stream>]` can be `[err]` which means that this log message is from stderr.
-`<message>` the raw log message, sometimes structured as JSON.
-
-### Supported formats
-
-| Format | `prepareDownload` arg | Download selector filename | Content                                |
-| ------ | --------------------- | -------------------------- | -------------------------------------- |
-| TXT    | `'txt'`               | `events.log`               | One log line per event                 |
-| JSON   | `'json'`              | `events.json`              | JSON array of structured event objects |
-| CSV    | `'csv'`               | `events.csv`               | CSV table                              |
+Use unique filenames in a temporary directory unless the user specifies
+otherwise.
 
 The download is generated client-side from data already loaded in the page —
-no additional network requests are made. Thus you need to ensure that the page is fully loaded before downloading.
+no additional network requests are made. Ensure the page is fully loaded
+before downloading.
 
-## Parsing Logs
+| Format | `prepareDownload` arg | Content                                 |
+| ------ | --------------------- | --------------------------------------- |
+| JSON   | `'json'`              | JSON array of structured event objects  |
+| TXT    | `'txt'`               | One log line per event (human-readable) |
+| CSV    | `'csv'`               | CSV table                               |
 
-When reading logs from an Antithesis run, there are TWO sources of log lines interleaved together:
+## JSON log format
 
-1. **Antithesis system events** — fault injection, container
-   lifecycle, network changes, compose, etc. Example: "fault_injector [host]"
-   where [host] indicates that this is coming from an Antithesis service.
-2. **Customer Application logs** — if it doesn't have [host] it's probably from
-   the customer's applications.
+The JSON download is an array of event objects. Every event has `source` and
+`moment` fields. The remaining fields vary by event type.
 
-### Antithesis Fault Log Format
+### Event schema
 
-Antithesis system-level events appear as structured JSON on stdout. The fault injector logs look like:
-
-Network partition between client and server, so only the connections between those partition groups are faulted. Connections between containers in the same group are not faulted.
-
-```json
+```
 {
-    fault:{
-        affected_nodes:[ALL],
-        details:{
-            asymmetric:true,
-            disruption_type:Slowed,
-            drop_rate:0,
-            latency:{
-                deviation:1597.9999999999998,
-                mean:1492.601977
-            },
-            partitions:[[client],[server]]
-        },
-        max_duration:0.183884736,
-        name:partition,
-        type:network
-    }
+  "source": {
+    "name": string, // e.g. "fault_injector", "container-name", "setup"
+    "stream"?: "info"|"error",
+    "container"?: string // Docker container name, present on app events
+  },
+  "moment": {
+    "_vtime_ticks": number, // virtual time as integer ticks (see below)
+    "input_hash": string,
+    "session_id": string
+  },
+  "output_text"?: string,           // application stdout/stderr line
+  "fault"?: { ... },                // fault injection event
+  "info"?: { ... },                 // fault_injector status
+  "event"?: string,                 // container lifecycle (create/init/start)
+  "antithesis_setup"?: { ... },     // SDK setup-complete signal
+  "command"?: string,               // test composer task lifecycle
+  ...                               // other fields may be included
 }
 ```
 
-Network clog event where any connection to a container listed in `affected_nodes` can experience the `disruption_type` at random times for random durations. If the `affected_nodes` array were empty the fault doesn't actually do anything.
+### Virtual time
 
-```json
-{
-    fault:{
-        affected_nodes:[server, client],
-        details:{
-            disruption_type:Stopped
-        },
-        max_duration:4.515860336,
-        name:clog,
-        type:network
-    }
-}
+Events are globally ordered by `moment._vtime_ticks`, an integer representing
+deterministic virtual time. To convert to seconds divide by `2^32`:
+
+```
+vtime_seconds = _vtime_ticks / 4294967296
 ```
 
-Network restore event which will restore all faulted network links:
+### Event types at a glance
 
-```json
-{
-    fault:{
-        affected_nodes:[ALL],
-        name:restore,
-        type:network
-    }
-}
+| Identifying field(s)             | Source name                | What it is                                  |
+| -------------------------------- | -------------------------- | ------------------------------------------- |
+| `output_text`                    | container name             | Application log line (stdout/stderr)        |
+| `fault`                          | `fault_injector`           | Fault injection event                       |
+| `info`                           | `fault_injector`           | Fault injector status message               |
+| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die) |
+| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                   |
+| `command`, `started_task`        | `antithesis_test_composer` | Test command started                        |
+| `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                       |
+
+### Fault events
+
+Events from `fault_injector` with a `fault` field describe injected faults.
+
+Key fields in `fault`:
+
+- `name`: `partition`, `clog`, `restore`, `kill`, `stop`, `pause`, `throttle`,
+  `skip`
+- `type`: `network`, `node`, `clock`
+- `affected_nodes`: array of container names, or `["ALL"]`
+- `max_duration`: seconds (number) — how long the fault lasts
+- `details`: optional object with fault-specific data (`disruption_type`,
+  `partitions`, `offset`, etc.)
+
+### Application log events (`output_text`)
+
+The `output_text` field contains stdout/stderr lines from SUT containers.
+
+Some applications serialize configuration objects, debug structs, or JSON
+payloads directly into their log messages. These lines can be very long
+(1-4 KB). When presenting logs to the user, consider truncating long
+`output_text` values. When searching, be aware that keyword matches may hit
+these serialized dumps rather than meaningful log messages.
+
+## Analyzing logs with jq
+
+All examples below assume:
+
+- The JSON log has been stripped with `assets/strip-log-escapes.py`
+- The log path is in `$LOG`:
+
+```bash
+LOG="/path/to/clean.json"
 ```
 
-Node kills, stops, pauses, and throttle all look like this:
+### Filtering events
 
-```json
-{
-    fault:{
-        affected_nodes:[server-3],
-        max_duration:1.7741677258234223,
-        name:kill,
-        type:node
-    }
-}
+Filter by source name:
+
+```bash
+jq '[.[] | select(.source.name == "fault_injector")]' "$LOG"
 ```
 
-System level clock skew moves the time forward/backward by the `offset` and then applies the offset in the other direction to return the time to normal.
+Filter by stream (application stderr only):
 
-```json
-{
-    fault:{
-        affected_nodes:[ALL],
-        details:{
-            offset:-0.11456344671067203
-        },
-        max_duration:0.15177661326674713,
-        name:skip,
-        type:clock
-    }
-}
+```bash
+jq '[.[] | select(.source.stream == "error")]' "$LOG"
 ```
 
-#### Fault types and what they mean
+Filter fault events by fault name:
 
-- **Network Partition**: Containers are placed in partition groups; if there is a link between containers in different groups that link will experience the `disruption_type`. Links between containers in the same group are not faulted by this event, but can be faulted by an overlapping event.
-- **Network Clog**: The links of containers listed in `affected_nodes` will be subject to the `disruption_type` at random times for random durations.
+```bash
+jq '[.[] | select(.fault.name == "partition")]' "$LOG"
+```
 
-- Explanation of `disruption_type`'s:
-  - Stopped - packets are dropped entirely
-  - Slowed - packets are delayed with latency
-  - Jammed - packets are "piled up" until a future deliver time
+Filter by fault type:
 
-- **Container Kill / Stop / Pause**: The named container is killed, stopped, or paused for some duration. If it is killed or stopped Antithesis will restart the container after the duration. If a restart policy is defined the container may be restarted immediately by docker-compose.
-- **CPU Throttle**: The cpu on the target container is slowed for a duration.
-- **Clock Skew**: System clock on the host system which runs the containers is jumped forward or backward.
+```bash
+jq '[.[] | select(.fault.type == "network")]' "$LOG"
+```
 
-### How to interpret causality
+Search output_text for a keyword (case-insensitive):
 
-When prompted to determine the cause of an error (e.g., container exit, assertion failure, error log message)
-which appears AFTER an Antithesis fault event:
+```bash
+jq '[.[] | select(.output_text != null and (.output_text | test("error"; "i")))]' "$LOG"
+```
 
-1. Check if the fault targeted the container involved in the error
-2. If yes, some errors are expected — the real question
-   is whether the test code or customer code correctly handled the error
-3. If no fault preceded the error, the failure may not have been caused by the fault event
+Container lifecycle events:
 
-For a more structured approach, use the fault windows methodology below.
+```bash
+jq '[.[] | select(.event == "die")]' "$LOG"
+```
 
-#### Thinking in fault windows
+Combine filters — fault partitions affecting a specific container:
+
+```bash
+jq '[.[] | select(.fault.name == "partition" and (.fault.affected_nodes | index("mycontainer") or index("ALL")))]' "$LOG"
+```
+
+### Filtering by virtual time
+
+Filter by tick range directly (most efficient):
+
+```bash
+jq '[.[] | select(.moment._vtime_ticks >= 400000000000 and .moment._vtime_ticks <= 500000000000)]' "$LOG"
+```
+
+To convert a vtime in seconds to ticks for use in filters, multiply by
+`4294967296`. For example, to filter between 100s and 110s:
+
+```bash
+jq --argjson lo 429496729600 --argjson hi 472446402560 \
+  '[.[] | select(.moment._vtime_ticks >= $lo and .moment._vtime_ticks <= $hi)]' "$LOG"
+```
+
+Compute the bounds with: `seconds * 4294967296`. For example:
+
+- 100s → `100 * 4294967296 = 429496729600`
+- 110s → `110 * 4294967296 = 472446402560`
+
+Add a vtime_seconds field to output for readability:
+
+```bash
+jq '[.[] | . + {vtime_seconds: ((.moment._vtime_ticks | tonumber) / 4294967296 * 1000 | round / 1000)}]' "$LOG"
+```
+
+## Interpreting logs
+
+### Two sources of log lines
+
+Antithesis logs interleave two sources:
+
+1. **Antithesis system events** — fault injection, container lifecycle,
+   network changes, compose orchestration. Identified by source names like
+   `fault_injector`, `containers_meta`, `setup`, `antithesis_test_composer`.
+2. **Application logs** — from the SUT containers. Identified by having
+   `output_text` and a `source.container` field matching a Docker container
+   name.
+
+### Fault types and what they mean
+
+- **Network Partition** (`partition`/`network`): Containers are split into
+  partition groups. Links between different groups experience the
+  `disruption_type`. Links within the same group are unaffected by this event
+  but may be faulted by an overlapping one.
+- **Network Clog** (`clog`/`network`): Links of containers in `affected_nodes`
+  experience the `disruption_type` at random times for random durations.
+- **Network Restore** (`restore`/`network`): Restores all faulted network
+  links.
+- `disruption_type` values: `Stopped` (packets dropped), `Slowed` (packets
+  delayed), `Jammed` (packets queued until a future delivery time).
+- **Container Kill / Stop / Pause** (`kill`|`stop`|`pause`/`node`): The named
+  container is killed, stopped, or paused for `max_duration` seconds. Killed
+  or stopped containers are restarted by Antithesis after the duration. A
+  restart policy in docker-compose may restart it sooner.
+- **CPU Throttle** (`throttle`/`node`): CPU on the target container is slowed
+  for a duration.
+- **Clock Skew** (`skip`/`clock`): System clock is jumped forward or backward
+  by `details.offset` seconds, then reversed after `max_duration`.
+
+### Correlating faults with failures
+
+To determine what faults were active when an assertion failed:
+
+1. Find fault events near the failure timestamp (adjust tick bounds to
+   a window around the failure):
+   ```bash
+   jq --argjson lo 2100000000000 --argjson hi 2200000000000 \
+     '[.[] | select(.fault != null and .moment._vtime_ticks >= $lo and .moment._vtime_ticks <= $hi)]' "$LOG"
+   ```
+2. Check whether `fault.affected_nodes` includes the container involved in the
+   failure (or `"ALL"`)
+3. Compare `fault.max_duration` with the time gap between the fault and the
+   assertion to determine if the fault was still active
+
+### Thinking in fault windows
 
 1. **Identify fault windows.** Each `partition` or `clog` event opens a window.
-   The window closes at the next `restore` event. A subsequent fault of the same
-   type replaces the network topology rather than restoring it — treat it as
-   opening a new window with a potentially different set of affected containers.
-   If the log ends without a restore, the window extends to the end of the
-   visible timeline. Node faults (`kill`, `stop`, `pause`) and clock faults
-   (`skip`) are point-in-time — their impact lingers until the affected
-   container restarts or the clock corrects.
+   The window closes at the next `restore` event. A subsequent fault of the
+   same type replaces the network topology — treat it as a new window. If the
+   log ends without a restore, the window extends to the end. Node faults
+   (`kill`, `stop`, `pause`) and clock faults (`skip`) are point-in-time —
+   their impact lingers until the container restarts or the clock corrects.
 
 2. **Map affected containers.** Each fault window affects specific containers
-   (listed in `affected_nodes`, or the groups listed in `partitions`).
-   `affected_nodes: [ALL]` means every container is affected.
+   (listed in `affected_nodes`, or the groups in `details.partitions`).
+   `["ALL"]` means every container.
 
 3. **Classify errors relative to windows:**
-   - **Error during fault window, on an affected container** — the fault may
-     have caused the error. The triage question is whether the SUT handled it
-     correctly (e.g., a connection timeout during a partition is expected; data
-     corruption after the partition lifts is a real bug).
-   - **Error shortly after a fault window ends** — recovery-time failures.
-     Check whether the SUT recovered correctly once the fault was lifted.
-   - **Error outside any fault window, or on an unaffected container** — the
-     fault may be unrelated to the error.
-   - **Error before a fault** — the fault did not cause the error.
+   - **During fault window, on affected container** — the fault likely caused
+     the error. Question: did the SUT handle it correctly?
+   - **Shortly after window ends** — recovery-time failure. Did the SUT
+     recover correctly?
+   - **Outside any fault window, or on unaffected container** — fault is
+     likely unrelated.
+   - **Before a fault** — the fault did not cause the error.
 
 4. **Watch for overlapping windows.** Antithesis can inject multiple faults
-   concurrently (e.g., a network partition overlapping with a node kill). When
-   windows overlap, consider whether either fault alone would explain the
-   failure.
+   concurrently (e.g., a partition overlapping with a node kill).
 
-### Key timestamps
+### Virtual time vs application timestamps
 
-Antithesis log timestamps reflect true execution order on the
-host system that runs the containers. When
-correlating Antithesis events with customer container logs, use
-Antithesis timestamps as the source of truth for ordering.
+Antithesis tags each event with it's virtual time, which represents an unambiguous global order of events in the simulation. Antithesis can do this since it runs the system deterministically.
+
+Use virtual time as the source of truth for ordering logs rather than timestamps embedded in application logs. Timestamps printed by the application can be out of order due to faults like clock skew and thread pausing.
