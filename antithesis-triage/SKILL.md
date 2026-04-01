@@ -39,7 +39,7 @@ when triage is complete.
 
 Before starting, collect the following from the user:
 
-1. **Report URL or Tenant ID** (required) — A full triage report URL like `https://TENANT.antithesis.com/...` or just the tenant name. If neither is provided, ask the user.
+1. **Report URL or Tenant ID** (required) — A full triage report URL like `https://TENANT.antithesis.com/...` or just the tenant name. If neither is provided, check the `$ANTITHESIS_TENANT` environment variable. Only ask the user if the variable is also unset.
 2. **What they want to know** — Are they investigating a specific failure? Getting a general overview? Comparing runs? This determines which workflow to follow.
 
 ## Reference files
@@ -251,6 +251,8 @@ again.
 3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
+**Important:** Do not draw conclusions about why a property failed until you have reviewed any attached logs. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
+
 ### Investigate an error report
 
 1. Read `references/setup-auth.md` — authenticate and open the report
@@ -288,8 +290,9 @@ again.
   log panes directly on the main report page.
 - **Some inline panes are previews.** If `readInlineErrorLog()` only surfaces a
   subset of rows, use the page's `Maximize` or `Expand for full, unfiltered
-  logs` controls before extracting more.
+logs` controls before extracting more.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
+- **Review logs before concluding on failures.** When a failed property has example rows with log links, navigate to the relevant logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
@@ -301,6 +304,6 @@ Review criteria:
 - Every property status reported (passed, failed, unfound) was extracted from the actual triage report, not inferred or assumed
 - Findings reference specific data from the report — property names, assertion text, log lines, timestamps
 - No selectors or report data were fabricated — all queries used the reference files' prescribed query files
-- Failed properties include actionable context: the assertion text, relevant log lines, and timeline context
+- Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend
 - If comparing runs, differences are grounded in data from both reports, not just one
