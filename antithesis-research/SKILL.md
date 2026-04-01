@@ -107,6 +107,36 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 5. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
 6. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
 
+### Coverage gap review
+
+After the property catalog is complete, verify that every area of concern
+identified in `antithesis/scratchbook/sut-analysis.md` is represented by at
+least one property in the catalog. This is a cross-reference check, not a
+deep analysis.
+
+1. Read `sut-analysis.md` and extract the list of components, attack surfaces,
+   and areas of concern.
+2. For each area, check whether at least one property in the catalog targets it.
+3. If an area has no property, either:
+   a. Add a property (preferred), or
+   b. Document why it was intentionally excluded (e.g., not relevant to
+      Antithesis testing, requires infrastructure not available).
+4. Write the results to `antithesis/scratchbook/coverage-gaps.md`.
+
+Pay particular attention to:
+- Components mentioned in the "Bug History and Hotspots" section
+- Areas called out in "Unproven Assumptions"
+- Features with dedicated sections in the SUT analysis that have zero
+  properties
+- Cross-cutting concerns (e.g., "what happens when feature X interacts
+  with feature Y under faults?") that may not be covered by any single
+  property discovery focus
+- Operational modes (degraded operation, migration, format conversion)
+  that span multiple subsystems
+
+If your agent supports sub-agents, delegate this to a fresh-context agent
+that reads both files without the bias of having written them.
+
 ## General Guidance
 
 - Prefer specific, checkable guarantees over vague goals like "test failover"
@@ -128,6 +158,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/scratchbook/deployment-topology.md`
 - `antithesis/scratchbook/property-relationships.md`
 - `antithesis/scratchbook/properties/{slug}.md` (one per cataloged property)
+- `antithesis/scratchbook/coverage-gaps.md`
 
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
 
@@ -152,4 +183,5 @@ Review criteria:
 - Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Claimed guarantees from docs, comments, or issues are represented as properties
+- `antithesis/scratchbook/coverage-gaps.md` exists and documents the cross-reference between SUT analysis areas and property catalog coverage. Every area of concern in the SUT analysis is either covered by a property or has a documented reason for exclusion.
 - The outputs are concrete enough for `antithesis-setup` and `antithesis-workload` to use directly — no ambiguous steps or missing details

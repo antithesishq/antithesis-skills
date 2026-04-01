@@ -104,6 +104,24 @@ Organize properties into categories based on system architecture. Common categor
 
 Each category should have a brief description explaining what area of the system it covers and why it matters.
 
+## Coverage Verification
+
+After the catalog is complete, cross-reference it against the SUT analysis.
+The property discovery process uses attention focuses that may not cover
+every area identified during SUT discovery. Common gaps include:
+
+- Features that interact with multiple subsystems (e.g., caching + replication,
+  authentication + session management, storage + garbage collection)
+- Areas identified in bug history that didn't map cleanly to a single
+  property discovery focus
+- Operational scenarios (migration, upgrade, format conversion, failover)
+  that span lifecycle transitions
+- Optional or configurable features that change system behavior in ways
+  the default-path analysis didn't explore
+
+A quick pass comparing SUT analysis sections against catalog categories
+catches these gaps before they become blind spots in testing.
+
 ## Evidence Files
 
 Every property in the catalog must have a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. These files capture the context and reasoning behind each property — information that would otherwise be lost when findings are compressed into catalog entries.
