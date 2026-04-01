@@ -61,13 +61,25 @@ This skill is broken out into multiple steps, each in a different reference file
 - Merge with existing `antithesis/` content instead of overwriting it.
 - Prefer `podman compose` for local testing; fall back to `docker compose`.
 - Keep Antithesis-only scaffolding under `antithesis/` when practical.
-- Focus this skill on infrastructure and readiness, not on defining the workload itself.
-- Installing the relevant Antithesis SDK into the SUT and adding one minimal bootstrap assertion is part of setup, not deferred workload work.
-- If `antithesis/test/` does not exist yet, create the directory structure needed for later workload work, but leave real test templates and assertions to `antithesis-workload`.
-- Treat instrumentation and symbolization as bootstrap work. The setup is not complete until the relevant images expose `/opt/antithesis/catalog/` or `/symbols/` correctly for their language.
+- Focus this skill on infrastructure and readiness, not on defining the workload
+  itself.
+- Installing the relevant Antithesis SDK into the SUT and adding one minimal
+  bootstrap assertion is part of setup, not deferred workload work.
+- If `antithesis/test/` does not exist yet, create the directory structure
+  needed for later workload work, but leave real test templates and assertions
+  to `antithesis-workload`.
+- Treat instrumentation and symbolization as bootstrap work. The setup is not
+  complete until the relevant images expose `/opt/antithesis/catalog/` or
+  `/symbols/` correctly for their language.
 - Treat local testing as required before the first submission.
 - Use `snouty run` directly to submit runs. Run `compose build` before `snouty run` to ensure images are up to date.
-- Do not add a separate Dockerfile under `antithesis/config/` unless the deployment explicitly requires it.
+- Do not add a separate Dockerfile under `antithesis/config/` unless the
+  deployment explicitly requires it.
+- Disable color/ANSI output in every container. Antithesis stores raw bytes and
+  does not render escape codes — color output is garbage in logs and triage. Set
+  `NO_COLOR=1` on all services via docker-compose.yaml environment blocks or
+  Dockerfile `ENV` directives. Add tool-specific flags (e.g. `FORCE_COLOR=0`)
+  where needed.
 
 ## Self-Review
 
@@ -84,4 +96,5 @@ Review criteria:
 - The `setup_complete` signal is wired in at least one entrypoint
 - `snouty validate` on `antithesis/config/` succeeds
 - All built images target `amd64` (verified via `podman image inspect` or `docker image inspect`)
+- Every service has `NO_COLOR=1` set in its environment (via docker-compose.yaml and/or Dockerfile) to prevent ANSI escape codes in container output
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use

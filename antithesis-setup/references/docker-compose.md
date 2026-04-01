@@ -24,6 +24,7 @@ Services use one of two patterns:
 Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. This applies to both local and public images — without it, builds and pulls on ARM hosts (e.g. macOS Apple Silicon) will produce the wrong architecture.
 
 Example:
+
 ```yaml
 name: foobar
 

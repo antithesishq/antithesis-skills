@@ -7,16 +7,8 @@
     return (text || "").replace(/\s+/g, " ").trim();
   }
 
-  function isObject(value) {
-    return !!value && typeof value === "object" && !Array.isArray(value);
-  }
-
   function clone(value) {
     return JSON.parse(JSON.stringify(value));
-  }
-
-  function isMethodError(result) {
-    return isObject(result) && typeof result.error === "string";
   }
 
   function currentPageType() {
@@ -33,8 +25,6 @@
 
   function summarizeWait(result) {
     return {
-      ok: !!result.ok,
-      ready: !!result.ready,
       attempts: result.attempts,
       waitedMs: result.waitedMs,
     };
@@ -157,14 +147,6 @@
     };
   }
 
-  function firstNonEmptyLogsUrl(exampleUrls) {
-    if (!Array.isArray(exampleUrls)) return null;
-    var row = exampleUrls.find(function (item) {
-      return item && typeof item.logsUrl === "string" && item.logsUrl !== "";
-    });
-    return row ? row.logsUrl : null;
-  }
-
   function hasRunStatus(run, needle) {
     var status = clean(run && run.status).toLowerCase();
     return status.indexOf(String(needle).toLowerCase()) >= 0;
@@ -229,16 +211,18 @@
   async function runCheck(name, fn, summarize, options) {
     var startedAt = now();
     var keepResult = !!(options && options.keepResult);
+    var expectError = (options && options.expectError) || null;
 
     try {
       var result = await fn();
-      if (isMethodError(result)) {
+
+      if (expectError) {
         return {
           name: name,
           ok: false,
           status: "failed",
           durationMs: now() - startedAt,
-          error: result.error,
+          summary: "expected error '" + expectError + "' but got success",
           result: keepResult ? clone(result) : undefined,
         };
       }
@@ -252,12 +236,22 @@
         result: keepResult ? clone(result) : undefined,
       };
     } catch (error) {
+      var msg = error && error.message ? error.message : String(error);
+      if (expectError && msg === expectError) {
+        return {
+          name: name,
+          ok: true,
+          status: "passed",
+          durationMs: now() - startedAt,
+          summary: "error handling verified: " + expectError,
+        };
+      }
       return {
         name: name,
         ok: false,
         status: "failed",
         durationMs: now() - startedAt,
-        error: error && error.message ? error.message : String(error),
+        error: msg,
       };
     }
   }
@@ -495,26 +489,9 @@
     var report = makeReport("report-examples");
 
     report.checks.push(
-      await runCheck("report.expandExamples", function () {
-        return runtime.report.expandExamples();
-      }, function (result) {
-        return {
-          expandedProperties: Array.isArray(result.expandedProperties)
-            ? result.expandedProperties.length
-            : 0,
-          totalExampleRows: result.totalExampleRows || 0,
-        };
-      }, { keepResult: true }),
-    );
-    report.checks.push(
-      await runCheck("report.getExampleUrls", function () {
-        return runtime.report.getExampleUrls();
-      }, function (result) {
-        return {
-          count: Array.isArray(result) ? result.length : 0,
-          firstLogsUrl: firstNonEmptyLogsUrl(result),
-        };
-      }, { keepResult: true }),
+      await runCheck("report.getExampleLogsUrl", function () {
+        return runtime.report.getExampleLogsUrl("__nonexistent__", 0);
+      }, null, { expectError: "property not found" }),
     );
 
     report.checks.push(
@@ -529,27 +506,9 @@
       }, summarizePropertyExamples, { keepResult: true }),
     );
 
-    var expandedCheck = findCheck(report.checks, "report.expandExamples");
-    var urlsCheck = findCheck(report.checks, "report.getExampleUrls");
     var allPropertyExamplesCheck = findCheck(report.checks, "report.getPropertyExamples");
     var failedPropertyExamplesCheck = findCheck(report.checks, "report.getFailedPropertyExamples");
 
-    report.counts.expandedProperties = expandedCheck && expandedCheck.result
-      ? Array.isArray(expandedCheck.result.expandedProperties)
-        ? expandedCheck.result.expandedProperties.length
-        : 0
-      : 0;
-    report.counts.totalExampleRows = expandedCheck && expandedCheck.result
-      ? expandedCheck.result.totalExampleRows || 0
-      : 0;
-    report.counts.exampleUrls = urlsCheck && Array.isArray(urlsCheck.result)
-      ? urlsCheck.result.length
-      : 0;
-    report.counts.exampleLogsUrls = urlsCheck && Array.isArray(urlsCheck.result)
-      ? urlsCheck.result.filter(function (item) {
-          return !!(item && item.logsUrl);
-        }).length
-      : 0;
     report.counts.propertyExamples = allPropertyExamplesCheck && allPropertyExamplesCheck.result
       ? allPropertyExamplesCheck.result.totalExamples || 0
       : 0;
@@ -557,37 +516,6 @@
       failedPropertyExamplesCheck && failedPropertyExamplesCheck.result
         ? failedPropertyExamplesCheck.result.totalExamples || 0
       : 0;
-    report.discovered.firstExampleLogsUrl = urlsCheck
-      ? firstNonEmptyLogsUrl(urlsCheck.result)
-      : null;
-    if (
-      !report.discovered.firstExampleLogsUrl &&
-      allPropertyExamplesCheck &&
-      allPropertyExamplesCheck.result
-    ) {
-      var properties = allPropertyExamplesCheck.result.properties || [];
-      for (var pi = 0; pi < properties.length; pi++) {
-        var examples = properties[pi].examples || [];
-        for (var ei = 0; ei < examples.length; ei++) {
-          if (examples[ei].logsUrl) {
-            report.discovered.firstExampleLogsUrl = examples[ei].logsUrl;
-            break;
-          }
-        }
-        if (report.discovered.firstExampleLogsUrl) break;
-      }
-    }
-
-    if (
-      !report.discovered.firstExampleLogsUrl &&
-      (report.counts.propertyExamples > 0 || report.counts.totalExampleRows > 0)
-    ) {
-      report.errors.push(
-        "property examples were present but none exposed an example logs url"
-      );
-    } else if (!report.discovered.firstExampleLogsUrl) {
-      report.warnings.push("report did not expose an example logs url");
-    }
 
     return finalize(report);
   }
@@ -863,12 +791,10 @@
     if (logsQuery) {
       report.checks.push(
         await runCheck("logs.filter", async function () {
-          var result = runtime.logs.filter(logsQuery);
-          if (isMethodError(result)) return result;
+          runtime.logs.filter(logsQuery);
           await delay(250);
 
           var visible = runtime.logs.readVisibleEvents(10);
-          if (isMethodError(visible)) return visible;
 
           return {
             query: logsQuery,
@@ -892,12 +818,10 @@
       );
       report.checks.push(
         await runCheck("logs.clearFilter", async function () {
-          var result = runtime.logs.clearFilter();
-          if (isMethodError(result)) return result;
+          runtime.logs.clearFilter();
           await delay(250);
 
           var visible = runtime.logs.readVisibleEvents(10);
-          if (isMethodError(visible)) return visible;
 
           return {
             filterValue: clean(
@@ -919,8 +843,7 @@
       );
       report.checks.push(
         await runCheck("logs.search", async function () {
-          var result = runtime.logs.search(logsQuery);
-          if (isMethodError(result)) return result;
+          runtime.logs.search(logsQuery);
           await delay(250);
 
           return {

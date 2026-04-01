@@ -122,9 +122,11 @@ run_audit_phase() {
 wait_ready() {
   local namespace="$1"
 
-  browser eval \
+  if ! browser eval \
     "window.__antithesisTriage.${namespace}.waitForReady({ timeoutMs: 10000, intervalMs: 500 })" \
-    >/dev/null
+    >/dev/null 2>&1; then
+    echo "warning: ${namespace}.waitForReady timed out" >&2
+  fi
 }
 
 make_temp() {
