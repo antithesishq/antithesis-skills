@@ -322,6 +322,39 @@ which appears AFTER an Antithesis fault event:
    is whether the test code or customer code correctly handled the error
 3. If no fault preceded the error, the failure may not have been caused by the fault event
 
+For a more structured approach, use the fault windows methodology below.
+
+#### Thinking in fault windows
+
+1. **Identify fault windows.** Each `partition` or `clog` event opens a window.
+   The window closes at the next `restore` event. A subsequent fault of the same
+   type replaces the network topology rather than restoring it — treat it as
+   opening a new window with a potentially different set of affected containers.
+   If the log ends without a restore, the window extends to the end of the
+   visible timeline. Node faults (`kill`, `stop`, `pause`) and clock faults
+   (`skip`) are point-in-time — their impact lingers until the affected
+   container restarts or the clock corrects.
+
+2. **Map affected containers.** Each fault window affects specific containers
+   (listed in `affected_nodes`, or the groups listed in `partitions`).
+   `affected_nodes: [ALL]` means every container is affected.
+
+3. **Classify errors relative to windows:**
+   - **Error during fault window, on an affected container** — the fault may
+     have caused the error. The triage question is whether the SUT handled it
+     correctly (e.g., a connection timeout during a partition is expected; data
+     corruption after the partition lifts is a real bug).
+   - **Error shortly after a fault window ends** — recovery-time failures.
+     Check whether the SUT recovered correctly once the fault was lifted.
+   - **Error outside any fault window, or on an unaffected container** — the
+     fault may be unrelated to the error.
+   - **Error before a fault** — the fault did not cause the error.
+
+4. **Watch for overlapping windows.** Antithesis can inject multiple faults
+   concurrently (e.g., a network partition overlapping with a node kill). When
+   windows overlap, consider whether either fault alone would explain the
+   failure.
+
 ### Key timestamps
 
 Antithesis log timestamps reflect true execution order on the

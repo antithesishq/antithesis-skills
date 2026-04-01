@@ -96,7 +96,7 @@ Each property in the returned `properties` array includes:
 
 The ratio of passing to failing examples is a strong signal for root cause:
 
-- **All failing (0 passing)** — Almost certainly a setup or workload bug, not a
+- **All failing (0 passing)** — Likely a setup or workload bug, not a
   real SUT bug. The property is being violated in every execution history,
   which means something is systematically wrong with how it's checked.
 - **Mostly failing with rare passes** — Could be a workload issue that only
@@ -106,6 +106,29 @@ The ratio of passing to failing examples is a strong signal for root cause:
   violation. Investigate the failing examples' logs for fault events.
 - **Roughly even split** — The property may be sensitive to configuration or
   timing. Check whether passing vs failing correlates with fault intensity.
+
+### Assertion types and what they mean for triage
+
+Each property is backed by an assertion of a specific type. The type determines
+what a failure actually tells you:
+
+- **`Always`**: Must be true every evaluation. Fails if the condition is false
+  at least once.
+- **`AlwaysOrUnreachable`**: Either never reached, or true every time reached.
+  Fails if reached at least once AND false at least once. A rare or optional
+  path was exercised and the invariant didn't hold. The path being reached is
+  itself informative.
+- **`Sometimes`**: Must be true at least once across the entire run. Fails if
+  the condition is never true. Implies `Reachable`.
+- **`Reachable`**: The assertion point must be reached at least once. Fails if
+  never reached. Could be a test coverage gap, a workload that never triggers
+  the state, or a SUT bug that prevents the path.
+- **`Unreachable`**: The assertion point must never be reached. Fails if reached
+  at least once. A forbidden or impossible path was entered.
+
+Numeric/boolean variants (e.g., `AlwaysGreaterThan`, `SometimesAll`) follow
+the same pass/fail semantics as their base type but attach the compared
+operands to assertion details automatically.
 
 To expand properties with example tables and collect their examples in one
 structured call:
