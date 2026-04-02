@@ -18,6 +18,10 @@ keywords:
 
 # Antithesis Launch
 
+## Prerequisites
+
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+
 ## Goal
 
 Launch an Antithesis run in this order only:
