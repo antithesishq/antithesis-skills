@@ -107,7 +107,7 @@ The ratio of passing to failing examples is a strong signal for root cause:
 - **Roughly even split** — The property may be sensitive to configuration or
   timing. Check whether passing vs failing correlates with fault intensity.
 
-### Assertion types and what they mean for triage
+## Assertion types and what they mean for triage
 
 Each property is backed by an assertion of a specific type. The type determines
 what a failure actually tells you:
@@ -147,3 +147,23 @@ If you specifically want failed properties only, use:
 agent-browser --session "$SESSION" eval \
   "window.__antithesisTriage.report.getFailedPropertyExamples()"
 ```
+
+## Navigate to logs for a specific example
+
+Use the exact `logsUrl` from the example associated with a property to open the log viewer. Do not rewrite query parameters.
+
+```
+agent-browser --session "$SESSION" open "<logsUrl>"
+agent-browser --session "$SESSION" wait --fn \
+  "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.logs.waitForReady()"
+```
+
+Before injecting, make sure the browser is still on `/search` with
+`get_logs=true`. If it redirected to login or another page, reauthenticate
+first.
+
+To learn how to download and understand logs, refer to `references/logs.md`.

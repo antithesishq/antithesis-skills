@@ -35,6 +35,13 @@ authentication state automatically, while `--session "$SESSION"` keeps each
 triage run isolated from other concurrent agents. Close the unique live session
 when triage is complete.
 
+## Prerequisites
+
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `agent-browser` is not installed. See `https://raw.githubusercontent.com/vercel-labs/agent-browser/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `agent-browser` is older than version `v0.23.4`. You can upgrade with `agent-browser upgrade`.
+- DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
+
 ## Gathering user input
 
 Before starting, collect the following from the user:
@@ -51,7 +58,7 @@ task. Read the relevant file before performing that task.
 | ----------------------------- | ---------------------------------------------------------- |
 | `references/setup-auth.md`    | Always — read first to set up the browser session          |
 | `references/run-discovery.md` | User wants to find or browse recent runs (no specific URL) |
-| `references/run-metadata.md`  | Need run title, date, or the Explore Logs link             |
+| `references/run-metadata.md`  | Need run title or date                                     |
 | `references/properties.md`    | Checking property pass/fail status, filtering properties   |
 | `references/environment.md`   | Checking which Docker images were used                     |
 | `references/findings.md`      | Viewing behavioral diffs between runs                      |
@@ -225,8 +232,7 @@ report is healthy.
   environment images, the error details, and any inline error logs.
 - **Runtime errors (`runtime_error`)**: Do **not** call findings methods (the
   section is stuck loading). Properties and utilization usually work normally.
-  If the report also shows inline error logs, use the report-side log methods
-  instead of navigating away immediately.
+  If the report also shows inline error logs, inspect them instead of navigating away immediately.
 
 Report queries are only valid on the main report view. If you navigate to an
 internal hash route such as `#/run/.../finding/...`, reopen the original report
@@ -248,17 +254,17 @@ again.
 
 1. Read `references/setup-auth.md` — authenticate and open the report
 2. Read `references/properties.md` — list properties, filter to failed, get examples grouped by property
-3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, find the highlighted assertion event and surrounding context
+3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, download the log to a file, and inspect the log file locally.
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
-**Important:** Do not draw conclusions about why a property failed until you have reviewed any attached logs. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
+**Important:** Do not draw conclusions about why a property failed until you have downloaded and reviewed any attached logs. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
 
-### Investigate an error report
+### Investigate an failed report
 
 1. Read `references/setup-auth.md` — authenticate and open the report
 2. Call `window.__antithesisTriage.report.waitForReady()` and inspect `result.error`
 3. Read `references/run-metadata.md` for run title/date and `references/environment.md` for source images
-4. Read `references/logs.md` — if the error report includes inline log panes, use `getInlineErrorLogViews()` first, then `readInlineErrorLog()` or `collectInlineErrorLog()` on the pane you need
+4. Read `references/logs.md` and download the log file from each of the log panes. You may have to expand section headers first.
 5. Summarize: error type, error details, and the relevant inline log lines with timestamps and sources
 
 ### Find a specific run
@@ -286,13 +292,10 @@ again.
 - **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
 - **Logs require full auth.** Navigating to log pages requires a fully authenticated session.
 - **Error reports may keep logs inline.** Before leaving an error report, check
-  `getInlineErrorLogViews()`. Setup-failure reports can embed multiple inline
-  log panes directly on the main report page.
-- **Some inline panes are previews.** If `readInlineErrorLog()` only surfaces a
-  subset of rows, use the page's `Maximize` or `Expand for full, unfiltered
-logs` controls before extracting more.
-- **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
-- **Review logs before concluding on failures.** When a failed property has example rows with log links, navigate to the relevant logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
+  `getLogViewers()`. Setup-failure reports can embed multiple inline log panes
+  directly on the main report page.
+- **Preferably download log files for local analysis.** Whenever possible try to download log files locally rather than using the web-ui log viewer.
+- **Review logs before concluding on failures.** When a failed property has example rows with log links, navigate to the relevant url and download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
