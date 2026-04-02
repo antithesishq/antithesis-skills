@@ -154,26 +154,35 @@ cat assets/antithesis-query-logs.js \
   | agent-browser --session "$SESSION" eval --stdin
 ```
 
-The runtime provides both UI interaction methods and URL construction helpers.
+The runtime registers two objects:
+
+- **`window.__antithesisQueryBuilder`** — standalone URL construction helpers.
+  Available on any page after injection. Use this when building a search URL
+  before navigating to the Logs Explorer.
+- **`window.__antithesisQueryLogs`** — full runtime with URL builders, UI
+  interaction methods, and result-reading methods.
+
 **URL construction is the preferred approach** for executing queries
 programmatically, because UI interaction (clicking dropdowns, targeting rows)
 is fragile with the query builder's dynamic DOM.
+
+**Important**: You must inject the runtime before calling any
+`window.__antithesisQueryBuilder` or `window.__antithesisQueryLogs` method.
+If you get `TypeError: Cannot read properties of undefined`, inject first.
 
 ## Recommended Workflows
 
 ### Cascade elimination
 
 1. Navigate to the triage report for the run
-2. Extract the session ID from the "Explore logs" link (see query-builder.md)
-3. Build a simple query URL for the suspected cascade target (e.g.,
-   `assertion.message contains "my-failing-property"` AND
-   `assertion.status matches "failing"`)
-4. Navigate to the URL and note the result count
-5. Build a temporal query URL with "Not preceded by" for the suspected cascade
-   source (e.g., `assertion.message contains "suspected-upstream-failure"`)
-6. Navigate to the temporal URL and note the new count
-7. If the count drops, the difference is cascade failures
-8. If the count stays the same, the failures are independent
+2. Inject `assets/antithesis-query-logs.js` (required before using any builder methods)
+3. Extract the session ID from the "Explore logs" link (see query-builder.md)
+4. Build a simple query URL using `window.__antithesisQueryBuilder.buildFailureQueryUrl(sessionId, "my-failing-property")`
+5. Navigate to the URL and note the result count
+6. Build a temporal query URL using `window.__antithesisQueryBuilder.buildNotPrecededByUrl(sessionId, "my-failing-property", "assertion.message", "suspected-upstream-failure")`
+7. Navigate to the temporal URL and note the new count
+8. If the count drops, the difference is cascade failures
+9. If the count stays the same, the failures are independent
 
 ### Failure correlation with event details
 
