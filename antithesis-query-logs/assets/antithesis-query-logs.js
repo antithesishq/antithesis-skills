@@ -172,14 +172,15 @@
   }
 
   /**
-   * Build a full search URL for the current tenant.
+   * Build a full search URL.
    * @param {Object} query - the query JSON from buildQuery()
+   * @param {string} [tenant] - tenant hostname; defaults to current page hostname
    * @returns {string} - the full URL
    */
-  function buildSearchUrl(query) {
-    var tenant = window.location.hostname;
+  function buildSearchUrl(query, tenant) {
+    var host = tenant || window.location.hostname;
     return (
-      "https://" + tenant + "/search?search=" + encodeQuery(query)
+      "https://" + host + "/search?search=" + encodeQuery(query)
     );
   }
 
@@ -207,6 +208,64 @@
     var decoded = decodeCurrentQuery();
     return decoded ? decoded.s : null;
   }
+
+  // -------------------------------------------------------------------------
+  // Standalone URL builder — available without full runtime or page context
+  // -------------------------------------------------------------------------
+
+  window.__antithesisQueryBuilder = {
+    buildQuery: function (options) {
+      return buildQuery(options);
+    },
+    encodeQuery: function (query) {
+      return encodeQuery(query);
+    },
+    buildSearchUrl: function (queryOrOptions, tenant) {
+      var query = queryOrOptions;
+      if (queryOrOptions && queryOrOptions.sessionId) {
+        query = buildQuery(queryOrOptions);
+      }
+      return buildSearchUrl(query, tenant);
+    },
+    buildFailureQueryUrl: function (sessionId, assertionMessage, tenant) {
+      var query = buildQuery({
+        sessionId: sessionId,
+        conditions: [
+          { field: "assertion.message", op: "contains", value: assertionMessage },
+          { field: "assertion.status", op: "matches", value: "failing" },
+        ],
+      });
+      return buildSearchUrl(query, tenant);
+    },
+    buildNotPrecededByUrl: function (sessionId, assertionMessage, precededByField, precededByValue, tenant) {
+      var query = buildQuery({
+        sessionId: sessionId,
+        conditions: [
+          { field: "assertion.message", op: "contains", value: assertionMessage },
+          { field: "assertion.status", op: "matches", value: "failing" },
+        ],
+        temporalType: "not_preceded_by",
+        temporalConditions: [
+          { field: precededByField, op: "contains", value: precededByValue },
+        ],
+      });
+      return buildSearchUrl(query, tenant);
+    },
+    buildNotFollowedByUrl: function (sessionId, assertionMessage, followedByField, followedByValue, tenant) {
+      var query = buildQuery({
+        sessionId: sessionId,
+        conditions: [
+          { field: "assertion.message", op: "contains", value: assertionMessage },
+          { field: "assertion.status", op: "matches", value: "failing" },
+        ],
+        temporalType: "not_followed_by",
+        temporalConditions: [
+          { field: followedByField, op: "contains", value: followedByValue },
+        ],
+      });
+      return buildSearchUrl(query, tenant);
+    },
+  };
 
   // -------------------------------------------------------------------------
   // Query builder interactions (fallback UI approach)

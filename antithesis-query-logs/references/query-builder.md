@@ -193,6 +193,69 @@ agent-browser --session "$SESSION" eval \
   "window.__antithesisQueryLogs.extractSessionId()"
 ```
 
+### Runtime URL Builder Methods
+
+After injecting `assets/antithesis-query-logs.js`, URL builder methods are
+available on two objects:
+
+- **`window.__antithesisQueryBuilder`** — standalone builder, available on
+  any page after injection. Use this when constructing a URL before
+  navigating to the Logs Explorer (e.g., from a triage report page).
+- **`window.__antithesisQueryLogs`** — full runtime, also has the same
+  builder methods plus UI interaction and result-reading methods.
+
+If you get `TypeError: Cannot read properties of undefined`, the runtime
+has not been injected. Inject it first:
+
+```bash
+cat assets/antithesis-query-logs.js \
+  | agent-browser --session "$SESSION" eval --stdin
+```
+
+#### buildFailureQueryUrl(sessionId, assertionMessage [, tenant])
+
+Build a URL for a simple assertion failure query.
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisQueryBuilder.buildFailureQueryUrl('SESSION_ID', 'my-property-name')"
+```
+
+#### buildNotPrecededByUrl(sessionId, assertionMessage, precededByField, precededByValue [, tenant])
+
+Build a temporal query URL filtering for failures NOT preceded by a condition.
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisQueryBuilder.buildNotPrecededByUrl('SESSION_ID', 'my-property', 'assertion.message', 'upstream-failure')"
+```
+
+#### buildNotFollowedByUrl(sessionId, assertionMessage, followedByField, followedByValue [, tenant])
+
+Build a temporal query URL filtering for failures NOT followed by a condition.
+
+#### buildSearchUrl(options [, tenant])
+
+Build a URL from a full options object. Accepts either a raw query JSON
+(from `buildQuery`) or an options object with `sessionId`, `conditions`,
+and optional `temporalType`/`temporalConditions`.
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisQueryBuilder.buildSearchUrl({ \
+    sessionId: 'SESSION_ID', \
+    conditions: [ \
+      { field: 'assertion.message', op: 'contains', value: 'my-property' }, \
+      { field: 'assertion.status', op: 'matches', value: 'failing' } \
+    ] \
+  })"
+```
+
+All builder methods accept an optional `tenant` parameter (the hostname,
+e.g. `"my-tenant.antithesis.com"`) as the last argument. If omitted, the
+current page hostname is used. Pass `tenant` explicitly when building URLs
+from a page that is not on the Antithesis domain.
+
 ### UI Interaction (Fallback)
 
 Use UI interaction only when URL construction is not possible (e.g.,
