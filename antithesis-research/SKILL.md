@@ -25,6 +25,7 @@ Research a target system and produce scratchbook artifacts that unblock the rest
 - `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology
 - `antithesis/scratchbook/properties/{slug}.md` captures per-property evidence trails and context
 - `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties
+- `antithesis/scratchbook/evaluation/synthesis.md` records categorized evaluation findings and actions taken
 
 ## Prerequisites and Scoping
 
@@ -67,6 +68,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 | `references/property-discovery.md`  | Discovering properties through structured attention focuses |
 | `references/property-catalog.md`    | Format and methodology for documenting properties   |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
+| `references/property-evaluation.md` | Evaluating the property catalog as a portfolio       |
 
 ## Recommended Workflows
 
@@ -86,7 +88,11 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 5. Read `references/property-discovery.md` and `references/property-catalog.md`
 6. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
 7. Read `references/deployment-topology.md`
-8. Write or update all findings in the scratchbook under `antithesis/scratchbook/`
+8. Design the deployment topology and write it to `antithesis/scratchbook/deployment-topology.md`
+9. Read `references/property-evaluation.md`
+10. Evaluate the property catalog using the ensemble or single-agent workflow from `references/property-evaluation.md`
+11. Address evaluation findings: apply refinements, fill gaps, escalate biases to the user
+12. Write or update all remaining findings in the scratchbook under `antithesis/scratchbook/`
 
 ### Targeted property research
 
@@ -97,6 +103,9 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 5. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
 6. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
 7. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
+8. Read `references/property-evaluation.md`
+9. Evaluate the updated property catalog using the ensemble or single-agent workflow from `references/property-evaluation.md`
+10. Address evaluation findings: apply refinements, fill gaps, escalate biases to the user
 
 ### Property expansion (after triage)
 
@@ -106,6 +115,10 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 4. Update the relevant files in the scratchbook
 5. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
 6. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
+7. If the expansion is substantial (a new category of properties or more than 3
+   new properties), read `references/property-evaluation.md` and evaluate the
+   updated catalog. Small expansions of 1-3 properties in existing categories
+   do not require a full evaluation pass.
 
 ## General Guidance
 
@@ -128,6 +141,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/scratchbook/deployment-topology.md`
 - `antithesis/scratchbook/property-relationships.md`
 - `antithesis/scratchbook/properties/{slug}.md` (one per cataloged property)
+- `antithesis/scratchbook/evaluation/synthesis.md`
+- `antithesis/scratchbook/evaluation/{lens}.md` (one per evaluation lens)
 
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
 
@@ -152,4 +167,8 @@ Review criteria:
 - Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
 - Claimed guarantees from docs, comments, or issues are represented as properties
+- Property evaluation was performed: `antithesis/scratchbook/evaluation/synthesis.md` exists with categorized findings
+- Evaluation refinements have been applied to the catalog
+- Evaluation gaps have been filled via targeted discovery, and the resulting properties are in the catalog with evidence files
+- Evaluation biases (if any) have been presented to the user with supporting evidence
 - The outputs are concrete enough for `antithesis-setup` and `antithesis-workload` to use directly — no ambiguous steps or missing details

@@ -25,7 +25,11 @@ All research outputs should be written as markdown files in the Antithesis scrat
 - `antithesis/scratchbook/deployment-topology.md` — Container topology plan for the Antithesis environment
 - `antithesis/scratchbook/property-relationships.md` — Suspected clusters and connections between properties
 - `antithesis/scratchbook/properties/{slug}.md` — Per-property evidence files (one per cataloged property)
+- `antithesis/scratchbook/evaluation/synthesis.md` — Categorized evaluation findings and actions taken
+- `antithesis/scratchbook/evaluation/{lens}.md` — Per-lens evaluation evidence (antithesis-fit, coverage-balance, implementability, wildcard)
 
 When starting from scratch, initialize each file with a short summary section plus explicit `Assumptions` and `Open Questions` headings. This makes later iterations and handoffs easier.
 
 Create the `antithesis/scratchbook/properties/` directory when writing the first property evidence file.
+
+Create the `antithesis/scratchbook/evaluation/` directory when starting property evaluation.

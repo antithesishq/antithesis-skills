@@ -13,6 +13,8 @@ The scratchbook lives at `antithesis/scratchbook/` in the target repository and 
 | `property-catalog.md` | research | workload, refinement (future) | Concise, scannable catalog of testable properties with priorities |
 | `property-relationships.md` | research | refinement (future) | Suspected clusters and connections between properties |
 | `properties/{slug}.md` | research | refinement (future) | Per-property evidence trail and context |
+| `evaluation/synthesis.md` | research | refinement (future) | Categorized evaluation findings and actions taken |
+| `evaluation/{lens}.md` | research | refinement (future) | Per-lens evaluation evidence |
 
 ## Layout
 
@@ -26,6 +28,12 @@ antithesis/scratchbook/
     {slug}.md
     {slug}.md
     ...
+  evaluation/
+    synthesis.md
+    antithesis-fit.md
+    coverage-balance.md
+    implementability.md
+    wildcard.md
 ```
 
 ## Property IDs
