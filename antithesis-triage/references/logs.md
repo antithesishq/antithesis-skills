@@ -1,208 +1,96 @@
 # Logs
 
-Logs can come from two places:
+Antithesis renders logs in the web UI using a `div.sequence_printer_wrapper` component.
+
+Logs can appear in a few places:
 
 1. **Per-example logs** from property examples. Passing and failing property
    example rows can both expose a "get logs" link that opens a
    timeline-specific log viewer on the search page.
 2. **Inline error-report logs** embedded directly in setup-failure reports.
-   These stay on the main report page under the `Error` section and use the
-   same `sequence_printer` widget as the `/search?get_logs=true` page.
+   These stay on the main report page under the `Error` section.
+3. **The general search logs page** When searching logs at `/search`, the log
+   viewer appears on the right side after selecting a candidate moment in the
+   search results.
 
-**Important:** If a `logsUrl` redirects away from the search page or fails to
-load, do a full interactive login first.
-**Important:** Report-side queries in this skill only apply on the main report
-view. If you navigate to a hash route such as `#/run/.../finding/...`, reopen
-the original report URL and rerun `window.__antithesisTriage.report.waitForReady()`
-before using any report method again.
+## Downloading logs from a log viewer
 
-If `window.__antithesisTriage` is missing, inject again and retry. After every
-`open` call or any navigation, use `agent-browser wait --fn` to confirm that
-the browser is on the expected page, inject again, then call the
-matching `*.waitForReady()` method before the next page-specific method call.
+### Check agent-browser version
 
-## Reading inline logs from an error report
+Downloading logs to a file requires `agent-browser` v0.23.4 or above. Check before attempting a download:
 
-When `window.__antithesisTriage.report.waitForReady()` returns an `error`,
-check whether the report exposes inline log panes:
+```bash
+agent-browser --version
+```
+
+Compare the version against `0.23.4`. If the installed version is older,
+read `references/logs-legacy.md` instead and use the scroll-based fallback
+methods described there.
+
+### Pages with multiple log viewers
+
+Sometimes the Report page may contain more than one log viewer. Use
+`getLogViewers()` to list them before downloading:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getInlineErrorLogViews()"
+  "window.__antithesisTriage.logs.getLogViewers()"
 ```
 
-This returns one entry per visible log pane with:
+Returns an array with one entry per viewer:
 
-- `index`: zero-based pane index
-- `itemCount`: total rows reported by the widget
-- `visibleEvents`: rows currently rendered in the DOM
-- `firstEvent`: first visible `{ vtime, source, text, highlighted }` row
+- `index`: zero-based viewer index (pass to `prepareDownload`)
+- `label`: text from the preceding element (e.g., `"Filtered logs:"`) or `null`
+- `itemCount`: number of items in the viewer
+- `visible`: whether the viewer is currently rendered
 
-Read the currently visible rows from a pane:
+If a desired log viewer is not visible, you may need to expand it's containing section to view it. Look for elements containing `Expand for full, unfiltered logs` or other section headers.
+
+### Download logs from a log viewer
+
+To download logs from a log viewer you need to run two agent-browser commands sequentially. These commands MUST NOT run in parallel as the second depends on the first.
+
+First, you need to execute `prepareDownload` specifying which format you want as well as the log viewer index. The first viewer index is 0.
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.readInlineErrorLog(0, 20)"
+  'window.__antithesisTriage.logs.prepareDownload("txt", 0)'
 ```
 
-Best-effort collection from a pane by scrolling its virtualized viewport:
+Then, once that command completes, you need to run download. Download takes two arguments. The first is the selector returned by the previous command, and the second is the output file path on your local filesystem.
 
 ```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.collectInlineErrorLog(0)"
+agent-browser --session "$SESSION" download \
+  'a.sequence_printer_menu_button[data-triage-dl]' "$OUTPUT_PATH"
 ```
 
-Optional limits can be passed as an object:
+You should download log files using unique names to a temporary directory unless
+a specific directory has been specified by the user. Make sure to generate
+unique names for log files so as to not collide with other processes running on
+the same machine or older log files.
 
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.collectInlineErrorLog(1, { maxItems: 200 })"
-```
-
-Use the inline-pane workflow for setup/runtime error reports that surface logs
-on the main report page. Use the `/search?get_logs=true` workflow only when you
-need logs for a specific property example.
-
-If an inline pane only exposes a preview, use the report UI's `Maximize` or
-`Expand for full, unfiltered logs` controls before trying to read more rows.
-
-## Getting log URLs from triage report examples
-
-Use `getPropertyExamples()` to expand properties that expose example tables and
-collect examples grouped by property in one call:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getPropertyExamples()"
-```
-
-Each property in the result includes its `group`, `name`, `status`, and an
-`examples` array with `{ status, time, logsUrl }` entries. Use the `logsUrl`
-from a specific example to navigate to its log viewer.
-
-Use `getFailedPropertyExamples()` only when you specifically want to restrict
-the results to failed properties.
-
-The older two-step flow (`expandExamples()` then `getExampleUrls()`) still works
-but returns a flat list without property context.
-
-## Navigate to logs for a specific example
-
-Use the exact `logsUrl` from the example row to open the log viewer. Do not
-rewrite query parameters unless you have a specific reason:
+The file is written directly to the specified path. For TXT format, each line
+is a log event in the format:
 
 ```
-agent-browser --session "$SESSION" open "<logsUrl>"
-agent-browser --session "$SESSION" wait --fn \
-  "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"
-cat assets/antithesis-triage.js \
-  | agent-browser --session "$SESSION" eval --stdin
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.waitForReady()"
+[<vtime>] [<source>] [<stream>] <message>
 ```
 
-Before injecting, make sure the browser is still on `/search` with
-`get_logs=true`. If it redirected to login or another page, reauthenticate
-first.
+`[<vtime>]` is the virtual time of the message. Messages from all containers are interleaved into a single global order by their deterministic vtime.
+`[<source>]` represents the source of the log, usually a docker container name for SUT messages.
+`[<stream>]` can be `[err]` which means that this log message is from stderr.
+`<message>` the raw log message, sometimes structured as JSON.
 
-## Log viewer page structure
+### Supported formats
 
-The log viewer is at `$TENANT.antithesis.com/search?search=...&get_logs=true&...`. It shows a timeline-specific event log centered on the assertion moment.
+| Format | `prepareDownload` arg | Download selector filename | Content                                |
+| ------ | --------------------- | -------------------------- | -------------------------------------- |
+| TXT    | `'txt'`               | `events.log`               | One log line per event                 |
+| JSON   | `'json'`              | `events.json`              | JSON array of structured event objects |
+| CSV    | `'csv'`               | `events.csv`               | CSV table                              |
 
-Log viewers are `div.sequence_printer_wrapper` elements, each with a virtual scroll.
-
-## Get log item count
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.getItemCount()"
-```
-
-## Filter logs by text
-
-Edit the query text directly in the snippet:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.filter('my search query')"
-```
-
-Clear the filter:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.clearFilter()"
-```
-
-## Read visible log entries
-
-Each log event has four columns: virtual time, source (command name), container,
-and message text. The runtime methods extract these into objects with fields
-`vtime`, `container`, `source`, `text`, `directText`, `outputText`, and
-`highlighted`. The `container` field
-identifies which Docker container produced the event (e.g., `nsq-workload-2`),
-which is important for correlating faults with errors in multi-container setups.
-
-`readVisibleEvents()` returns the rows that are currently rendered in the DOM.
-`text` is the best-effort combined message text, while `directText` and
-`outputText` preserve the two underlying extraction paths used for structured
-rows.
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.readVisibleEvents()"
-```
-
-This matters for fault injector and other structured events because some rows
-store their useful content in direct text nodes rather than in
-`.event__output_text`.
-
-Logs use virtual scrolling, so only ~50-70 rows render at a time. If you need
-more than the current viewport, use the collector instead of relying on manual
-scrolling:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.collectEvents()"
-```
-
-Optional limits can be passed as an object:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.collectEvents({ maxItems: 200 })"
-```
-
-The collector walks the virtual scroller and returns:
-
-- `itemCount`: rows reported by the viewer
-- `collectedCount`: rows actually captured
-- `truncated`: whether `maxItems` stopped collection early
-- `events`: serialized rows with `vtime`, `container`, `source`, `text`, `directText`, `outputText`, and `highlighted`
-
-## Find the highlighted assertion event
-
-The event that triggered the "get logs" link is highlighted with `._emphasized_blue`:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.findHighlightedEvent()"
-```
-
-## Search within logs
-
-Use the search input to find and navigate between matches:
-
-Edit the query text directly in the snippet:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.search('my search query')"
-```
-
-The search count is displayed next to the search input (e.g., "1 / 30").
-If you need to read beyond the currently rendered rows after filtering or
-searching, run `collectEvents()` again on the updated view.
+The download is generated client-side from data already loaded in the page —
+no additional network requests are made. Thus you need to ensure that the page is fully loaded before downloading.
 
 ## Parsing Logs
 

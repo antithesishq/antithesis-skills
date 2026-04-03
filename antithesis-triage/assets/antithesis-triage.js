@@ -107,7 +107,9 @@
       // The validation error message lives in a <pre> inside the content area.
       // Fall back to the full section text (trimmed) if no <pre> is found.
       var pre = content && content.querySelector("pre");
-      var details = clean(pre ? pre.textContent : content && content.textContent);
+      var details = clean(
+        pre ? pre.textContent : content && content.textContent,
+      );
 
       return {
         type: "setup_error",
@@ -179,16 +181,17 @@
   }
 
   function findSectionByHeading(heading) {
-    return Array.from(document.querySelectorAll("section")).find(function (
-      section,
-    ) {
-      var h = section.querySelector("h1, h2, h3, h4, h5, h6");
-      return clean(h && h.textContent) === heading;
-    });
+    return Array.from(document.querySelectorAll("section")).find(
+      function (section) {
+        var h = section.querySelector("h1, h2, h3, h4, h5, h6");
+        return clean(h && h.textContent) === heading;
+      },
+    );
   }
 
   function visibleCount(selector) {
-    return Array.from(document.querySelectorAll(selector)).filter(isVisible).length;
+    return Array.from(document.querySelectorAll(selector)).filter(isVisible)
+      .length;
   }
 
   function sectionInfo(section) {
@@ -232,7 +235,9 @@
   }
 
   function nameOf(container) {
-    var label = container.querySelector(":scope > .property .property__name_label");
+    var label = container.querySelector(
+      ":scope > .property .property__name_label",
+    );
     return clean(label && label.textContent);
   }
 
@@ -257,7 +262,9 @@
   }
 
   function expanderButton(container) {
-    return container.querySelector(":scope > .property .property__expander-button");
+    return container.querySelector(
+      ":scope > .property .property__expander-button",
+    );
   }
 
   function groupPath(container) {
@@ -315,9 +322,13 @@
 
   async function waitForReady(checkFn, detailsFn, options) {
     var timeoutMs =
-      options && typeof options.timeoutMs === "number" ? options.timeoutMs : 60000;
+      options && typeof options.timeoutMs === "number"
+        ? options.timeoutMs
+        : 60000;
     var intervalMs =
-      options && typeof options.intervalMs === "number" ? options.intervalMs : 1000;
+      options && typeof options.intervalMs === "number"
+        ? options.intervalMs
+        : 1000;
     var startedAt = Date.now();
     var deadline = startedAt + timeoutMs;
     var attempts = 0;
@@ -347,6 +358,33 @@
     };
   }
 
+  async function expandAllSections() {
+    var settleMs = 300;
+    var maxPasses = 10;
+
+    for (var pass = 0; pass < maxPasses; pass++) {
+      var collapsed = Array.from(
+        document.querySelectorAll(".section_container"),
+      ).filter(function (sc) {
+        var expander = sc.querySelector(
+          ":scope > .section_header .expander.section_expander",
+        );
+        return expander && !expander.classList.contains("_expanded");
+      });
+
+      if (collapsed.length === 0) break;
+
+      for (var i = 0; i < collapsed.length; i++) {
+        var btn = collapsed[i].querySelector(
+          ":scope > .section_header .section_title_button",
+        );
+        if (btn) click(btn);
+      }
+
+      await wait(settleMs);
+    }
+  }
+
   async function expandVisibleContainers(shouldExpand, maxPasses, settleMs) {
     for (var i = 0; i < maxPasses; i++) {
       var changed = false;
@@ -366,7 +404,9 @@
 
   function exampleCounts(container) {
     var text = clean(container.textContent);
-    var match = text.match(/([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/);
+    var match = text.match(
+      /([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/,
+    );
     if (!match) return { passingCount: null, failingCount: null };
     return { passingCount: match[1], failingCount: match[2] };
   }
@@ -403,7 +443,8 @@
   }
 
   function extractLogOutput(varyingPart) {
-    var output = varyingPart && varyingPart.querySelector(".event__output_text");
+    var output =
+      varyingPart && varyingPart.querySelector(".event__output_text");
     var direct = cleanLogOutput(lastTextNode(output));
     if (direct) return direct;
     return cleanLogOutput(output && output.textContent);
@@ -486,9 +527,9 @@
     var section = errorSection();
     if (!section) return [];
 
-    return Array.from(section.querySelectorAll(".sequence_printer_wrapper")).filter(
-      isVisible,
-    );
+    return Array.from(
+      section.querySelectorAll(".sequence_printer_wrapper"),
+    ).filter(isVisible);
   }
 
   function requireInlineErrorLogs() {
@@ -548,7 +589,9 @@
         ? options.settleMs
         : 100;
     var maxScrolls =
-      options && typeof options.maxScrolls === "number" && options.maxScrolls > 0
+      options &&
+      typeof options.maxScrolls === "number" &&
+      options.maxScrolls > 0
         ? options.maxScrolls
         : 500;
 
@@ -639,7 +682,10 @@
       var value = clean(
         valueEl
           ? valueEl.textContent
-          : clean(row.textContent).replace(clean(keyEl && keyEl.textContent), ""),
+          : clean(row.textContent).replace(
+              clean(keyEl && keyEl.textContent),
+              "",
+            ),
       );
       var parsed = clean(row.textContent).match(/^([^:]+):\s*(.*)$/);
 
@@ -694,7 +740,9 @@
     var durationCell = row.querySelector('[cell-identifier="duration"]');
     var findingsCell = row.querySelector(".runs_table_run_findings");
     var utilizationCell = row.querySelector(".runs_table_utilization");
-    var actionCell = row.querySelector("a-cell.table_left_most_right_pinned_col");
+    var actionCell = row.querySelector(
+      "a-cell.table_left_most_right_pinned_col",
+    );
     var nameTooltip = nameCell
       ? nameCell.closest("a-cell").querySelector("a-tooltip")
       : null;
@@ -704,8 +752,10 @@
     var nameMeta = tooltipMap(nameTooltip);
     var creatorMeta = tooltipMap(creatorTooltip);
 
-    var nameMutedEl = nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text");
-    var nameTooltipTextEl = nameCell && nameCell.querySelector(".runs_table_tooltip_text");
+    var nameMutedEl =
+      nameCell && nameCell.querySelector(".runs_table_muted_tooltip_text");
+    var nameTooltipTextEl =
+      nameCell && nameCell.querySelector(".runs_table_tooltip_text");
 
     return {
       name:
@@ -794,10 +844,16 @@
     var tab = await activateTab(
       function () {
         if (target === "failed") {
-          return document.querySelector("a-tab._failing") || tabByPattern(/\bfailed\b/);
+          return (
+            document.querySelector("a-tab._failing") ||
+            tabByPattern(/\bfailed\b/)
+          );
         }
         if (target === "passed") {
-          return document.querySelector("a-tab._passing") || tabByPattern(/\bpassed\b/);
+          return (
+            document.querySelector("a-tab._passing") ||
+            tabByPattern(/\bpassed\b/)
+          );
         }
         return tabByPattern(/\ball\b/);
       },
@@ -852,9 +908,10 @@
     var error = requireReportPage();
     if (error) return error;
 
-    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
-      ? targetStatuses.slice()
-      : ["failed", "passed"];
+    var statuses =
+      Array.isArray(targetStatuses) && targetStatuses.length
+        ? targetStatuses.slice()
+        : ["failed", "passed"];
     var expandedProperties = [];
 
     for (var si = 0; si < statuses.length; si++) {
@@ -871,7 +928,10 @@
 
         visiblePropertyContainers().forEach(function (container) {
           if (!isVisible(container) || isGroup(container)) return;
-          if (containerStatus(container) !== status || examplesRows(container) > 0) {
+          if (
+            containerStatus(container) !== status ||
+            examplesRows(container) > 0
+          ) {
             return;
           }
 
@@ -935,7 +995,9 @@
 
   function examplesForContainer(container) {
     return Array.from(
-      container.querySelectorAll(":scope > .property__details .examples_table__row"),
+      container.querySelectorAll(
+        ":scope > .property__details .examples_table__row",
+      ),
     ).map(function (row) {
       return parseExampleRow(row);
     });
@@ -945,9 +1007,10 @@
     var error = requireReportPage();
     if (error) return error;
 
-    var statuses = Array.isArray(targetStatuses) && targetStatuses.length
-      ? targetStatuses.slice()
-      : ["failed", "passed"];
+    var statuses =
+      Array.isArray(targetStatuses) && targetStatuses.length
+        ? targetStatuses.slice()
+        : ["failed", "passed"];
     var properties = [];
 
     for (var si = 0; si < statuses.length; si++) {
@@ -1010,19 +1073,24 @@
       var propertiesSection = document.querySelector(
         "section.section_properties:not(.section_findings)",
       );
-      var environmentImages = visibleCount(".presentation_environment__source_image");
+      var environmentImages = visibleCount(
+        ".presentation_environment__source_image",
+      );
       var utilizationMetric = clean(
         document.querySelector(".utilization-summary__metric") &&
           document.querySelector(".utilization-summary__metric").textContent,
       );
       var propertyTabs = visibleCount("a-tab");
       var propertyContainers = visibleCount(".property-container");
-      var propertiesText = clean(propertiesSection && propertiesSection.textContent);
+      var propertiesText = clean(
+        propertiesSection && propertiesSection.textContent,
+      );
       var findingsSection = document.querySelector("section.section_findings");
       var findingsText = clean(findingsSection && findingsSection.textContent);
       var findingsDetails =
         findingsSection && isVisible(findingsSection)
-          ? findingsSection.querySelectorAll("details.findings_section_details").length
+          ? findingsSection.querySelectorAll("details.findings_section_details")
+              .length
           : 0;
       var findingLinks =
         findingsSection && isVisible(findingsSection)
@@ -1087,6 +1155,7 @@
 
       var err = detectError();
       if (err) result.error = err;
+      if (result.ready) await expandAllSections();
       return result;
     },
 
@@ -1113,9 +1182,11 @@
         ).length,
         utilizationMetric: clean(metricEl && metricEl.textContent),
         propertyTabs: document.querySelectorAll("a-tab").length,
-        propertyContainers: document.querySelectorAll(".property-container").length,
+        propertyContainers: document.querySelectorAll(".property-container")
+          .length,
         findingsDetails: findingsSection
-          ? findingsSection.querySelectorAll("details.findings_section_details").length
+          ? findingsSection.querySelectorAll("details.findings_section_details")
+              .length
           : 0,
         findingLinks: findingsSection
           ? findingsSection.querySelectorAll(
@@ -1210,7 +1281,8 @@
         title: title,
         metadata: metadataText,
         conductedOn: metadataMatch ? metadataMatch[1].trim() : "",
-        source: metadataMatch && metadataMatch[2] ? metadataMatch[2].trim() : "",
+        source:
+          metadataMatch && metadataMatch[2] ? metadataMatch[2].trim() : "",
       };
     },
 
@@ -1224,7 +1296,9 @@
         var title = img.querySelector(".source_image__title");
         var digest = img.querySelector(".click_to_copy_text_element");
         return {
-          name: title ? clean(title.childNodes[0] && title.childNodes[0].textContent) : "",
+          name: title
+            ? clean(title.childNodes[0] && title.childNodes[0].textContent)
+            : "",
           digest: clean(digest && digest.textContent),
         };
       });
@@ -1248,10 +1322,14 @@
       if (opened > 0) await wait(300);
 
       // Re-query after expansion in case the DOM changed.
-      return Array.from(document.querySelectorAll("details.findings_section_details"))
+      return Array.from(
+        document.querySelectorAll("details.findings_section_details"),
+      )
         .map(function (section) {
           var summaryEl = section.querySelector("summary");
-          var summary = clean((summaryEl && summaryEl.textContent) || section.textContent);
+          var summary = clean(
+            (summaryEl && summaryEl.textContent) || section.textContent,
+          );
           var dateMatch = summary.match(
             /^[A-Z][a-z]{2} \d{2} [A-Z][a-z]{2,3} \d{2}:\d{2}/,
           );
@@ -1263,7 +1341,9 @@
             ),
           )
             .map(function (anchor) {
-              var text = clean(anchor.textContent).replace(/Look into this finding$/, "").trim();
+              var text = clean(anchor.textContent)
+                .replace(/Look into this finding$/, "")
+                .trim();
               var match = text.match(/^(new|resolved|rare\??)\s*(.+)$/i);
               if (!match) return null;
               return {
@@ -1312,8 +1392,9 @@
       var searchInput = document.querySelector(".sequence_search__input");
       var counter = document.querySelector(".sequence_toolbar__items-counter");
       var counterText = clean(counter && counter.textContent);
-      var visibleEvents = Array.from(document.querySelectorAll(".event")).filter(isVisible)
-        .length;
+      var visibleEvents = Array.from(
+        document.querySelectorAll(".event"),
+      ).filter(isVisible).length;
       var hasItemCount = /(\d[\d,]*)\s*items?\b/i.test(counterText);
       var inSelectedLogView =
         /[?&]get_logs=true\b/.test(window.location.search) ||
@@ -1332,15 +1413,24 @@
     },
 
     loadingStatus: function () {
-      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
+      var counterEl = document.querySelector(
+        ".sequence_toolbar__items-counter",
+      );
       return {
         url: window.location.href,
-        wrapperVisible: isVisible(document.querySelector(".sequence_printer_wrapper")),
-        filterVisible: isVisible(document.querySelector(".sequence_filter__input")),
-        searchVisible: isVisible(document.querySelector(".sequence_search__input")),
+        wrapperVisible: isVisible(
+          document.querySelector(".sequence_printer_wrapper"),
+        ),
+        filterVisible: isVisible(
+          document.querySelector(".sequence_filter__input"),
+        ),
+        searchVisible: isVisible(
+          document.querySelector(".sequence_search__input"),
+        ),
         counterVisible: isVisible(counterEl),
-        visibleEvents: Array.from(document.querySelectorAll(".event")).filter(isVisible)
-          .length,
+        visibleEvents: Array.from(document.querySelectorAll(".event")).filter(
+          isVisible,
+        ).length,
         itemCounter: clean(counterEl && counterEl.textContent),
       };
     },
@@ -1361,7 +1451,9 @@
       var error = requireLogsPage();
       if (error) return error;
 
-      var counterEl = document.querySelector(".sequence_toolbar__items-counter");
+      var counterEl = document.querySelector(
+        ".sequence_toolbar__items-counter",
+      );
       var count = parseItemCount(clean(counterEl && counterEl.textContent));
       return count === null ? "unknown" : String(count);
     },
@@ -1371,7 +1463,8 @@
       if (error) return error;
 
       var filter = document.querySelector(".sequence_filter__input");
-      filter.value = typeof query === "string" && query !== "" ? query : "error";
+      filter.value =
+        typeof query === "string" && query !== "" ? query : "error";
       filter.dispatchEvent(new Event("input", { bubbles: true }));
       return { ok: true, query: filter.value };
     },
@@ -1445,6 +1538,92 @@
 
       return { ok: true, query: query };
     },
+
+    getLogViewers: function () {
+      var wrappers = document.querySelectorAll(".sequence_printer_wrapper");
+      return Array.from(wrappers).map(function (wrapper, i) {
+        var text = wrapper.textContent || "";
+        var itemMatch = text.match(/(\d[\d,]*)\s*items?\b/i);
+        var itemCount = itemMatch
+          ? Number(itemMatch[1].replace(/,/g, ""))
+          : null;
+        var prev = wrapper.previousElementSibling;
+        var label = prev ? clean(prev.textContent) : null;
+        var rect = wrapper.getBoundingClientRect();
+        return {
+          index: i,
+          label: label,
+          itemCount: itemCount,
+          visible: rect.width > 0 && rect.height > 0,
+        };
+      });
+    },
+
+    prepareDownload: function (format, index) {
+      var fmt = (format || "txt").toLowerCase();
+      var downloadMap = {
+        txt: "events.log",
+        json: "events.json",
+        csv: "events.csv",
+      };
+      var filename = downloadMap[fmt];
+      if (!filename) {
+        return {
+          error: "unsupported format: " + format + "; use txt, json, or csv",
+        };
+      }
+
+      var wrappers = document.querySelectorAll(".sequence_printer_wrapper");
+      if (wrappers.length === 0) {
+        return { error: "no log viewers found on this page" };
+      }
+
+      var idx = index != null ? index : 0;
+      if (idx < 0 || idx >= wrappers.length) {
+        return {
+          error:
+            "log viewer index " +
+            idx +
+            " out of range; page has " +
+            wrappers.length +
+            " viewer(s)",
+        };
+      }
+
+      var wrapper = wrappers[idx];
+
+      var link = wrapper.querySelector(
+        'a.sequence_printer_menu_button[download="' + filename + '"]',
+      );
+      if (!link) {
+        return { error: "download link not found for format: " + fmt };
+      }
+
+      // Force the shadow-root menu visible so agent-browser can click the link.
+      var aMenu = link.closest("a-menu");
+      var shadowMenu =
+        aMenu && aMenu.shadowRoot && aMenu.shadowRoot.querySelector("menu");
+      if (!shadowMenu) {
+        return {
+          error: "shadow menu not found for download link in viewer " + idx,
+        };
+      }
+      shadowMenu.style.display = "flex";
+      shadowMenu.style.position = "fixed";
+      shadowMenu.style.top = "0";
+      shadowMenu.style.left = "0";
+      shadowMenu.style.zIndex = "99999";
+
+      // Clear any previous marker, then tag this link for agent-browser.
+      wrappers.forEach(function (w) {
+        var prev = w.querySelector("[data-triage-dl]");
+        if (prev) prev.removeAttribute("data-triage-dl");
+      });
+      link.setAttribute("data-triage-dl", "active");
+
+      var selector = "a.sequence_printer_menu_button[data-triage-dl]";
+      return { ok: true, format: fmt, filename: filename, selector: selector };
+    },
   };
 
   var runsApi = {
@@ -1472,11 +1651,13 @@
       });
       if (!hasPopulatedRow) return false;
 
-      var hasVisibleLoadingIndicator = Array.from(scroller.querySelectorAll("*")).some(
-        function (el) {
-          return isVisible(el) && /^Loading(?:\.\.\.)?$/.test(clean(el.textContent));
-        },
-      );
+      var hasVisibleLoadingIndicator = Array.from(
+        scroller.querySelectorAll("*"),
+      ).some(function (el) {
+        return (
+          isVisible(el) && /^Loading(?:\.\.\.)?$/.test(clean(el.textContent))
+        );
+      });
 
       return !hasVisibleLoadingIndicator;
     },
@@ -1526,10 +1707,14 @@
           if (key) runs.set(key, run);
         });
 
-        var maxScrollTop = Math.max(0, scroller.scrollHeight - scroller.clientHeight);
+        var maxScrollTop = Math.max(
+          0,
+          scroller.scrollHeight - scroller.clientHeight,
+        );
         var nextScrollTop = Math.min(
           maxScrollTop,
-          scroller.scrollTop + Math.max(200, Math.floor(scroller.clientHeight * 0.8)),
+          scroller.scrollTop +
+            Math.max(200, Math.floor(scroller.clientHeight * 0.8)),
         );
 
         if (
