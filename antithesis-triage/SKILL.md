@@ -182,6 +182,25 @@ Make sure NOT to filter by text or status unless explicitly asked. If you are tr
 
 **Important:** Make sure you download and review example logs and the source code of the SUT if you have access to it. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
 
+### Verify cascade vs independent failures
+
+When you suspect a failure might be a cascade from an earlier failure (e.g.,
+property X always fails after property Y), do not rely on a handful of
+examples from the triage report. A few examples can mislead — use the
+`antithesis-query-logs` skill to test the hypothesis across all timelines:
+
+1. Use `antithesis-query-logs` to count total failures of the target property
+2. Run a temporal query ("not preceded by" the suspected upstream failure)
+3. Compare counts: if the count drops, the difference is cascade failures;
+   if it stays the same, the failures are independent
+4. Report the actual numbers — e.g., "53 total failures, 53 remain after
+   filtering out upstream-X → failures are independent" or "53 total, 7
+   remain → 46 are cascades from upstream-X"
+
+Do not generalize from a small sample. If you inspect 2-3 examples in the
+triage log viewer and they all show the same upstream failure, that does not
+mean all instances are cascades. The temporal query gives you the true count.
+
 ## General guidance
 
 - **Always ensure you are authenticated first.**
@@ -192,6 +211,7 @@ Make sure NOT to filter by text or status unless explicitly asked. If you are tr
 - **Keep report evals on the main report view.** If you click into another page by accident, reopen the original report URL before using report queries again.
 - **Download log files for local analysis.** Whenever possible try to download log files locally rather than using the web-ui log viewer.
 - **Review logs before concluding on failures.** When a failed property has example rows with log links, download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
+- **Prove cascade hypotheses with log queries, not samples.** If you suspect a failure is a cascade from an earlier failure, use the `antithesis-query-logs` skill's temporal queries to determine the true scope. Do not conclude from a few triage examples — the Logs Explorer searches all timelines and gives exact counts.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
