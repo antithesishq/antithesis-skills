@@ -251,6 +251,25 @@ again.
 3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, find the highlighted assertion event and surrounding context
 4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
 
+### Verify cascade vs independent failures
+
+When you suspect a failure might be a cascade from an earlier failure (e.g.,
+property X always fails after property Y), do not rely on a handful of
+examples from the triage report. A few examples can mislead — use the
+`antithesis-query-logs` skill to test the hypothesis across all timelines:
+
+1. Use `antithesis-query-logs` to count total failures of the target property
+2. Run a temporal query ("not preceded by" the suspected upstream failure)
+3. Compare counts: if the count drops, the difference is cascade failures;
+   if it stays the same, the failures are independent
+4. Report the actual numbers — e.g., "53 total failures, 53 remain after
+   filtering out upstream-X → failures are independent" or "53 total, 7
+   remain → 46 are cascades from upstream-X"
+
+Do not generalize from a small sample. If you inspect 2-3 examples in the
+triage log viewer and they all show the same upstream failure, that does not
+mean all instances are cascades. The temporal query gives you the true count.
+
 ### Investigate an error report
 
 1. Read `references/setup-auth.md` — authenticate and open the report
@@ -290,6 +309,7 @@ again.
   subset of rows, use the page's `Maximize` or `Expand for full, unfiltered
   logs` controls before extracting more.
 - **Logs use virtual scrolling.** Only ~50-70 rows render at a time. You may need to scroll to find specific entries.
+- **Prove cascade hypotheses with log queries, not samples.** If you suspect a failure is a cascade from an earlier failure, use the `antithesis-query-logs` skill's temporal queries to determine the true scope. Do not conclude from a few triage examples — the Logs Explorer searches all timelines and gives exact counts.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
