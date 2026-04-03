@@ -43,13 +43,22 @@ or after the matched event in the same timeline. Uses include:
 
 ## Temporal Types
 
-| Type                | `y` value           | Meaning                                        |
+The caller-facing temporal type names used in the runtime methods are:
+
+| Type                | Runtime value       | Meaning                                        |
 | ------------------- | ------------------- | ---------------------------------------------- |
 | None                | `"none"`            | Simple query, no temporal filter               |
 | Preceded by         | `"preceded_by"`     | Match events that ARE preceded by the condition |
 | Not preceded by     | `"not_preceded_by"` | Match events NOT preceded by the condition      |
 | Followed by         | `"followed_by"`     | Match events that ARE followed by the condition |
 | Not followed by     | `"not_followed_by"` | Match events NOT followed by the condition      |
+
+The runtime translates these to the platform's URL encoding automatically.
+In the URL JSON, the encoding is different:
+
+- `q.n.y` is always `"none"` — even for temporal queries
+- The temporal type lives on `q.p.y`: `"preceding"` or `"following"`
+- Negation is encoded in `q.p.t.g`: `true` = NOT, `false` = positive
 
 ## URL Construction (Preferred)
 
@@ -96,7 +105,7 @@ add a `p` sibling key containing the temporal condition:
         "g": false,
         "m": ""
       },
-      "y": "not_preceded_by"
+      "y": "none"
     },
     "p": {
       "r": {
@@ -114,7 +123,12 @@ add a `p` sibling key containing the temporal condition:
           }
         ],
         "o": "and"
-      }
+      },
+      "t": {
+        "g": true,
+        "m": ""
+      },
+      "y": "preceding"
     }
   },
   "s": "{session_id}"
@@ -123,10 +137,12 @@ add a `p` sibling key containing the temporal condition:
 
 ### Key Differences from Simple Query
 
-| Field    | Simple query | Temporal query            |
-| -------- | ------------ | ------------------------- |
-| `q.n.y`  | `"none"`     | `"not_preceded_by"`, etc. |
-| `q.p`    | absent       | temporal condition block   |
+| Field      | Simple query | Temporal query              |
+| ---------- | ------------ | --------------------------- |
+| `q.n.y`    | `"none"`     | `"none"` (always)           |
+| `q.p`      | absent       | temporal condition block     |
+| `q.p.y`    | absent       | `"preceding"` or `"following"` |
+| `q.p.t.g`  | absent       | `true` = NOT, `false` = positive |
 
 The `q.p` block uses the same `r.h` structure as the main `q.n.r` block —
 it is a full query with its own field/operator/value conditions.
