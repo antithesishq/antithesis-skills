@@ -19,6 +19,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, and
 
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty run` with sensible metadata once the harness is ready.
 
+`antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
+
 > [!NOTE]
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
 
@@ -127,6 +129,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-workload`
    - `antithesis-debug`
    - `antithesis-launch`
+   - `antithesis-skills-feedback`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.
 4. **Install find-skills skill** — choose **No**.
