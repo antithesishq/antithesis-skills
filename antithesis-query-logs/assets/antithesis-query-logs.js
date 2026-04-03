@@ -131,6 +131,21 @@
    * @param {Array} [options.temporalConditions] - array of {field, op, value}
    *   objects for the temporal block (required if temporalType != "none")
    */
+  /**
+   * Map the caller-facing temporal type to the platform's p-block encoding.
+   *
+   * Platform format (discovered 2026-04-03 against platform 50-6):
+   *   q.n.y is always "none" — even for temporal queries.
+   *   q.p.y is "preceding" or "following".
+   *   q.p.t.g encodes the negation: true = NOT, false = positive.
+   */
+  var TEMPORAL_MAP = {
+    preceded_by:       { y: "preceding",  negate: false },
+    not_preceded_by:   { y: "preceding",  negate: true },
+    followed_by:       { y: "following",  negate: false },
+    not_followed_by:   { y: "following",  negate: true },
+  };
+
   function buildQuery(options) {
     var mainGroups = options.conditions.map(function (c) {
       return condGroup([cond(c.field, c.op, c.value)]);
@@ -140,7 +155,7 @@
       q: {
         n: Object.assign(rowGroup(mainGroups), {
           t: { g: false, m: "" },
-          y: options.temporalType || "none",
+          y: "none",
         }),
       },
       s: options.sessionId,
@@ -151,10 +166,20 @@
       options.temporalType !== "none" &&
       options.temporalConditions
     ) {
+      var mapping = TEMPORAL_MAP[options.temporalType];
+      if (!mapping) {
+        // Unknown temporal type — fall back to legacy encoding
+        mapping = { y: options.temporalType, negate: false };
+      }
+
       var temporalGroups = options.temporalConditions.map(function (c) {
         return condGroup([cond(c.field, c.op, c.value)]);
       });
-      query.q.p = rowGroup(temporalGroups);
+
+      query.q.p = Object.assign(rowGroup(temporalGroups), {
+        t: { g: mapping.negate, m: "" },
+        y: mapping.y,
+      });
     }
 
     return query;
