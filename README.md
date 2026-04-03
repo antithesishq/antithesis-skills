@@ -71,7 +71,6 @@ Here's an example:
 - `antithesis/Dockerfile` performs a multi-stage build of the SUT.
 - `antithesis/config/docker-compose.yaml` orchestrates the SUT.
 - `antithesis/setup-complete.sh` emits the `setup_complete` lifecycle event.
-- `antithesis/workload-entrypoint.sh` waits for the SUT to be ready and calls `antithesis/setup_complete.sh` to signal `setup_complete`.
 - `antithesis/AGENTS.md` documents the `antithesis/` directory.
 
 ### antithesis-workload
