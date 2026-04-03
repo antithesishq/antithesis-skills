@@ -1559,7 +1559,7 @@
       });
     },
 
-    prepareDownload: async function (format, index) {
+    prepareDownload: function (format, index) {
       var fmt = (format || "txt").toLowerCase();
       var downloadMap = {
         txt: "events.log",
@@ -1592,21 +1592,6 @@
 
       var wrapper = wrappers[idx];
 
-      var trigger = wrapper.querySelector('a-button[icon="download"]');
-      if (!trigger) {
-        return { error: "download menu trigger not found in viewer " + idx };
-      }
-
-      trigger.scrollIntoView({ block: "center" });
-
-      // Wait a frame for the scroll to resolve
-      await new Promise(requestAnimationFrame);
-
-      click(trigger);
-
-      // Wait a frame for the dropdown menu to render
-      await new Promise(requestAnimationFrame);
-
       var link = wrapper.querySelector(
         'a.sequence_printer_menu_button[download="' + filename + '"]',
       );
@@ -1614,10 +1599,25 @@
         return { error: "download link not found for format: " + fmt };
       }
 
-      // Clear any previous marker, then tag this link so agent-browser
-      // can target it unambiguously even when multiple viewers exist.
-      document.querySelectorAll("[data-triage-dl]").forEach(function (el) {
-        el.removeAttribute("data-triage-dl");
+      // Force the shadow-root menu visible so agent-browser can click the link.
+      var aMenu = link.closest("a-menu");
+      var shadowMenu =
+        aMenu && aMenu.shadowRoot && aMenu.shadowRoot.querySelector("menu");
+      if (!shadowMenu) {
+        return {
+          error: "shadow menu not found for download link in viewer " + idx,
+        };
+      }
+      shadowMenu.style.display = "flex";
+      shadowMenu.style.position = "fixed";
+      shadowMenu.style.top = "0";
+      shadowMenu.style.left = "0";
+      shadowMenu.style.zIndex = "99999";
+
+      // Clear any previous marker, then tag this link for agent-browser.
+      wrappers.forEach(function (w) {
+        var prev = w.querySelector("[data-triage-dl]");
+        if (prev) prev.removeAttribute("data-triage-dl");
       });
       link.setAttribute("data-triage-dl", "active");
 
