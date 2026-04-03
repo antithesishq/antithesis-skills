@@ -358,6 +358,33 @@
     };
   }
 
+  async function expandAllSections() {
+    var settleMs = 300;
+    var maxPasses = 10;
+
+    for (var pass = 0; pass < maxPasses; pass++) {
+      var collapsed = Array.from(
+        document.querySelectorAll(".section_container"),
+      ).filter(function (sc) {
+        var expander = sc.querySelector(
+          ":scope > .section_header .expander.section_expander",
+        );
+        return expander && !expander.classList.contains("_expanded");
+      });
+
+      if (collapsed.length === 0) break;
+
+      for (var i = 0; i < collapsed.length; i++) {
+        var btn = collapsed[i].querySelector(
+          ":scope > .section_header .section_title_button",
+        );
+        if (btn) click(btn);
+      }
+
+      await wait(settleMs);
+    }
+  }
+
   async function expandVisibleContainers(shouldExpand, maxPasses, settleMs) {
     for (var i = 0; i < maxPasses; i++) {
       var changed = false;
@@ -1128,6 +1155,7 @@
 
       var err = detectError();
       if (err) result.error = err;
+      if (result.ready) await expandAllSections();
       return result;
     },
 
