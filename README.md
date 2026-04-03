@@ -50,10 +50,13 @@ Here are some examples starter prompts.
 This skill outputs the following research materials, relative to the project directory:
 
 - `antithesis/scratchbook/sut-analysis.md` captures architecture, state, concurrency, and failure-prone areas.
+- `antithesis/scratchbook/existing-assertions.md` lists any Antithesis SDK assertions already present in the codebase.
 - `antithesis/scratchbook/property-catalog.md` lists concrete, testable properties with priorities.
 - `antithesis/scratchbook/deployment-topology.md` describes the minimal useful container topology.
 - `antithesis/scratchbook/properties/{slug}.md` per-property evidence files capturing the reasoning, code paths, and key observations behind each property.
 - `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties.
+- `antithesis/scratchbook/evaluation/synthesis.md` records categorized evaluation findings and actions taken.
+- `antithesis/scratchbook/evaluation/{lens}.md` one per evaluation lens used during property evaluation.
 
 ### antithesis-setup
 
