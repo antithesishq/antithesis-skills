@@ -30,6 +30,52 @@ Before starting, collect the following from the user:
 1. **Report URL or Tenant Name** (required) — A full triage report URL like `https://TENANT.antithesis.com/...` or just the tenant name. If neither is provided, check the `$ANTITHESIS_TENANT` environment variable. Only ask the user if you can't guess the tenant name.
 2. **What they want to know** — Are they investigating a specific failure? Getting a general overview? Comparing runs? This determines which workflow to follow.
 
+If `antithesis/scratchbook/run-log.md` exists, read it before triaging. The
+run log records what changed in each run (run ID, description, branch, date).
+Match the report's title or run metadata to a run log entry to understand
+what this run was testing and what changed since the previous run.
+
+When a failure looks like a bug that was already fixed, check the run log
+dates: if the fix was committed after this run was submitted, the failure is
+expected — note it as "known, fix not yet deployed in this run" and move on
+rather than investigating it again. Runs are often submitted in parallel with
+ongoing fixes, so later runs may already contain the fix while earlier runs
+do not.
+
+If `antithesis/scratchbook/known-issues.md` exists, read it before triaging.
+It tracks the status of every failure that has been investigated across runs.
+Before investigating a failure, check whether it is already listed:
+
+- **If listed and status is `confirmed SUT bug` or `investigating`**: note it
+  as a known issue in your summary, skip re-investigation unless the user asks.
+- **If listed and status is `fixed`**: check the run log to see whether the
+  fix was deployed in this run. If yes and the failure still appears, reopen
+  the investigation and update the entry. If the fix was not yet deployed,
+  note it as expected.
+- **If not listed**: investigate it, then add or update an entry.
+
+After triaging, **immediately** update `antithesis/scratchbook/run-log.md`
+with the run's results (status, key findings) and update
+`antithesis/scratchbook/known-issues.md` with any new findings or status
+changes. Do not defer these updates — context compaction can cause deferred
+writes to be lost. Each known-issues entry should have:
+
+- **Slug**: kebab-case identifier matching the property or bug name
+- **Property**: the failing property name
+- **Status**: `investigating`, `confirmed SUT bug`, `workload bug`, `fixed`,
+  `expected` (platform/environment), or `duplicate`
+- **First seen**: run ID where first observed
+- **Last seen**: run ID of most recent occurrence
+- **Notes**: one-line summary — what it is, what causes it, where the
+  evidence lives (journal entries, `bugs/` directory, mailing list drafts)
+
+If `antithesis/journal/` exists or the user asks for a journal entry, write
+a dated summary of your triage findings to
+`antithesis/journal/YYYY-MM-DD-<slug>.md`. Journal entries are narrative
+write-ups — deeper than the run log status line, capturing the investigation
+process, evidence, conclusions, and open questions. If the directory doesn't
+exist and the user hasn't asked for one, don't create it.
+
 ## Session management with `agent-browser`
 
 `agent-browser` has two session variables:
@@ -223,3 +269,4 @@ Review criteria:
 - Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend
 - If comparing runs, differences are grounded in data from both reports, not just one
+- `antithesis/scratchbook/known-issues.md` has been updated with any new failures or status changes from this triage

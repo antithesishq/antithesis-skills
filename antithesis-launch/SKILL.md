@@ -40,6 +40,33 @@ Launch an Antithesis run in this order only:
 - Use the directory containing `docker-compose.yaml` as the `snouty validate <CONFIG>` and `snouty run --config <CONFIG>` argument.
 - Build against that exact file with `docker compose -f <CONFIG>/docker-compose.yaml build`. If `docker compose` is unavailable, fall back to `docker-compose -f ... build`.
 
+## Run Log
+
+Maintain a run log at `antithesis/scratchbook/run-log.md`. Each run gets a
+sequential integer ID (Run 1, Run 2, …). Before launching, read the run log
+to determine the next ID. **Immediately** after a successful `snouty run`,
+append an entry in the same response — do not defer or batch run log updates,
+because context compaction can cause deferred updates to be lost:
+
+```markdown
+## Run <N>
+
+- **Date**: <ISO 8601 date>
+- **Duration**: <minutes> minutes
+- **Description**: <what changed or what this run is testing>
+- **Branch**: <git branch>
+- **Config**: <config directory>
+- **snouty output**: <paste the run URL or submission ID from snouty>
+```
+
+If the run log does not exist yet, create it with a heading and the first
+entry. Include the run ID in both `--test-name` and `--description` so it
+appears in the triage report and runs browser (e.g., `--description "Run 14: fixed clone isolation in atomic push driver"`).
+
+If `antithesis/scratchbook/known-issues.md` exists, read it before launching.
+Note in the run log entry which known issues this run is expected to address
+(fixes deployed) and which are still outstanding.
+
 ## Run Arguments
 
 - Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test`.
@@ -47,8 +74,8 @@ Launch an Antithesis run in this order only:
 - Always set all of these explicitly:
   - `--duration`: the user-provided duration
   - `--source`: repo name
-  - `--test-name`: repo name plus branch or config name
-  - `--description`: short, readable description of the run, including details such as the branch name, currently goal, or what you changed since the last run.
+  - `--test-name`: repo name plus branch or config name, prefixed with the run ID (e.g., `"Run 14 — myrepo/main"`)
+  - `--description`: short, readable description including the run ID, branch name, current goal, or what changed since the last run.
 
 ## Execution
 
@@ -71,6 +98,7 @@ snouty run \
 
 - Report the config directory, compose build command, validate command, and final `snouty run` command shape before submission.
 - If validation fails, stop immediately and show the failing command plus the key error.
+- Update `antithesis/scratchbook/run-log.md` with the new run entry.
 
 ## Self-Review
 
@@ -78,4 +106,6 @@ snouty run \
 - The build, validate, and run steps all point at the same config.
 - `snouty validate` succeeded before `snouty run` was invoked.
 - The run set `source`, `test-name`, `description`, and `duration` explicitly.
+- The run ID is sequential and appears in both `--test-name` and `--description`.
+- `antithesis/scratchbook/run-log.md` has been updated with the new run entry.
 - Missing blockers such as `duration`, `ANTITHESIS_REPOSITORY`, or an ambiguous config location caused a stop instead of a bad submission.
