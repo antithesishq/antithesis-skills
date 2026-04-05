@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "1.3.0";
+  var VERSION = "2.0.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -9,6 +9,16 @@
     return new Promise(function (resolve) {
       setTimeout(resolve, ms);
     });
+  }
+
+  function abort(details) {
+    var msg =
+      typeof details === "string"
+        ? details
+        : (details && details.error) || JSON.stringify(details);
+    var err = new Error(msg);
+    err.details = details;
+    throw err;
   }
 
   function isVisible(el) {
@@ -145,39 +155,21 @@
 
   function requireReportPage() {
     if (!/^\/report\//.test(window.location.pathname)) {
-      return { error: "expected main report view", url: window.location.href };
+      abort({ error: "expected main report view", url: window.location.href });
     }
 
     if (/\/findings?\//.test(window.location.hash)) {
-      return {
+      abort({
         error: "expected main report view, not finding hash route",
         url: window.location.href,
-      };
+      });
     }
-
-    return null;
-  }
-
-  function requireLogsPage() {
-    if (
-      window.location.pathname !== "/search" ||
-      !/[?&]get_logs=true\b/.test(window.location.search)
-    ) {
-      return {
-        error: "expected selected-event logs view",
-        url: window.location.href,
-      };
-    }
-
-    return null;
   }
 
   function requireRunsPage() {
     if (window.location.pathname !== "/runs") {
-      return { error: "expected runs page", url: window.location.href };
+      abort({ error: "expected runs page", url: window.location.href });
     }
-
-    return null;
   }
 
   function findSectionByHeading(heading) {
@@ -338,8 +330,6 @@
 
       if (checkFn()) {
         return {
-          ok: true,
-          ready: true,
           attempts: attempts,
           waitedMs: Date.now() - startedAt,
         };
@@ -349,13 +339,12 @@
       await wait(intervalMs);
     }
 
-    return {
-      ok: false,
-      ready: false,
+    abort({
+      error: "timed out waiting for page to be ready",
       attempts: attempts,
       waitedMs: Date.now() - startedAt,
       details: detailsFn ? detailsFn() : null,
-    };
+    });
   }
 
   async function expandAllSections() {
@@ -382,6 +371,32 @@
       }
 
       await wait(settleMs);
+    }
+  }
+
+  async function expandAllProperties() {
+    requireReportPage();
+
+    await activateTab(
+      function () {
+        return tabByPattern(/\ball\b/);
+      },
+      function () {
+        return visiblePropertyContainers().length > 0;
+      },
+    );
+
+    for (var i = 0; i < 24; i++) {
+      var before = visibleLeafProperties().length;
+      await expandVisibleContainers(
+        function (container) {
+          return !!expanderButton(container) && !isExpanded(container);
+        },
+        1,
+        250,
+      );
+      var after = visibleLeafProperties().length;
+      if (after === before) break;
     }
   }
 
@@ -432,10 +447,14 @@
       });
   }
 
-  function examplesRows(container) {
+  function exampleRowElements(container) {
     return container.querySelectorAll(
       ":scope > .property__details .examples_table__row",
-    ).length;
+    );
+  }
+
+  function examplesRows(container) {
+    return exampleRowElements(container).length;
   }
 
   function cleanLogOutput(text) {
@@ -509,16 +528,6 @@
     };
   }
 
-  function readEventsFromWrapper(wrapper, limit) {
-    var maxItems = typeof limit === "number" && limit > 0 ? limit : 20;
-
-    return Array.from(wrapper.querySelectorAll(".event"))
-      .slice(0, maxItems)
-      .map(function (ev) {
-        return serializeLogEvent(ev);
-      });
-  }
-
   function errorSection() {
     return findSectionByHeading("Error");
   }
@@ -533,27 +542,24 @@
   }
 
   function requireInlineErrorLogs() {
-    var navError = requireReportPage();
-    if (navError) return navError;
+    requireReportPage();
 
     var err = detectError();
     if (!err) {
-      return {
+      abort({
         error: "expected error report with inline logs",
         url: window.location.href,
-      };
+      });
     }
 
     var wrappers = inlineErrorLogWrappers();
     if (!wrappers.length) {
-      return {
+      abort({
         error: "no inline error log panes found",
         errorType: err.type,
         url: window.location.href,
-      };
+      });
     }
-
-    return null;
   }
 
   function inlineErrorLogViews() {
@@ -570,96 +576,6 @@
         firstEvent: firstEvent,
       };
     });
-  }
-
-  async function collectEventsFromWrapper(wrapper, options) {
-    var scroller = wrapper.querySelector(".vscroll");
-    if (!scroller) return { error: "log scroller not found" };
-
-    var maxItems =
-      options && typeof options.maxItems === "number" && options.maxItems > 0
-        ? options.maxItems
-        : null;
-    var stepPx =
-      options && typeof options.stepPx === "number" && options.stepPx > 0
-        ? options.stepPx
-        : Math.max(Math.floor(scroller.clientHeight * 0.8), 200);
-    var settleMs =
-      options && typeof options.settleMs === "number" && options.settleMs >= 0
-        ? options.settleMs
-        : 100;
-    var maxScrolls =
-      options &&
-      typeof options.maxScrolls === "number" &&
-      options.maxScrolls > 0
-        ? options.maxScrolls
-        : 500;
-
-    var startTop = scroller.scrollTop;
-    var seen = {};
-    var events = [];
-
-    function recordVisible() {
-      var limitReached = false;
-
-      Array.from(wrapper.querySelectorAll(".event")).forEach(function (ev) {
-        if (limitReached) return;
-
-        var entry = serializeLogEvent(ev);
-        var key = [entry.vtime, entry.source, entry.text].join("\n");
-        if (!entry.vtime && !entry.source && !entry.text) return;
-        if (seen[key]) return;
-        if (maxItems && events.length >= maxItems) {
-          limitReached = true;
-          return;
-        }
-        seen[key] = true;
-        events.push(entry);
-      });
-
-      return limitReached;
-    }
-
-    scroller.scrollTop = 0;
-    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
-    await wait(settleMs);
-
-    var previousCount = -1;
-    for (var i = 0; i < maxScrolls; i++) {
-      if (recordVisible() || (maxItems && events.length >= maxItems)) break;
-
-      var atBottom =
-        Math.ceil(scroller.scrollTop + scroller.clientHeight) >=
-        Math.floor(scroller.scrollHeight);
-      if (atBottom && events.length === previousCount) break;
-      previousCount = events.length;
-
-      var nextTop = Math.min(
-        scroller.scrollTop + stepPx,
-        Math.max(scroller.scrollHeight - scroller.clientHeight, 0),
-      );
-
-      if (nextTop === scroller.scrollTop) {
-        if (atBottom) break;
-        nextTop = scroller.scrollHeight;
-      }
-
-      scroller.scrollTop = nextTop;
-      scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
-      await wait(settleMs);
-    }
-
-    recordVisible();
-    scroller.scrollTop = startTop;
-    scroller.dispatchEvent(new Event("scroll", { bubbles: true }));
-
-    var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
-    return {
-      itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
-      collectedCount: events.length,
-      truncated: !!(maxItems && events.length >= maxItems),
-      events: maxItems ? events.slice(0, maxItems) : events,
-    };
   }
 
   function tooltipMap(tooltip) {
@@ -797,32 +713,11 @@
   }
 
   async function getAllProperties() {
-    var error = requireReportPage();
-    if (error) return error;
+    requireReportPage();
 
-    var tab = await activateTab(
-      function () {
-        return tabByPattern(/\ball\b/);
-      },
-      function () {
-        return visiblePropertyContainers().length > 0;
-      },
-    );
+    await expandAllProperties();
 
-    // Fresh report loads may only expose top-level groups until they are expanded.
-    for (var i = 0; i < 24; i++) {
-      var before = visibleLeafProperties().length;
-      await expandVisibleContainers(
-        function (container) {
-          return !!expanderButton(container) && !isExpanded(container);
-        },
-        1,
-        250,
-      );
-      var after = visibleLeafProperties().length;
-      if (after === before) break;
-    }
-
+    var tab = tabByPattern(/\ball\b/);
     var properties = visibleLeafProperties();
     var counts = properties.reduce(function (acc, property) {
       acc[property.status] = (acc[property.status] || 0) + 1;
@@ -838,8 +733,7 @@
   }
 
   async function getFilteredProperties(target) {
-    var error = requireReportPage();
-    if (error) return error;
+    requireReportPage();
 
     var tab = await activateTab(
       function () {
@@ -905,8 +799,7 @@
   }
 
   async function expandExamplesForStatuses(targetStatuses) {
-    var error = requireReportPage();
-    if (error) return error;
+    requireReportPage();
 
     var statuses =
       Array.isArray(targetStatuses) && targetStatuses.length
@@ -920,8 +813,7 @@
         continue;
       }
 
-      var prepared = await getFilteredProperties(status);
-      if (prepared && prepared.error) return prepared;
+      await getFilteredProperties(status);
 
       for (var i = 0; i < 8; i++) {
         var changed = false;
@@ -962,50 +854,66 @@
     };
   }
 
-  async function expandExamples(targetStatuses) {
-    return expandExamplesForStatuses(targetStatuses);
-  }
-
-  async function expandFailedExamples() {
-    return expandExamplesForStatuses(["failed"]);
-  }
-
-  function getExampleUrls() {
-    var error = requireReportPage();
-    if (error) return error;
-
-    return Array.from(document.querySelectorAll(".examples_table__row")).map(
-      function (row) {
-        return parseExampleRow(row);
-      },
-    );
-  }
-
-  function parseExampleRow(row) {
+  function parseExampleRow(row, index) {
     var example = row.querySelector(".example_failing, .example_passing");
-    var getLogsLink = row.querySelector("a[href*='search']");
     var timeCell = row.querySelectorAll("td")[1];
 
     return {
+      index: index,
       status: example ? example.className.replace("example_", "") : "",
       time: timeCell && clean(timeCell.textContent),
-      logsUrl: getLogsLink ? getLogsLink.href : null,
     };
   }
 
   function examplesForContainer(container) {
-    return Array.from(
-      container.querySelectorAll(
-        ":scope > .property__details .examples_table__row",
-      ),
-    ).map(function (row) {
-      return parseExampleRow(row);
+    return Array.from(exampleRowElements(container)).map(function (row, i) {
+      return parseExampleRow(row, i);
     });
   }
 
+  function getExampleLogsUrl(propertyName, exampleIndex) {
+    requireReportPage();
+
+    var idx = typeof exampleIndex === "number" ? exampleIndex : 0;
+    var containers = visiblePropertyContainers();
+    var target = null;
+
+    for (var i = 0; i < containers.length; i++) {
+      var container = containers[i];
+      if (isGroup(container)) continue;
+      if (nameOf(container) === propertyName) {
+        target = container;
+        break;
+      }
+    }
+
+    if (!target) {
+      abort({ error: "property not found", propertyName: propertyName });
+    }
+
+    var rows = Array.from(exampleRowElements(target));
+
+    if (idx < 0 || idx >= rows.length) {
+      abort({
+        error: "example index out of range",
+        propertyName: propertyName,
+        exampleIndex: idx,
+        availableExamples: rows.length,
+      });
+    }
+
+    var row = rows[idx];
+    var link = row.querySelector("a[href*='search']");
+
+    return {
+      propertyName: propertyName,
+      exampleIndex: idx,
+      logsUrl: link ? link.href : null,
+    };
+  }
+
   async function getPropertyExamples(targetStatuses) {
-    var error = requireReportPage();
-    if (error) return error;
+    requireReportPage();
 
     var statuses =
       Array.isArray(targetStatuses) && targetStatuses.length
@@ -1015,8 +923,7 @@
 
     for (var si = 0; si < statuses.length; si++) {
       var status = statuses[si];
-      var expanded = await expandExamplesForStatuses([status]);
-      if (expanded && expanded.error) return expanded;
+      await expandExamplesForStatuses([status]);
 
       properties = properties.concat(
         visiblePropertyContainers()
@@ -1155,13 +1062,13 @@
 
       var err = detectError();
       if (err) result.error = err;
-      if (result.ready) await expandAllSections();
+      await expandAllSections();
+      if (!err) await expandAllProperties();
       return result;
     },
 
     loadingStatus: function () {
-      var error = requireReportPage();
-      if (error) return error;
+      requireReportPage();
 
       var environmentSection = findSectionByHeading("Environment");
       var utilizationSection = findSectionByHeading("Utilization");
@@ -1210,64 +1117,17 @@
     },
 
     getError: function () {
-      var navError = requireReportPage();
-      if (navError) return navError;
+      requireReportPage();
       return detectError();
     },
 
     getInlineErrorLogViews: function () {
-      var error = requireInlineErrorLogs();
-      if (error) return error;
+      requireInlineErrorLogs();
       return inlineErrorLogViews();
     },
 
-    readInlineErrorLog: function (index, limit) {
-      var error = requireInlineErrorLogs();
-      if (error) return error;
-
-      var wrappers = inlineErrorLogWrappers();
-      var target = typeof index === "number" ? index : 0;
-      var wrapper = wrappers[target];
-      if (!wrapper) {
-        return {
-          error: "inline error log pane not found",
-          index: target,
-          available: wrappers.length,
-        };
-      }
-
-      var counterEl = wrapper.querySelector(".sequence_toolbar__items-counter");
-      return {
-        index: target,
-        itemCount: parseItemCount(clean(counterEl && counterEl.textContent)),
-        events: readEventsFromWrapper(wrapper, limit),
-      };
-    },
-
-    collectInlineErrorLog: async function (index, options) {
-      var error = requireInlineErrorLogs();
-      if (error) return error;
-
-      var wrappers = inlineErrorLogWrappers();
-      var target = typeof index === "number" ? index : 0;
-      var wrapper = wrappers[target];
-      if (!wrapper) {
-        return {
-          error: "inline error log pane not found",
-          index: target,
-          available: wrappers.length,
-        };
-      }
-
-      var result = await collectEventsFromWrapper(wrapper, options || {});
-      if (result.error) return result;
-      result.index = target;
-      return result;
-    },
-
     getRunMetadata: function () {
-      var error = requireReportPage();
-      if (error) return error;
+      requireReportPage();
 
       var titleEl = document.querySelector(".branded_title");
       var metadataEl = document.querySelector(".branded_metadata");
@@ -1287,8 +1147,7 @@
     },
 
     getEnvironmentSourceImages: function () {
-      var error = requireReportPage();
-      if (error) return error;
+      requireReportPage();
 
       return Array.from(
         document.querySelectorAll(".presentation_environment__source_image"),
@@ -1305,8 +1164,7 @@
     },
 
     getFindingsGrouped: async function () {
-      var error = requireReportPage();
-      if (error) return error;
+      requireReportPage();
 
       // Expand all findings sections so lazy-rendered content is available.
       var sections = Array.from(
@@ -1360,14 +1218,6 @@
         });
     },
 
-    getUtilizationTotalTestHours: function () {
-      var error = requireReportPage();
-      if (error) return error;
-
-      var metric = document.querySelector(".utilization-summary__metric");
-      return metric ? clean(metric.textContent) : "no data";
-    },
-
     getAllProperties: getAllProperties,
     getFailedProperties: function () {
       return getFilteredProperties("failed");
@@ -1378,9 +1228,7 @@
     getUnfoundProperties: function () {
       return getFilteredProperties("unfound");
     },
-    expandExamples: expandExamples,
-    expandFailedExamples: expandFailedExamples,
-    getExampleUrls: getExampleUrls,
+    getExampleLogsUrl: getExampleLogsUrl,
     getPropertyExamples: getPropertyExamples,
     getFailedPropertyExamples: getFailedPropertyExamples,
   };
@@ -1447,98 +1295,6 @@
       );
     },
 
-    getItemCount: function () {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      var counterEl = document.querySelector(
-        ".sequence_toolbar__items-counter",
-      );
-      var count = parseItemCount(clean(counterEl && counterEl.textContent));
-      return count === null ? "unknown" : String(count);
-    },
-
-    filter: function (query) {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      var filter = document.querySelector(".sequence_filter__input");
-      filter.value =
-        typeof query === "string" && query !== "" ? query : "error";
-      filter.dispatchEvent(new Event("input", { bubbles: true }));
-      return { ok: true, query: filter.value };
-    },
-
-    clearFilter: function () {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      var filter = document.querySelector(".sequence_filter__input");
-      filter.value = "";
-      filter.dispatchEvent(new Event("input", { bubbles: true }));
-      return { ok: true };
-    },
-
-    readVisibleEvents: function (limit) {
-      var error = requireLogsPage();
-      if (error) return error;
-      return readEventsFromWrapper(document, limit);
-    },
-
-    collectEvents: async function (options) {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      var wrapper = document.querySelector(".sequence_printer_wrapper");
-      if (!wrapper) return { error: "log viewer not found" };
-
-      return collectEventsFromWrapper(wrapper, options || {});
-    },
-
-    findHighlightedEvent: function (beforeCount, afterCount) {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      var events = Array.from(document.querySelectorAll(".event"));
-      var highlightedIndex = events.findIndex(function (ev) {
-        return ev.classList.contains("_emphasized_blue");
-      });
-
-      if (highlightedIndex < 0) {
-        return { error: "no highlighted event found" };
-      }
-
-      var before = typeof beforeCount === "number" ? beforeCount : 10;
-      var after = typeof afterCount === "number" ? afterCount : 5;
-      var start = Math.max(0, highlightedIndex - before);
-      var end = Math.min(events.length, highlightedIndex + after);
-
-      return events.slice(start, end).map(function (ev) {
-        return serializeLogEvent(ev);
-      });
-    },
-
-    search: function (query) {
-      var error = requireLogsPage();
-      if (error) return error;
-
-      if (typeof query !== "string" || query === "") {
-        return {
-          error: "expected non-empty query",
-          url: window.location.href,
-        };
-      }
-
-      var search = document.querySelector(".sequence_search__input");
-      search.value = query;
-      search.dispatchEvent(new Event("input", { bubbles: true }));
-      search.dispatchEvent(
-        new KeyboardEvent("keydown", { key: "Enter", bubbles: true }),
-      );
-
-      return { ok: true, query: query };
-    },
-
     getLogViewers: function () {
       var wrappers = document.querySelectorAll(".sequence_printer_wrapper");
       return Array.from(wrappers).map(function (wrapper, i) {
@@ -1568,26 +1324,23 @@
       };
       var filename = downloadMap[fmt];
       if (!filename) {
-        return {
-          error: "unsupported format: " + format + "; use txt, json, or csv",
-        };
+        abort("unsupported format: " + format + "; use txt, json, or csv");
       }
 
       var wrappers = document.querySelectorAll(".sequence_printer_wrapper");
       if (wrappers.length === 0) {
-        return { error: "no log viewers found on this page" };
+        abort("no log viewers found on this page");
       }
 
       var idx = index != null ? index : 0;
       if (idx < 0 || idx >= wrappers.length) {
-        return {
-          error:
-            "log viewer index " +
+        abort(
+          "log viewer index " +
             idx +
             " out of range; page has " +
             wrappers.length +
             " viewer(s)",
-        };
+        );
       }
 
       var wrapper = wrappers[idx];
@@ -1596,7 +1349,7 @@
         'a.sequence_printer_menu_button[download="' + filename + '"]',
       );
       if (!link) {
-        return { error: "download link not found for format: " + fmt };
+        abort("download link not found for format: " + fmt);
       }
 
       // Force the shadow-root menu visible so agent-browser can click the link.
@@ -1604,9 +1357,7 @@
       var shadowMenu =
         aMenu && aMenu.shadowRoot && aMenu.shadowRoot.querySelector("menu");
       if (!shadowMenu) {
-        return {
-          error: "shadow menu not found for download link in viewer " + idx,
-        };
+        abort("shadow menu not found for download link in viewer " + idx);
       }
       shadowMenu.style.display = "flex";
       shadowMenu.style.position = "fixed";
@@ -1622,7 +1373,7 @@
       link.setAttribute("data-triage-dl", "active");
 
       var selector = "a.sequence_printer_menu_button[data-triage-dl]";
-      return { ok: true, format: fmt, filename: filename, selector: selector };
+      return { format: fmt, filename: filename, selector: selector };
     },
   };
 
@@ -1689,11 +1440,10 @@
     },
 
     getRecentRuns: async function () {
-      var error = requireRunsPage();
-      if (error) return error;
+      requireRunsPage();
 
       var scroller = document.querySelector(".vscroll");
-      if (!scroller) return { error: "runs scroller not found" };
+      if (!scroller) abort("runs scroller not found");
 
       var runs = new Map();
       var previousScrollTop = -1;
@@ -1747,7 +1497,6 @@
     runs: runsApi,
     info: function () {
       return {
-        ok: true,
         version: VERSION,
         description: "Antithesis triage runtime",
         namespaces: {

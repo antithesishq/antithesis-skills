@@ -6,6 +6,8 @@
 # Local images use `build:` so `compose build` can build them before `snouty run`.
 # Public images (e.g. postgres, redis) use `image:` directly.
 # Every service MUST include `platform: linux/amd64` — Antithesis runs on x86-64.
+# Every service MUST set `NO_COLOR=1` — Antithesis stores raw bytes and does
+# not render ANSI escape codes, so color output is garbage.
 #
 # Example:
 #   name: foobar
@@ -18,14 +20,20 @@
 #         context: ../..           # repo root (relative to this file)
 #         dockerfile: Dockerfile
 #       image: foobar-server:latest
+#       environment:
+#         NO_COLOR: "1"
 #
 #     postgres:
 #       container_name: foobar-postgres
 #       platform: linux/amd64
 #       image: docker.io/library/postgres:17.2
+#       environment:
+#         NO_COLOR: "1"
 
 services:
   noop:
     platform: linux/amd64
     image: busybox:1.36
+    environment:
+      NO_COLOR: "1"
     command: ["sh", "-c", "tail -f /dev/null"]
