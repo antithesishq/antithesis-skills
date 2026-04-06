@@ -4,24 +4,7 @@ description: >
   Search across all timelines in an Antithesis test run to find events,
   correlate property failures, and answer temporal questions about ordering
   and causation (e.g., did event A always precede failure B? do failures
-  occur even without a preceding fault?). Use this skill anytime you need
-  to query Antithesis run logs — during triage, during setup, or as a
-  standalone investigation tool. This skill uses the Logs Explorer, which
-  searches across all timelines (distinct from the per-example log viewer
-  that shows one timeline). Covers query construction (URL-based and
-  UI-based), temporal queries (preceded by, not preceded by, followed by,
-  not followed by), result reading, event detail expansion, and multiverse
-  map cluster analysis.
-keywords:
-  - antithesis
-  - logs explorer
-  - temporal query
-  - cascade elimination
-  - multiverse map
-  - search
-  - correlation
-  - preceded by
-  - not preceded by
+  occur even without a preceding fault?).
 ---
 
 # Antithesis Logs Explorer
@@ -105,6 +88,7 @@ agent-browser --session "$SESSION" eval \
 Navigate to the returned URL. This automatically sets the correct session/run.
 
 The URL will have the form:
+
 ```
 https://{tenant}.antithesis.com/search?search=v5v{base64_encoded_query}
 ```
@@ -138,9 +122,9 @@ no results. The selected run is shown in the dropdown at the top of the page.
 
 ## Reference Files
 
-| Reference                        | When to read                                    |
-| -------------------------------- | ----------------------------------------------- |
-| `references/query-builder.md`    | Building and executing search queries           |
+| Reference                        | When to read                                     |
+| -------------------------------- | ------------------------------------------------ |
+| `references/query-builder.md`    | Building and executing search queries            |
 | `references/temporal-queries.md` | Using preceded-by / not-preceded-by filters      |
 | `references/results.md`          | Reading search results and clicking into details |
 | `references/map.md`              | Using the multiverse map for cluster analysis    |
