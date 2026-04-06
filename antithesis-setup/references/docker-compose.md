@@ -14,6 +14,10 @@ Set the top-level `name:` field to the SUT's project name. This controls the Com
 name: foobar
 ```
 
+## Container Name and Hostname
+
+Every service must set both `container_name:` and `hostname:` to the same value. Antithesis sometimes uses `hostname` rather than `container_name` in it's log messages, so making sure they are the same will eliminate ambiguity during log analysis.
+
 ## Image References
 
 Services use one of two patterns:
@@ -31,6 +35,7 @@ name: foobar
 services:
   server:
     container_name: foobar-server
+    hostname: foobar-server
     platform: linux/amd64
     build:
       context: ../..
@@ -39,6 +44,7 @@ services:
 
   postgres:
     container_name: foobar-postgres
+    hostname: foobar-postgres
     platform: linux/amd64
     image: docker.io/library/postgres:17.2
 ```
