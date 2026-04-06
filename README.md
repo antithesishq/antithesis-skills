@@ -17,6 +17,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) — inspecting container filesystems and runtime state, running shell commands, and extracting evidence from inside the Antithesis environment.
 
+`antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
+
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty run` with sensible metadata once the harness is ready.
 
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
@@ -130,6 +132,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-triage`
    - `antithesis-workload`
    - `antithesis-debug`
+   - `antithesis-query-logs`
    - `antithesis-launch`
    - `antithesis-skills-feedback`
 2. **Install scope** — choose **global**, not project.
