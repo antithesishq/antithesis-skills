@@ -1,39 +1,22 @@
 ---
 name: antithesis-triage
 description: >
-  Use this skill to triage bugs found by Antithesis using the `agent-browser`
-  skill to control a headless Chromium browser. If you are about to check run
-  status, read property results, inspect findings, view environment images, or
-  extract any information from the triage report — you MUST use this skill
-  first. Covers runs page, run metadata (title, date, run/session IDs), property
-  statuses (passed/failed/unfound), environment source images, findings,
-  utilization metrics, and run logs.
+  Use this skill to triage Antithesis runs (reports). Use this skill to lookup runs, check run status, triage properties (assertions), view run metadata, download logs, view findings, or inspect environmental details.
 keywords:
   - antithesis
   - triage report
   - bug report
   - properties
+  - assertions
   - findings
-  - environment
-  - utilization
   - logs
-  - run status
-  - triage results
-  - run metadata
 ---
 
-# Antithesis Bug Triage
+# Antithesis Report Triage
 
-Use the `agent-browser` skill to read and triage Antithesis test reports.
+Use this skill to read and triage Antithesis test reports.
 
-Every triage run should use:
-
-- a fresh, unique `SESSION` value such as `antithesis-triage-$(date +%s)-$$`
-
-Use `--session-name antithesis` so `agent-browser` manages shared
-authentication state automatically, while `--session "$SESSION"` keeps each
-triage run isolated from other concurrent agents. Close the unique live session
-when triage is complete.
+**Reference files:** This skill's `references/` directory contains detailed guides for specific tasks. Do NOT read them all up front — only read a reference file when you are told to. Each reference file is mentioned by name at the point where it is needed.
 
 ## Prerequisites
 
@@ -46,40 +29,52 @@ when triage is complete.
 
 Before starting, collect the following from the user:
 
-1. **Report URL or Tenant ID** (required) — A full triage report URL like `https://TENANT.antithesis.com/...` or just the tenant name. If neither is provided, check the `$ANTITHESIS_TENANT` environment variable. Only ask the user if the variable is also unset.
+1. **Report URL or Tenant Name** (required) — A full triage report URL like `https://TENANT.antithesis.com/...` or just the tenant name. If neither is provided, check the `$ANTITHESIS_TENANT` environment variable. Only ask the user if you can't guess the tenant name.
 2. **What they want to know** — Are they investigating a specific failure? Getting a general overview? Comparing runs? This determines which workflow to follow.
 
-## Reference files
+## Session management with `agent-browser`
 
-Each reference file contains the selectors and query file paths for a specific
-task. Read the relevant file before performing that task.
+`agent-browser` has two session variables:
 
-| Page                          | When to read                                               |
-| ----------------------------- | ---------------------------------------------------------- |
-| `references/setup-auth.md`    | Always — read first to set up the browser session          |
-| `references/run-discovery.md` | User wants to find or browse recent runs (no specific URL) |
-| `references/run-metadata.md`  | Need run title or date                                     |
-| `references/properties.md`    | Checking property pass/fail status, filtering properties   |
-| `references/environment.md`   | Checking which Docker images were used                     |
-| `references/findings.md`      | Viewing behavioral diffs between runs                      |
-| `references/utilization.md`   | Checking test hours or behavior discovery rate             |
-| `references/logs.md`          | Investigating logs for a specific property example         |
+- `--session`: the name of an unique, isolated browser instance
+- `--session-name`: auto-save/restore cookies by name
+
+Every triage run MUST use a unique `--session` value. Generate this variable once and reuse it whenever you see `$SESSION` referenced by this skill.
+
+```sh
+SESSION=`antithesis-triage-$(date +%s)-$$`
+```
+
+Use `--session-name antithesis` on the FIRST `agent-browser` command that references a new `$SESSION`. This creates the session and restores saved cookies. Subsequent commands for the same `$SESSION` do not need `--session-name` — the session already exists.
+
+Make sure you close the unique live session when triage is complete.
+
+```sh
+agent-browser --session $SESSION close
+```
+
+## Authentication
+
+Do NOT navigate to the home page just to check auth. Instead, navigate directly to your target URL (report, runs page, etc.) using the session-creation command:
+
+```
+agent-browser --session "$SESSION" --session-name antithesis open "$TARGET_URL"
+agent-browser --session "$SESSION" wait --load networkidle
+agent-browser --session "$SESSION" get url
+```
+
+If the URL starts with `https://$TENANT.antithesis.com` then you are authenticated. If it redirected to a login page, you need to authenticate — read `references/setup-auth.md`.
 
 ## Runtime injection
 
-Use the browser-side runtime file:
-
-- `assets/antithesis-triage.js`
-
-Inject it into the current page with:
+The triage skill makes heavy use of an injected runtime API. Inject the runtime into the current page after navigation completes:
 
 ```bash
 cat assets/antithesis-triage.js \
   | agent-browser --session "$SESSION" eval --stdin
 ```
 
-Injecting the file registers methods on `window.__antithesisTriage`. Call those
-methods with `agent-browser eval`.
+The runtime registers methods on `window.__antithesisTriage`. Call those methods with `agent-browser eval`.
 
 Method call pattern:
 
@@ -91,58 +86,49 @@ agent-browser --session "$SESSION" eval \
 `agent-browser eval` awaits Promises automatically, so async and sync methods
 use the same call pattern.
 
+**Error handling:** Runtime methods throw on error, which causes
+`agent-browser eval` to return a non-zero exit code. Check the exit code
+to detect failures — no output parsing required. The error message describes
+what went wrong (e.g. wrong page, element not found, timeout).
+
 If `window.__antithesisTriage` is missing, inject `assets/antithesis-triage.js` and retry the method call.
 
-Do not run method calls in parallel with `agent-browser open`, hash-route
-navigation, or any other command that can replace the page. Wait until the
-target page is settled before starting `eval` calls. On a single browser
-session, run report queries sequentially; property methods mutate tab and
-expansion state and will interfere with each other if you launch them in
-parallel.
+NEVER run `agent-browser` calls in parallel. They are stateful calls with side-effects, thus parallel calls can break or return confusing results.
 
-After every `open` call or any interaction that may navigate or replace the
-page, first confirm that the browser has landed on the expected page type by
-waiting on `window.location`, then inject `assets/antithesis-triage.js`, then call the
-matching `waitForReady()` method before running page-specific methods. If a
-method call reports that `window.__antithesisTriage` is missing, inject and
-retry.
+## Navigation and loading
 
-## Page Loading Checks
+Each Antithesis page loads in content async. After navigation to any Antithesis page, follow this pattern:
 
-Each page type has async wait methods. After navigation, first verify that the
-browser is on the page you expected with `agent-browser wait --fn`, inject the
-runtime, then call the matching wait method before running page-specific
-queries.
+First, wait for networkidle:
 
-Use checks like these:
+```sh
+agent-browser --session "$SESSION" wait --load networkidle
+```
 
-- Runs page:
-  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/runs'"`
-- Report page:
-  `agent-browser --session "$SESSION" wait --fn "window.location.pathname.startsWith('/report/')"`
-- Logs page:
-  `agent-browser --session "$SESSION" wait --fn "window.location.pathname === '/search' && new URLSearchParams(window.location.search).has('get_logs')"`
+Then, check the url to see if you got redirected to an authentication page:
 
-This catches slow loads and auth redirects. If the browser lands on an unexpected
-page such as a login or Google auth flow, stop and reauthenticate before
-continuing.
+```sh
+agent-browser --session "$SESSION" get url
+```
 
-Use these wait methods to make sure the page is fully loaded before running other runtime methods:
+If you hit an authentication page, stop and reauthenticate before continuing.
+
+Then, inject the runtime:
+
+```bash
+cat assets/antithesis-triage.js \
+  | agent-browser --session "$SESSION" eval --stdin
+```
+
+Finally, eval the page-specific wait function to wait for all asynchronous chunks to finish loading:
 
 - Report page: `window.__antithesisTriage.report.waitForReady()`
 - Logs page: `window.__antithesisTriage.logs.waitForReady()`
 - Runs page: `window.__antithesisTriage.runs.waitForReady()`
 
-Example:
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.waitForReady()"
-```
-
-Each wait method polls for up to about 60 seconds by default and returns a
-result object with `ok`, `ready`, `attempts`, and `waitedMs`. On timeout, the
-result also includes `details`.
+Each wait method polls for up to 60 seconds by default. On success it
+returns `{ attempts, waitedMs }`. On timeout, the method **throws** causing
+`agent-browser eval` to return a non-zero exit code.
 
 Use the lower-level boolean checks when you need a one-shot probe:
 
@@ -150,152 +136,60 @@ Use the lower-level boolean checks when you need a one-shot probe:
 - Logs page: `window.__antithesisTriage.logs.loadingFinished()`
 - Runs page: `window.__antithesisTriage.runs.loadingFinished()`
 
-If the report page still does not become ready, inspect:
+If the report page still does not become ready, inspect status:
 
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.loadingStatus()"
-```
-
-Equivalent one-shot status probes are also available at
-`window.__antithesisTriage.logs.loadingStatus()` and
-`window.__antithesisTriage.runs.loadingStatus()`.
-
-The report-page loading check returns `true` only when the main report
-sections have finished loading, including findings, properties, environment,
-and utilization. The report hydrates asynchronously after the browser `load`
-event, and findings are often the last section to settle.
+- Report page: `window.__antithesisTriage.report.loadingStatus()`
+- Logs page: `window.__antithesisTriage.logs.loadingStatus()`
+- Runs page: `window.__antithesisTriage.runs.loadingStatus()`
 
 ## Handling error reports
 
-Not every report loads normally. Antithesis may show an **error report**
-instead of the usual property/findings/utilization view. The runtime detects
-two kinds of error:
+After every report `waitForReady()` call, check `result.error`. If it is
+present, read `references/error-reports.md` for the error report workflow.
 
-| Error type        | `error.type`    | What it looks like                                                                                                                                                                                                             |
-| ----------------- | --------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| **Setup failure** | `setup_error`   | The report replaces the normal sections with a single "Error" card describing a container setup failure (e.g. a container died, the setup-complete event was never emitted). Properties, Findings, and Utilization are absent. |
-| **Runtime error** | `runtime_error` | A red/orange banner appears at the top of the page (class `GeneralErrorNew`). The normal sections may partially render but one or more (typically Findings) will be stuck on "Loading..." forever.                             |
+## Workflows
 
-### Detection
+### Summarize recent runs
 
-`waitForReady()` short-circuits when an error is detected — it will **not**
-wait 60 seconds for sections that will never load. The returned result object
-will contain an `error` field:
+Read `references/run-discovery.md` to get a list of recent runs. Then summarize them in a report.
 
-```json
-{
-  "ok": true,
-  "ready": true,
-  "attempts": 1,
-  "waitedMs": 42,
-  "error": {
-    "type": "setup_error",
-    "summary": "Container setup failure",
-    "details": "Setup validation failures:\n• Container floci died during environment setup with exit code 1..."
-  }
-}
-```
+### Looking up a specific run
 
-**After every `waitForReady()` call, check `result.error`.** If it is
-present, the report is an error report and you should change your workflow:
+To lookup a specific run (report), read `references/run-discovery.md`. Then continue with other workflows as needed.
 
-1. **Extract what is available.** `getRunMetadata()` and
-   `getEnvironmentSourceImages()` still work for both error types. For
-   runtime errors, `getAllProperties()` / `getUtilizationTotalTestHours()`
-   may also work — the sections loaded normally, only Findings is broken.
-   Setup and runtime error reports may also expose inline log panes via
-   `getInlineErrorLogViews()`, `readInlineErrorLog()`, and
-   `collectInlineErrorLog()`.
-2. **Read the error details.** `result.error.details` contains the error
-   message. For setup errors this includes the validation failure and
-   troubleshooting steps. For runtime errors it contains the backend query
-   failure message.
-3. **Report the error to the user.** Explain which error type was found,
-   quote the details, and suggest next steps (fix the setup, contact
-   Antithesis, or re-run).
+### Triage a run
 
-You can also check for errors at any time with:
+1. Read `references/run-info.md` to load information on a run
+2. Read `references/properties.md` to load properties
+3. Cross reference failed properties with findings, review passed/failed counts
+4. Build a detailed summary of the run including a review of all failures as well as flagging any new failures.
 
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getError()"
-```
+### Investigate failed properties
 
-This returns the error object (same shape as `result.error`) or `null` if the
-report is healthy.
+1. Read `references/properties.md` - use `getFailedPropertyExamples` to extract failed properties along with their examples and learn how to download logs
+2. Read `references/logs.md` to learn how to understand logs
+3. For each property to investigate:
+   a. Pick the first failing example
+   b. Call `getExampleLogsUrl(propertyName, index)` to get the example's log URL
+   c. Download the example's log using `download-logs.sh`
+   d. Analyze the downloaded log locally
+   e. If you aren't certain what caused the issue, consider downloading another example's log from the same property. Passing logs can be useful to compare against.
+4. Cross-reference the log against the source code of the system under test (SUT) if you have access to it.
+5. Deeply investigate the failure to develop an understanding of the timeline of events which led up to and potentially caused it.
+6. Report your findings.
 
-### What to skip on error reports
-
-- **Setup errors (`setup_error`)**: Do **not** call property, findings, or
-  utilization methods — those sections do not exist. Focus on metadata,
-  environment images, the error details, and any inline error logs.
-- **Runtime errors (`runtime_error`)**: Do **not** call findings methods (the
-  section is stuck loading). Properties and utilization usually work normally.
-  If the report also shows inline error logs, inspect them instead of navigating away immediately.
-
-Report queries are only valid on the main report view. If you navigate to an
-internal hash route such as `#/run/.../finding/...`, reopen the original report
-URL, wait until `window.location.pathname.startsWith('/report/')`, inject
-`assets/antithesis-triage.js`, and rerun
-`window.__antithesisTriage.report.waitForReady()` before using report methods
-again.
-
-## Recommended workflows
-
-### Quick overview of a run
-
-1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/run-metadata.md` — get the run title and date
-3. Read `references/properties.md` — use the all-properties query for totals, then failed/passed/unfound queries only if you need filtered subsets
-4. Summarize: total properties, how many passed/failed/unfound, and flag any failures
-
-### Investigate a failing property
-
-1. Read `references/setup-auth.md` — authenticate and open the report
-2. Read `references/properties.md` — list properties, filter to failed, get examples grouped by property
-3. Read `references/logs.md` — navigate to a specific example's `logsUrl`, download the log to a file, and inspect the log file locally.
-4. Report the failure with: property name, assertion text, relevant log lines, and the timeline context
-
-**Important:** Do not draw conclusions about why a property failed until you have downloaded and reviewed any attached logs. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
-
-### Investigate an failed report
-
-1. Read `references/setup-auth.md` — authenticate and open the report
-2. Call `window.__antithesisTriage.report.waitForReady()` and inspect `result.error`
-3. Read `references/run-metadata.md` for run title/date and `references/environment.md` for source images
-4. Read `references/logs.md` and download the log file from each of the log panes. You may have to expand section headers first.
-5. Summarize: error type, error details, and the relevant inline log lines with timestamps and sources
-
-### Find a specific run
-
-1. Read `references/setup-auth.md` — authenticate
-2. Read `references/run-discovery.md` — browse the runs page to find the target run
-3. Continue with any of the above workflows once on the report
+**Important:** Make sure you download and review example logs and the source code of the SUT if you have access to it. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
 
 ## General guidance
 
-- **Always authenticate first.** Every session starts with setup-auth.
-- **Use disposable sessions.** Generate a unique `SESSION` for each triage run,
-  pair it with the shared `--session-name antithesis`, and `agent-browser
---session "$SESSION" close` when you finish or abort.
-- **Inject the runtime after navigation.** After every `open`, after link clicks
-  that may change pages, and after reopening the report from a finding route,
-  wait until `window.location` matches the expected page, inject
-  `assets/antithesis-triage.js`, then use the matching `*.waitForReady()`
-  method before the next page-specific method call.
-- **Retry missing-runtime errors by reinjecting.** If a command fails because
-  `window.__antithesisTriage` is undefined or missing, inject the runtime and
-  rerun the same method.
-- **Don't fabricate selectors.** The triage report uses custom web components and non-obvious class names. Always consult the resource page for the correct queries.
-- **Keep report queries on the main report view.** If you click into a finding-focused hash route, reopen the original report URL before using report queries again.
-- **Do not overlap navigation with queries.** `agent-browser eval` calls can fail with an execution-context-destroyed error if the report is still navigating or hydrating.
-- **Logs require full auth.** Navigating to log pages requires a fully authenticated session.
-- **Error reports may keep logs inline.** Before leaving an error report, check
-  `getLogViewers()`. Setup-failure reports can embed multiple inline log panes
-  directly on the main report page.
-- **Preferably download log files for local analysis.** Whenever possible try to download log files locally rather than using the web-ui log viewer.
-- **Review logs before concluding on failures.** When a failed property has example rows with log links, navigate to the relevant url and download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
+- **Always ensure you are authenticated first.**
+- **Use disposable sessions.** Generate a unique `SESSION` for each triage run.
+- **Inject the runtime after navigation.** After every `open`, after link clicks that may change pages, and after reopening the report from a finding route, wait until `networkidle`, inject `assets/antithesis-triage.js`, then use the matching `*.waitForReady()` method before continuing.
+- **Never run `agent-browser` calls in parallel.**
+- **Retry missing-runtime errors by reinjecting.** If a command fails because `window.__antithesisTriage` is undefined or missing, inject the runtime and rerun the same method.
+- **Keep report evals on the main report view.** If you click into another page by accident, reopen the original report URL before using report queries again.
+- **Download log files for local analysis.** Whenever possible try to download log files locally rather than using the web-ui log viewer.
+- **Review logs before concluding on failures.** When a failed property has example rows with log links, download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
 ## Self-Review
@@ -306,7 +200,6 @@ Review criteria:
 
 - Every property status reported (passed, failed, unfound) was extracted from the actual triage report, not inferred or assumed
 - Findings reference specific data from the report — property names, assertion text, log lines, timestamps
-- No selectors or report data were fabricated — all queries used the reference files' prescribed query files
 - Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend
 - If comparing runs, differences are grounded in data from both reports, not just one

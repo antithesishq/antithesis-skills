@@ -51,7 +51,22 @@ services:
 
 If the deployment includes a client or workload image, make sure it can later receive test templates at `/opt/antithesis/test/v1/`. The `antithesis-setup` skill does not need to create real test templates; it only needs to preserve the path and image structure that `antithesis-workload` will use. If helper files later live inside a template, prefix their file or directory names with `helper_` so Test Composer ignores them.
 
+## Disable Color Output
+
+Antithesis collects and stores raw bytes from container output. ANSI escape codes (colors, cursor movement, etc.) are not rendered and appear as garbage in logs and triage output. **Disable color output in every container image.**
+
+Set this environment variable in every Dockerfile (or in docker-compose.yaml environment blocks):
+
+```dockerfile
+ENV NO_COLOR=1
+```
+
+`NO_COLOR` is a widely adopted convention (see https://no-color.org/) honored by most CLI tools, test frameworks, and language runtimes.
+
+Additionally, if the SUT or its dependencies have their own color flags (e.g. `--no-color`, `FORCE_COLOR=0`, `GCC_COLORS=`, `PYTEST_ADDOPTS=--no-header -p no:color`), disable those too. The goal is zero ANSI escape sequences in any container output.
+
 ## Requirements
 
 - All images must target Linux x86-64. Set `platform: linux/amd64` on every service in docker-compose.yaml — both `build:` services and `image:`-only services (public images like postgres will also pull the wrong architecture on ARM hosts without it).
+- All images must disable color/ANSI output. Set `NO_COLOR=1` in every container environment.
 - Follow the Docker best practices guide: `https://antithesis.com/docs/best_practices/docker_best_practices.md`

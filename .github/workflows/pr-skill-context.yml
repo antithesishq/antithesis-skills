@@ -20,6 +20,9 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.sha }}
 
+      - name: Run process-logs tests
+        run: python3 antithesis-triage/assets/process-logs.py --test
+
       - name: Check spelling
         uses: crate-ci/typos@v1.44.0
 

@@ -1,8 +1,8 @@
 # antithesis-skills
 
-Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, and launch Antithesis runs. Other workflows coming soon.
+Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
-`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's a prereq for the other skills.
+`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's used by the research, setup, and workload skills. You can also use it to ask questions about how to use Antithesis.
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will:
 
@@ -15,7 +15,7 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, and
 
 `antithesis-triage` enables agents to parse and analyze the results of your Antithesis test runs.
 
-`antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) notebook — inspecting container filesystems, runtime state, and events from inside the Antithesis environment.
+`antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) — inspecting container filesystems and runtime state, running shell commands, and extracting evidence from inside the Antithesis environment.
 
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty run` with sensible metadata once the harness is ready.
 
