@@ -37,26 +37,30 @@ If any prerequisite is missing, stop and report which ones are unavailable.
 
 Spawn a **general-purpose sub-agent** with the Agent tool. Provide these
 instructions, replacing `{{TENANT}}` with the actual value of the
-`$ANTITHESIS_TENANT` environment variable:
+`$ANTITHESIS_TENANT` environment variable and `{{TRIAGE_SKILL}}` with the
+absolute path to `antithesis-triage/SKILL.md` in this repository:
 
 ```
-Use the Antithesis Triage skill to list recent runs for
-the tenant "{{TENANT}}". Follow the "Summarize recent runs" workflow.
+Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to list
+recent runs for the tenant "{{TENANT}}". Follow the "Summarize recent runs"
+workflow.
 
-Return the COMPLETE run list in JSON or structured format including for each
-run: name, status (completed/in-progress/error), findings counts by category
-(new, ongoing, resolved, rare), triage URL (or null if unavailable), and any
-utilization info.
+Fetch recent complete and incomplete runs separately by using the status filter:
 
-Also fetch incomplete runs separately using the status filter:
+  `window.__antithesisTriage.runs.getRecentRuns({status: 'Completed'})`
   `window.__antithesisTriage.runs.getRecentRuns({status: 'Incomplete'})`
-Include those in the results too (deduplicate by triage URL).
 
-Report every command you ran and its output. If you encounter errors, report
-them in detail. Close your browser session when done.
+Return the COMPLETE results from both calls in JSON, including for each run:
+  - name
+  - status (completed/in-progress/error)
+  - findings counts by category (new, ongoing, resolved, rare)
+  - triage URL (or null if unavailable)
+  - utilization info
 ```
 
 Wait for this sub-agent to finish before proceeding.
+
+If the sub-agent did not return triage URLs abort.
 
 ## Phase 2: Select Test Targets
 
@@ -86,22 +90,25 @@ directly in Phase 4.
 ### Phase 3a: Completed run with findings
 
 Spawn a general-purpose sub-agent with these instructions (substitute the
-actual triage URL):
+actual triage URL and `{{TRIAGE_SKILL}}` with the absolute path to
+`antithesis-triage/SKILL.md` in this repository):
 
 ```
-Use the Antithesis Triage skill to triage the Antithesis
-report at {{TRIAGE_URL}}. Investigate the logs of failing property most likely
-to be a SUT bug. Pick any failing property if you aren't sure.
+Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to triage
+the Antithesis report at {{TRIAGE_URL}}. Investigate the logs of failing
+property most likely to be a SUT bug. Pick any failing property if you aren't
+sure.
 ```
 
 ### Phase 3b: Incomplete or no-findings run
 
 Spawn a general-purpose sub-agent with these instructions (substitute the
-actual URL — triage URL if available, otherwise the runs page URL):
+actual URL and `{{TRIAGE_SKILL}}` with the absolute path to
+`antithesis-triage/SKILL.md` in this repository):
 
 ```
-Use the Antithesis Triage skill to triage the Antithesis
-run at {{TARGET_URL}}.
+Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to triage
+the Antithesis run at {{TARGET_URL}}.
 ```
 
 Wait for both sub-agents to complete.

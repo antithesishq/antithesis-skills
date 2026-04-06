@@ -10,7 +10,9 @@ agent-browser --session "$SESSION" eval \
 ```
 
 The method returns `title`, the raw `metadata`, plus best-effort parsed
-`conductedOn` and `source` fields.
+`conductedOn` and `source` fields. It also includes `test_hours` and
+`wall_clock` from the Utilization section (e.g. `"335h 8m"` and `"7h 4m"`).
+These will be `null` if the utilization section hasn't loaded or has an error.
 
 ## Get source images
 

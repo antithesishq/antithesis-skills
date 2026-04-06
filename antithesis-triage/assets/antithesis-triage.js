@@ -1237,12 +1237,26 @@
         /^Conducted on\s+(.+?)(?:\s*Source:\s*(.+))?$/,
       );
 
+      var metricKeys = { "Test hours": "test_hours", "Wall clock": "wall_clock" };
+      var metrics = document.querySelectorAll(
+        ".utilization-summary__metric",
+      );
+      var utilization = {};
+      metrics.forEach(function (m) {
+        var parts = clean(m.textContent).split(":");
+        if (parts.length !== 2) return;
+        var key = metricKeys[parts[0].trim()];
+        if (key) utilization[key] = parts[1].trim();
+      });
+
       return {
         title: title,
         metadata: metadataText,
         conductedOn: metadataMatch ? metadataMatch[1].trim() : "",
         source:
           metadataMatch && metadataMatch[2] ? metadataMatch[2].trim() : "",
+        test_hours: utilization.test_hours || null,
+        wall_clock: utilization.wall_clock || null,
       };
     },
 
