@@ -157,7 +157,7 @@ Read `references/run-discovery.md` to get a list of recent runs. Then summarize 
 
 To lookup a specific run (report), read `references/run-discovery.md`. Then continue with other workflows as needed.
 
-Make sure NOT to filter by text or status unless explicitely asked. If you are trying to find the most recent run for a project, just look at recent runs with any status first. Only filter by text or status if you can't find what you are looking for.
+Make sure NOT to filter by text or status unless explicitly asked. If you are trying to find the most recent run for a project, just look at recent runs with any status first. Only filter by text or status if you can't find what you are looking for.
 
 ### Triage a run
 
