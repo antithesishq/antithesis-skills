@@ -2,13 +2,6 @@
 name: antithesis-skills-feedback
 description: >
   Send Antithesis feedback or a bug report regarding Antithesis skills for AI agents.
-keywords:
-  - antithesis
-  - skills
-  - feedback
-  - bug report
-  - complaint
-  - issue
 ---
 
 # Antithesis Skills feedback
