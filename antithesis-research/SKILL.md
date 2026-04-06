@@ -4,14 +4,6 @@ description: >
   Analyze a codebase to figure out how it should be tested with Antithesis:
   map the system, identify failure-prone areas and testable properties, and
   produce the research artifacts needed for workload and environment planning.
-keywords:
-  - antithesis
-  - properties
-  - safety
-  - liveness
-  - correctness
-  - research
-  - planning
 ---
 
 # Antithesis Research

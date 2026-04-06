@@ -6,17 +6,6 @@ description: >
   filesystems and runtime state, run shell commands, and extract evidence
   from inside the Antithesis environment. Supports both the simplified
   debugger (default) and the advanced notebook mode.
-keywords:
-  - antithesis
-  - debugger
-  - multiverse
-  - debugging session
-  - notebook
-  - container
-  - filesystem
-  - runtime
-  - inspect
-  - shell
 ---
 
 # Antithesis Multiverse Debugger

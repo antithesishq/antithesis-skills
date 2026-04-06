@@ -3,14 +3,6 @@ name: antithesis-workload
 description: >
   Implement Antithesis workloads by turning the property catalog into SDK
   assertions and test commands, then refine coverage after triage.
-keywords:
-  - antithesis
-  - workload
-  - assertions
-  - test commands
-  - test templates
-  - properties
-  - SDK
 ---
 
 # Antithesis Workload

@@ -2,14 +2,6 @@
 name: antithesis-triage
 description: >
   Use this skill to triage Antithesis runs (reports). Use this skill to lookup runs, check run status, triage properties (assertions), view run metadata, download logs, view findings, or inspect environmental details.
-keywords:
-  - antithesis
-  - triage report
-  - bug report
-  - properties
-  - assertions
-  - findings
-  - logs
 ---
 
 # Antithesis Report Triage
