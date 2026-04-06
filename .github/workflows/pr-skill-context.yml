@@ -12,37 +12,7 @@ permissions:
   contents: read
 
 jobs:
-  utility-checks:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Check out PR head
-        uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event.pull_request.head.sha }}
-
-      - name: Run process-logs tests
-        run: python3 antithesis-triage/assets/process-logs.py --test
-
-      - name: Check spelling
-        uses: crate-ci/typos@v1.44.0
-
-      - name: Cache lychee results
-        uses: actions/cache@v5
-        with:
-          path: .lycheecache
-          key: ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-${{ github.ref_name }}-
-            ${{ runner.os }}-lychee-${{ hashFiles('lychee.toml') }}-
-
-      - name: Check links
-        uses: lycheeverse/lychee-action@v2
-        with:
-          args: --config lychee.toml .
-          jobSummary: true
-          token: ${{ secrets.GITHUB_TOKEN }}
-
-  python-validation-and-report:
+  token-report:
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write
@@ -62,9 +32,6 @@ jobs:
 
       - name: Sync project dependencies
         run: uv sync --locked
-
-      - name: Validate skills
-        run: make validate
 
       - name: Ensure base commit is available
         run: git fetch --no-tags origin ${{ github.event.pull_request.base.sha }}

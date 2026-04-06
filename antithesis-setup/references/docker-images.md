@@ -39,6 +39,7 @@ Reference each local image in `docker-compose.yaml` with both `build:` (for loca
 services:
   server:
     container_name: foobar-server
+    hostname: foobar-server
     platform: linux/amd64
     build:
       context: ../..
