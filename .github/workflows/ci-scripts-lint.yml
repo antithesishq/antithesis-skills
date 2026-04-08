@@ -1,0 +1,49 @@
+name: CI Scripts
+
+on:
+  pull_request:
+    paths:
+      - ".ci-scripts/**"
+      - "CHANGELOG.md"
+
+permissions:
+  contents: read
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Install ruff
+        run: pip install ruff==0.11.6
+
+      - name: Lint
+        run: ruff check .ci-scripts/
+
+      - name: Check formatting
+        run: ruff format --check .ci-scripts/
+
+  validate-changelog:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out PR head
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Validate changelog format
+        run: python3 .ci-scripts/changelog.py validate

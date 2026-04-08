@@ -12,6 +12,7 @@ https://agentskills.io/specification.md
 ## Build, Test, and Development Commands
 
 - `make validate`: validates all SKILLS align with the specification.
+- `make validate-changelog`: validates CHANGELOG.md format.
 
 ## Coding Style & Naming Conventions
 
@@ -43,3 +44,8 @@ PRs should include:
 - What changed and why.
 - Validation evidence (`make validate` output).
 - Any follow-up work or limitations.
+
+For notable changes (new skills, breaking changes, significant fixes), add a
+`changelog - breaking` or `changelog - non-breaking` label to the PR. A bot
+updates `CHANGELOG.md` automatically on merge using the PR title. Do not edit
+`CHANGELOG.md` directly.

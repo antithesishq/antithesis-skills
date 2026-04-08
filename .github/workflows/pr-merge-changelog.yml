@@ -1,0 +1,101 @@
+name: PR Merge Changelog
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - CHANGELOG.md
+
+permissions:
+  contents: write
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Find merged PR
+        id: pr
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          COMMIT_SHA: ${{ github.sha }}
+          REPO: ${{ github.repository }}
+        run: |
+          # Retry loop for GitHub API eventual consistency.
+          for attempt in 1 2 3; do
+            PR_JSON=$(gh api "repos/${REPO}/commits/${COMMIT_SHA}/pulls" \
+              --jq '.[0] // empty' 2>/dev/null || echo "")
+            if [ -n "$PR_JSON" ]; then
+              break
+            fi
+            echo "Attempt ${attempt}: no PR found, retrying in 10s..."
+            sleep 10
+          done
+
+          if [ -z "$PR_JSON" ]; then
+            echo "No PR found for commit — skipping"
+            echo "skip=true" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+
+          NUMBER=$(echo "$PR_JSON" | jq -r '.number')
+          TITLE=$(echo "$PR_JSON" | jq -r '.title')
+          URL=$(echo "$PR_JSON" | jq -r '.html_url')
+
+          BREAKING=$(echo "$PR_JSON" | jq -r \
+            '[.labels[].name] | map(select(. == "changelog - breaking")) | first // empty')
+          NON_BREAKING=$(echo "$PR_JSON" | jq -r \
+            '[.labels[].name] | map(select(. == "changelog - non-breaking")) | first // empty')
+
+          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
+          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+          echo "breaking=$BREAKING" >> "$GITHUB_OUTPUT"
+          echo "non_breaking=$NON_BREAKING" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
+
+      - name: Check out main
+        if: steps.pr.outputs.skip != 'true' && (steps.pr.outputs.breaking != '' || steps.pr.outputs.non_breaking != '')
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        if: steps.pr.outputs.skip != 'true' && (steps.pr.outputs.breaking != '' || steps.pr.outputs.non_breaking != '')
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Add changelog entry (breaking)
+        if: steps.pr.outputs.breaking != ''
+        env:
+          TITLE: ${{ steps.pr.outputs.title }}
+          NUMBER: ${{ steps.pr.outputs.number }}
+          URL: ${{ steps.pr.outputs.url }}
+        run: |
+          ENTRY="${TITLE} ([PR #${NUMBER}](${URL}))"
+          python3 .ci-scripts/changelog.py add-entry --section breaking "$ENTRY"
+
+      - name: Add changelog entry (non-breaking)
+        if: steps.pr.outputs.non_breaking != ''
+        env:
+          TITLE: ${{ steps.pr.outputs.title }}
+          NUMBER: ${{ steps.pr.outputs.number }}
+          URL: ${{ steps.pr.outputs.url }}
+        run: |
+          ENTRY="${TITLE} ([PR #${NUMBER}](${URL}))"
+          python3 .ci-scripts/changelog.py add-entry --section non-breaking "$ENTRY"
+
+      - name: Commit and push
+        if: steps.pr.outputs.skip != 'true' && (steps.pr.outputs.breaking != '' || steps.pr.outputs.non_breaking != '')
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add CHANGELOG.md
+          if git diff --cached --quiet; then
+            echo "No changes to commit"
+            exit 0
+          fi
+          git commit -m "Update changelog for PR #${NUMBER}"
+          git pull --rebase origin main
+          git push origin main

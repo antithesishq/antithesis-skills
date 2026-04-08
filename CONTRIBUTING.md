@@ -21,3 +21,27 @@ make validate-links
 ```
 
 This uses `lychee` to check repository links, including raw URLs inside Markdown code spans via `--include-verbatim`.
+
+## Changelog
+
+Changelog entries are managed automatically via PR labels. Do not edit
+`CHANGELOG.md` directly.
+
+Add one of these labels to PRs with notable changes:
+
+- `changelog - breaking` — changes existing behavior in a way that requires
+  users to adapt.
+- `changelog - non-breaking` — new features, fixes, and other improvements.
+
+Not every PR needs a label. Internal CI changes, typo fixes, and similar
+housekeeping generally don't.
+
+When a labeled PR is merged, a bot adds the PR title to `CHANGELOG.md` under
+the matching category, grouped by date (UTC). Write your PR title as a
+changelog entry.
+
+## Validate changelog
+
+```bash
+make validate-changelog
+```
