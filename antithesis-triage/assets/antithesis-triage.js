@@ -1,5 +1,5 @@
 (function () {
-  var VERSION = "2.0.0";
+  var VERSION = "3.0.0";
 
   function clean(text) {
     return (text || "").replace(/\s+/g, " ").trim();
@@ -303,27 +303,6 @@
     return match ? Number(match[1]) : null;
   }
 
-  function isSelected(tab) {
-    return !!tab && tab.getAttribute("selected") === "true";
-  }
-
-  async function activateTab(findTab, visibleReady) {
-    var tab = findTab();
-    if (!tab) return null;
-
-    for (var attempt = 0; attempt < 12; attempt++) {
-      click(tab);
-      await wait(250);
-
-      var expected = countFromTab(tab);
-      if (isSelected(tab) && (visibleReady(expected) || expected === 0)) {
-        return tab;
-      }
-    }
-
-    return tab;
-  }
-
   async function waitForReady(checkFn, detailsFn, options) {
     var timeoutMs =
       options && typeof options.timeoutMs === "number"
@@ -359,6 +338,20 @@
     });
   }
 
+  async function expandAllFindings() {
+    var sections = Array.from(
+      document.querySelectorAll("details.findings_section_details"),
+    );
+    var opened = 0;
+    sections.forEach(function (section) {
+      if (!section.open) {
+        section.open = true;
+        opened++;
+      }
+    });
+    if (opened > 0) await wait(300);
+  }
+
   async function expandAllSections() {
     var settleMs = 300;
     var maxPasses = 10;
@@ -389,43 +382,21 @@
   async function expandAllProperties() {
     requireReportPage();
 
-    await activateTab(
-      function () {
-        return tabByPattern(/\ball\b/);
-      },
-      function () {
-        return visiblePropertyContainers().length > 0;
-      },
-    );
-
-    for (var i = 0; i < 24; i++) {
-      var before = visibleLeafProperties().length;
-      await expandVisibleContainers(
-        function (container) {
-          return !!expanderButton(container) && !isExpanded(container);
-        },
-        1,
-        250,
-      );
-      var after = visibleLeafProperties().length;
-      if (after === before) break;
-    }
-  }
-
-  async function expandVisibleContainers(shouldExpand, maxPasses, settleMs) {
-    for (var i = 0; i < maxPasses; i++) {
+    // Expand all property containers in up to 32 passes (groups and leaves).
+    for (var i = 0; i < 32; i++) {
       var changed = false;
 
-      visiblePropertyContainers().forEach(function (container) {
-        if (!shouldExpand(container)) return;
-
-        if (click(expanderButton(container))) {
-          changed = true;
-        }
-      });
+      document
+        .querySelectorAll(".property__expander-button")
+        .forEach(function (btn) {
+          var container = btn.closest(".property-container");
+          if (!container || !isVisible(container) || isExpanded(container))
+            return;
+          if (click(btn)) changed = true;
+        });
 
       if (!changed) break;
-      await wait(settleMs);
+      await wait(250);
     }
   }
 
@@ -438,9 +409,9 @@
     return { passingCount: match[1], failingCount: match[2] };
   }
 
-  // Assumes leaf properties are already expanded by the caller (getAllProperties
-  // and getFilteredProperties both expand all containers before calling this).
-  // Pass/fail example counts are only present in the DOM after expansion.
+  // Assumes leaf properties are already expanded (waitForReady expands all
+  // sections and properties on load). Pass/fail example counts are only
+  // present in the DOM after expansion.
   function visibleLeafProperties(filterStatus) {
     return visiblePropertyContainers()
       .filter(function (container) {
@@ -724,10 +695,8 @@
     );
   }
 
-  async function getAllProperties() {
+  function getAllProperties() {
     requireReportPage();
-
-    await expandAllProperties();
 
     var tab = tabByPattern(/\ball\b/);
     var properties = visibleLeafProperties();
@@ -737,132 +706,9 @@
     }, {});
 
     return {
-      filter: "all",
       expectedCount: countFromTab(tab),
       counts: counts,
       properties: properties,
-    };
-  }
-
-  async function getFilteredProperties(target) {
-    requireReportPage();
-
-    var tab = await activateTab(
-      function () {
-        if (target === "failed") {
-          return (
-            document.querySelector("a-tab._failing") ||
-            tabByPattern(/\bfailed\b/)
-          );
-        }
-        if (target === "passed") {
-          return (
-            document.querySelector("a-tab._passing") ||
-            tabByPattern(/\bpassed\b/)
-          );
-        }
-        return tabByPattern(/\ball\b/);
-      },
-      function () {
-        return visiblePropertyContainers().some(function (container) {
-          return !target || containerStatus(container) === target;
-        });
-      },
-    );
-
-    await expandVisibleContainers(
-      function (container) {
-        if (!expanderButton(container) || isExpanded(container)) return false;
-        // The passed tab already filters the tree; only expand passed-status branches there.
-        if (target === "passed") return containerStatus(container) === target;
-        return true;
-      },
-      target === "passed" ? 16 : 24,
-      target === "passed" ? 300 : 250,
-    );
-
-    return {
-      filter: target || "all",
-      expectedCount: countFromTab(tab),
-      properties: visibleLeafProperties(target),
-    };
-  }
-
-  function expandedPropertiesWithExamples(statuses) {
-    return visiblePropertyContainers()
-      .filter(function (container) {
-        return (
-          !isGroup(container) &&
-          statuses.indexOf(containerStatus(container)) >= 0 &&
-          examplesRows(container) > 0
-        );
-      })
-      .map(function (container) {
-        return {
-          group: groupPath(container),
-          name: nameOf(container),
-          status: containerStatus(container),
-          exampleRows: examplesRows(container),
-        };
-      })
-      .filter(function (property) {
-        return property.name;
-      });
-  }
-
-  async function expandExamplesForStatuses(targetStatuses) {
-    requireReportPage();
-
-    var statuses =
-      Array.isArray(targetStatuses) && targetStatuses.length
-        ? targetStatuses.slice()
-        : ["failed", "passed"];
-    var expandedProperties = [];
-
-    for (var si = 0; si < statuses.length; si++) {
-      var status = statuses[si];
-      if (status !== "failed" && status !== "passed" && status !== "unfound") {
-        continue;
-      }
-
-      await getFilteredProperties(status);
-
-      for (var i = 0; i < 8; i++) {
-        var changed = false;
-
-        visiblePropertyContainers().forEach(function (container) {
-          if (!isVisible(container) || isGroup(container)) return;
-          if (
-            containerStatus(container) !== status ||
-            examplesRows(container) > 0
-          ) {
-            return;
-          }
-
-          var button = expanderButton(container);
-          if (button && click(button)) {
-            changed = true;
-          }
-        });
-
-        if (changed) {
-          await wait(250);
-        } else {
-          break;
-        }
-      }
-
-      expandedProperties = expandedProperties.concat(
-        expandedPropertiesWithExamples([status]),
-      );
-    }
-
-    return {
-      filter: statuses.join(","),
-      expandedProperties: expandedProperties,
-      totalExampleRows: expandedProperties.reduce(function (sum, property) {
-        return sum + property.exampleRows;
-      }, 0),
     };
   }
 
@@ -924,53 +770,32 @@
     };
   }
 
-  async function getPropertyExamples(targetStatuses) {
+  function getPropertyExamples() {
     requireReportPage();
 
-    var statuses =
-      Array.isArray(targetStatuses) && targetStatuses.length
-        ? targetStatuses.slice()
-        : ["failed", "passed"];
-    var properties = [];
-
-    for (var si = 0; si < statuses.length; si++) {
-      var status = statuses[si];
-      await expandExamplesForStatuses([status]);
-
-      properties = properties.concat(
-        visiblePropertyContainers()
-          .filter(function (container) {
-            return (
-              !isGroup(container) &&
-              containerStatus(container) === status &&
-              examplesRows(container) > 0
-            );
-          })
-          .map(function (container) {
-            return {
-              group: groupPath(container),
-              name: nameOf(container),
-              status: containerStatus(container),
-              examples: examplesForContainer(container),
-            };
-          })
-          .filter(function (property) {
-            return property.name;
-          }),
-      );
-    }
+    var properties = visiblePropertyContainers()
+      .filter(function (container) {
+        return (
+          !isGroup(container) &&
+          nameOf(container) &&
+          examplesRows(container) > 0
+        );
+      })
+      .map(function (container) {
+        return {
+          group: groupPath(container),
+          name: nameOf(container),
+          status: containerStatus(container),
+          examples: examplesForContainer(container),
+        };
+      });
 
     return {
-      filter: statuses.join(","),
       properties: properties,
       totalExamples: properties.reduce(function (sum, property) {
         return sum + property.examples.length;
       }, 0),
     };
-  }
-
-  async function getFailedPropertyExamples() {
-    return getPropertyExamples(["failed"]);
   }
 
   var reportApi = {
@@ -1109,7 +934,8 @@
 
       function status(loaded, section) {
         if (loaded) return "ok";
-        if (err && section && hasLoadingText(section.textContent)) return "error";
+        if (err && section && hasLoadingText(section.textContent))
+          return "error";
         if (err) return "error";
         return "not_loaded";
       }
@@ -1164,6 +990,7 @@
 
       await expandAllSections();
       if (sectionStatus.properties === "ok") await expandAllProperties();
+      if (sectionStatus.findings === "ok") await expandAllFindings();
       return result;
     },
 
@@ -1237,10 +1064,11 @@
         /^Conducted on\s+(.+?)(?:\s*Source:\s*(.+))?$/,
       );
 
-      var metricKeys = { "Test hours": "test_hours", "Wall clock": "wall_clock" };
-      var metrics = document.querySelectorAll(
-        ".utilization-summary__metric",
-      );
+      var metricKeys = {
+        "Test hours": "test_hours",
+        "Wall clock": "wall_clock",
+      };
+      var metrics = document.querySelectorAll(".utilization-summary__metric");
       var utilization = {};
       metrics.forEach(function (m) {
         var parts = clean(m.textContent).split(":");
@@ -1277,23 +1105,9 @@
       });
     },
 
-    getFindingsGrouped: async function () {
+    getFindingsGrouped: function () {
       requireReportPage();
 
-      // Expand all findings sections so lazy-rendered content is available.
-      var sections = Array.from(
-        document.querySelectorAll("details.findings_section_details"),
-      );
-      var opened = 0;
-      sections.forEach(function (section) {
-        if (!section.open) {
-          section.open = true;
-          opened++;
-        }
-      });
-      if (opened > 0) await wait(300);
-
-      // Re-query after expansion in case the DOM changed.
       return Array.from(
         document.querySelectorAll("details.findings_section_details"),
       )
@@ -1333,18 +1147,8 @@
     },
 
     getAllProperties: getAllProperties,
-    getFailedProperties: function () {
-      return getFilteredProperties("failed");
-    },
-    getPassedProperties: function () {
-      return getFilteredProperties("passed");
-    },
-    getUnfoundProperties: function () {
-      return getFilteredProperties("unfound");
-    },
     getExampleLogsUrl: getExampleLogsUrl,
     getPropertyExamples: getPropertyExamples,
-    getFailedPropertyExamples: getFailedPropertyExamples,
   };
 
   var logsApi = {

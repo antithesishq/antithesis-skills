@@ -97,7 +97,8 @@ actual triage URL and `{{TRIAGE_SKILL}}` with the absolute path to
 Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to triage
 the Antithesis report at {{TRIAGE_URL}}. Investigate the logs of failing
 property most likely to be a SUT bug. Pick any failing property if you aren't
-sure.
+sure. Do NOT explore or analyze any local source code repositories — only use
+the report and downloaded logs to perform your triage.
 ```
 
 ### Phase 3b: Incomplete or no-findings run
@@ -114,6 +115,21 @@ the Antithesis run at {{TARGET_URL}}.
 Wait for both sub-agents to complete.
 
 ## Phase 4: Review and Report
+
+### Understanding the skill protocol
+
+Before auditing the sub-agent traces, read the triage skill and its references
+so you can distinguish correct behavior from violations:
+
+1. Read `antithesis-triage/SKILL.md` — the main skill protocol
+2. Read `antithesis-triage/references/error-reports.md` — the error-report
+   workflow (setup errors, runtime errors, how to download inline logs)
+3. Read `antithesis-triage/references/logs.md` — log analysis guidance
+4. Read `antithesis-triage/references/properties.md` — property triage workflow
+
+Use these as the ground truth when evaluating compliance. If a sub-agent does
+something that looks unusual, check whether the skill documents it before
+flagging it as an issue.
 
 ### Reading sub-agent session traces
 

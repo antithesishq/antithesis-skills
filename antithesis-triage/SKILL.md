@@ -160,7 +160,7 @@ Make sure NOT to filter by text or status unless explicitly asked. If you are tr
 
 ### Investigate failed properties
 
-1. Read `references/properties.md` - use `getFailedPropertyExamples` to extract failed properties along with their examples and learn how to download logs
+1. Read `references/properties.md` - use `getPropertyExamples()` to extract properties with their examples and learn how to download logs
 2. Read `references/logs.md` to learn how to understand logs
 3. For each property to investigate:
    a. Pick the first failing example
