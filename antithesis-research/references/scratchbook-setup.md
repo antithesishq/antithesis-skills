@@ -21,6 +21,7 @@ The Antithesis scratchbook is the central location for durable Antithesis handof
 All research outputs should be written as markdown files in the Antithesis scratchbook. Use the following naming conventions:
 
 - `antithesis/scratchbook/sut-analysis.md` — System architecture, components, data flows, and attack surfaces
+- `antithesis/scratchbook/existing-assertions.md` — Scan of existing Antithesis SDK assertions in the codebase
 - `antithesis/scratchbook/property-catalog.md` — Catalog of testable properties with priorities and scoring
 - `antithesis/scratchbook/deployment-topology.md` — Container topology plan for the Antithesis environment
 - `antithesis/scratchbook/property-relationships.md` — Suspected clusters and connections between properties
