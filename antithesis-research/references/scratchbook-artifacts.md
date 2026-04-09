@@ -9,6 +9,7 @@ The scratchbook lives at `antithesis/scratchbook/` in the target repository and 
 | Artifact | Producer | Consumers | Purpose |
 |---|---|---|---|
 | `sut-analysis.md` | research | setup, workload | System architecture, components, data flows, failure-prone areas |
+| `existing-assertions.md` | research | discovery, evaluation | Scan of existing Antithesis SDK assertions in the codebase |
 | `deployment-topology.md` | research | setup | Minimal container topology for the Antithesis environment |
 | `property-catalog.md` | research | workload, refinement (future) | Concise, scannable catalog of testable properties with priorities |
 | `property-relationships.md` | research | refinement (future) | Suspected clusters and connections between properties |
@@ -21,6 +22,7 @@ The scratchbook lives at `antithesis/scratchbook/` in the target repository and 
 ```
 antithesis/scratchbook/
   sut-analysis.md
+  existing-assertions.md
   deployment-topology.md
   property-catalog.md
   property-relationships.md
