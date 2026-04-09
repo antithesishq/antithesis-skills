@@ -59,6 +59,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 | `references/sut-analysis.md`        | General methodology for analyzing the codebase and understanding components |
 | `references/property-discovery.md`  | Discovering properties through structured attention focuses |
 | `references/property-catalog.md`    | Format and methodology for documenting properties   |
+| `references/faults.md`              | Understanding fault types, quiet periods, and process fault availability |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
 | `references/property-evaluation.md` | Evaluating the property catalog as a portfolio       |
 
