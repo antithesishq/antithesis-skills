@@ -30,15 +30,17 @@ Changelog entries are managed automatically via PR labels. Do not edit
 Add one of these labels to PRs with notable changes:
 
 - `changelog - breaking` — changes existing behavior in a way that requires
-  users to adapt.
+  users to adapt. The entry will be prefixed with `BREAKING CHANGE:`.
 - `changelog - non-breaking` — new features, fixes, and other improvements.
+
+If a PR has both labels, it gets a single entry with the `BREAKING CHANGE:`
+prefix.
 
 Not every PR needs a label. Internal CI changes, typo fixes, and similar
 housekeeping generally don't.
 
 When a labeled PR is merged, a bot adds the PR title to `CHANGELOG.md` under
-the matching category, grouped by date (UTC). Write your PR title as a
-changelog entry.
+the date (UTC). Write your PR title as a changelog entry.
 
 ## Validate changelog
 
