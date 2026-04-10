@@ -4,7 +4,10 @@
 Transformations applied to each event:
   1. Strip ANSI escape codes from output_text fields.
   2. Add vtime_seconds (moment._vtime_ticks / 2^32, rounded to 5 decimal places).
-  3. Add active_faults dict tracking currently open fault windows.
+  3. Add active_faults dict tracking currently open fault windows:
+     - network_partition / network_clog: outer boundary of overlapping network faults
+     - node_pause / node_throttle: per-container node fault windows
+     - clock_skip: cumulative clock offset (permanent + active jitter)
 
 Usage: python3 process-logs.py < events.json > processed.json
        python3 process-logs.py events.json -o processed.json
@@ -16,6 +19,7 @@ import argparse
 import json
 import re
 import sys
+from dataclasses import dataclass
 
 ANSI_RE = re.compile(
     r"\x1b\[[\x20-\x3f]*[\x40-\x7e]"  # CSI: ESC [ ... final
@@ -25,17 +29,55 @@ ANSI_RE = re.compile(
 
 VTIME_DIVISOR = 4294967296  # 2^32
 
-# Fault names that represent network fault windows (not instantaneous).
 NETWORK_FAULTS = {"partition", "clog"}
+TRACKED_NODE_FAULTS = {"pause", "throttle"}
+
+
+@dataclass
+class FaultWindow:
+    fault_type: str  # "network", "node", or "clock"
+    fault_name: str  # "partition", "clog", "pause", "throttle", "skip"
+    start_vtime: float
+    end_vtime: float | None  # None = no natural end (permanent clock offsets)
+    container: str | None  # for node faults only
+    offset: float  # for clock/skip only (0.0 for non-clock)
 
 
 def strip_ansi(text):
     return ANSI_RE.sub("", text)
 
 
+def _valid_max_duration(max_dur):
+    """Return max_dur as a positive float, or None if absent/zero/string."""
+    if isinstance(max_dur, (int, float)) and max_dur > 0:
+        return float(max_dur)
+    return None
+
+
+def _build_active_faults(windows):
+    """Reduce internal fault windows into the active_faults snapshot."""
+    result = {}
+    for w in windows:
+        if w.fault_type == "network":
+            result[f"network_{w.fault_name}"] = {"vtime": w.start_vtime}
+        elif w.fault_type == "node":
+            key = f"node_{w.fault_name}"
+            if key not in result:
+                result[key] = {}
+            result[key][w.container] = w.start_vtime
+    # Clock: sum offsets of all active clock windows, use most recent vtime
+    clock_windows = [w for w in windows if w.fault_type == "clock"]
+    if clock_windows:
+        cumulative = sum(w.offset for w in clock_windows)
+        latest_vtime = max(w.start_vtime for w in clock_windows)
+        if cumulative != 0.0:
+            result["clock_skip"] = {"cumulative_offset": cumulative, "vtime": latest_vtime}
+    return result
+
+
 def process_events(events):
     """Process all events in a single pass: strip ANSI, add vtime_seconds, track active_faults."""
-    active_faults = {}
+    fault_windows = []
     faults_snapshot = {}
     faults_dirty = True
     result = []
@@ -50,28 +92,117 @@ def process_events(events):
 
         # Compute vtime_seconds
         moment = processed.get("moment")
+        vtime = None
         if isinstance(moment, dict) and "_vtime_ticks" in moment:
-            vtime_seconds = round(moment["_vtime_ticks"] / VTIME_DIVISOR, 5)
-            processed["vtime_seconds"] = vtime_seconds
+            vtime = round(moment["_vtime_ticks"] / VTIME_DIVISOR, 5)
+            processed["vtime_seconds"] = vtime
 
-        # Track active fault windows
-        fault = processed.get("fault")
-        if isinstance(fault, dict):
-            fault_name = fault.get("name")
-            if fault_name in NETWORK_FAULTS:
-                affected = fault.get("affected_nodes")
-                if affected:
-                    active_faults[fault_name] = processed.get("vtime_seconds", 0.0)
-                else:
-                    active_faults.pop(fault_name, None)
+        ev_vtime = vtime if vtime is not None else 0.0
+
+        # Only process fault/info events from the fault injector source.
+        source = processed.get("source")
+        is_fault_injector = isinstance(source, dict) and source.get("name") == "fault_injector"
+
+        # --- Stage 1: Expire windows ---
+        if vtime is not None and fault_windows:
+            before = len(fault_windows)
+            fault_windows[:] = [
+                w for w in fault_windows if w.end_vtime is None or w.end_vtime > vtime
+            ]
+            if len(fault_windows) != before:
                 faults_dirty = True
-            elif fault_name == "restore":
-                if active_faults:
-                    active_faults.clear()
+
+        # --- Stage 2: Info events ---
+        info = processed.get("info")
+        if is_fault_injector and isinstance(info, dict) and info.get("message") == "status":
+            details = info.get("details", {})
+            if details.get("paused") is True:
+                # Clear network and node windows; clock windows survive pause
+                before = len(fault_windows)
+                fault_windows[:] = [w for w in fault_windows if w.fault_type == "clock"]
+                if len(fault_windows) != before:
                     faults_dirty = True
 
+        # --- Stage 3: Fault events ---
+        fault = processed.get("fault")
+        if is_fault_injector and isinstance(fault, dict):
+            fault_name = fault.get("name")
+            fault_type = fault.get("type")
+            affected = fault.get("affected_nodes") or []
+            max_dur = _valid_max_duration(fault.get("max_duration"))
+
+            # Network faults: outer boundary tracking
+            if fault_name in NETWORK_FAULTS and affected:
+                new_end = (ev_vtime + max_dur) if max_dur else None
+                # After expiration, any remaining window of same name is active
+                existing = next(
+                    (w for w in fault_windows
+                     if w.fault_type == "network" and w.fault_name == fault_name),
+                    None,
+                )
+                if existing is not None:
+                    # Extend if new fault reaches beyond existing
+                    if existing.end_vtime is not None and (
+                        new_end is None or new_end > existing.end_vtime
+                    ):
+                        existing.end_vtime = new_end
+                        faults_dirty = True
+                    # else: completely covered, ignore
+                else:
+                    fault_windows.append(
+                        FaultWindow(
+                            fault_type="network",
+                            fault_name=fault_name,
+                            start_vtime=ev_vtime,
+                            end_vtime=new_end,
+                            container=None,
+                            offset=0.0,
+                        )
+                    )
+                    faults_dirty = True
+
+            elif fault_name == "restore":
+                before = len(fault_windows)
+                fault_windows[:] = [w for w in fault_windows if w.fault_type != "network"]
+                if len(fault_windows) != before:
+                    faults_dirty = True
+
+            elif fault_name in TRACKED_NODE_FAULTS and fault_type == "node":
+                if affected:
+                    container = affected[0]
+                    end_vt = (ev_vtime + max_dur) if max_dur else None
+                    fault_windows.append(
+                        FaultWindow(
+                            fault_type="node",
+                            fault_name=fault_name,
+                            start_vtime=ev_vtime,
+                            end_vtime=end_vt,
+                            container=container,
+                            offset=0.0,
+                        )
+                    )
+                    faults_dirty = True
+
+            elif fault_name == "skip" and fault_type == "clock":
+                det = fault.get("details")
+                offset = det.get("offset", 0.0) if isinstance(det, dict) else 0.0
+                if offset != 0.0:
+                    end_vt = (ev_vtime + max_dur) if max_dur else None
+                    fault_windows.append(
+                        FaultWindow(
+                            fault_type="clock",
+                            fault_name="skip",
+                            start_vtime=ev_vtime,
+                            end_vtime=end_vt,
+                            container=None,
+                            offset=offset,
+                        )
+                    )
+                    faults_dirty = True
+
+        # --- Stage 4: Reduce to snapshot ---
         if faults_dirty:
-            faults_snapshot = active_faults.copy()
+            faults_snapshot = _build_active_faults(fault_windows)
             faults_dirty = False
         processed["active_faults"] = faults_snapshot
 
@@ -113,6 +244,18 @@ def main():
 # ---------------------------------------------------------------------------
 # Tests
 # ---------------------------------------------------------------------------
+
+
+def _evt(vtime_sec, **kwargs):
+    """Helper to create a test event at a given virtual time in seconds.
+
+    Automatically adds source.name = "fault_injector" when fault or info keys
+    are present, since process_events only processes those from that source.
+    """
+    event = {"moment": {"_vtime_ticks": int(vtime_sec * VTIME_DIVISOR)}, **kwargs}
+    if "fault" in event or "info" in event:
+        event.setdefault("source", {"name": "fault_injector"})
+    return event
 
 
 def run_tests():
@@ -239,178 +382,437 @@ def run_tests():
     assert_eq("no vtime_seconds when no moment", "vtime_seconds" not in results[0], True)
     assert_eq("active_faults present even without moment", "active_faults" in results[0], True)
 
-    # -- active_faults tracking --
+    # =====================================================================
+    # active_faults: network faults
+    # =====================================================================
     print()
-    print("active_faults tests:")
+    print("active_faults: network faults")
 
     # Partition opens a fault window
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-    ]
-    results = process_events(events)
-    assert_eq("partition opens fault window", results[0]["active_faults"], {"partition": 1.0})
-
-    # Restore closes network faults
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {"fault": {"name": "restore"}, "moment": {"_vtime_ticks": 8589934592}},  # vtime=2.0
-    ]
-    results = process_events(events)
-    assert_eq("partition visible on first event", results[0]["active_faults"], {"partition": 1.0})
-    assert_eq("restore clears network faults", results[1]["active_faults"], {})
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+    ])
+    assert_eq("partition opens fault window", results[0]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
 
     # Clog opens a fault window
-    events = [
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-    ]
-    results = process_events(events)
-    assert_eq("clog opens fault window", results[0]["active_faults"], {"clog": 1.0})
+    results = process_events([
+        _evt(1.0, fault={"name": "clog", "type": "network", "affected_nodes": ["node-1"], "max_duration": 100}),
+    ])
+    assert_eq("clog opens fault window", results[0]["active_faults"],
+              {"network_clog": {"vtime": 1.0}})
 
-    # Clog replaces previous clog
-    events = [
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-2"]},
-            "moment": {"_vtime_ticks": 8589934592},
-        },  # vtime=2.0
-    ]
-    results = process_events(events)
-    assert_eq("first clog", results[0]["active_faults"], {"clog": 1.0})
-    assert_eq("second clog replaces first", results[1]["active_faults"], {"clog": 2.0})
+    # Restore closes network faults
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("partition visible before restore", results[0]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+    assert_eq("restore clears network faults", results[1]["active_faults"], {})
 
-    # Multiple concurrent faults
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["ALL"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 8589934592},
-        },  # vtime=2.0
-        {"output_text": "normal event", "moment": {"_vtime_ticks": 12884901888}},  # vtime=3.0
-        {"fault": {"name": "restore"}, "moment": {"_vtime_ticks": 17179869184}},  # vtime=4.0
-    ]
-    results = process_events(events)
-    assert_eq("partition only", results[0]["active_faults"], {"partition": 1.0})
-    assert_eq("partition + clog", results[1]["active_faults"], {"partition": 1.0, "clog": 2.0})
-    assert_eq(
-        "both still active on normal event",
-        results[2]["active_faults"],
-        {"partition": 1.0, "clog": 2.0},
-    )
+    # Multiple concurrent network faults (partition + clog)
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "clog", "type": "network", "affected_nodes": ["node-1"], "max_duration": 100}),
+        _evt(3.0, output_text="normal event"),
+        _evt(4.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("partition only", results[0]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+    assert_eq("partition + clog", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}, "network_clog": {"vtime": 2.0}})
+    assert_eq("both still active on normal event", results[2]["active_faults"],
+              {"network_partition": {"vtime": 1.0}, "network_clog": {"vtime": 2.0}})
     assert_eq("restore clears both", results[3]["active_faults"], {})
 
-    # Instantaneous faults (kill, stop, pause, throttle, skip) do NOT track
-    events = [
-        {"fault": {"name": "kill"}, "moment": {"_vtime_ticks": 4294967296}},
-        {"fault": {"name": "stop"}, "moment": {"_vtime_ticks": 4294967296}},
-        {"fault": {"name": "pause"}, "moment": {"_vtime_ticks": 4294967296}},
-        {"fault": {"name": "throttle"}, "moment": {"_vtime_ticks": 4294967296}},
-        {"fault": {"name": "skip"}, "moment": {"_vtime_ticks": 4294967296}},
-    ]
-    results = process_events(events)
-    for i, r in enumerate(results):
-        assert_eq(
-            f"instantaneous fault {events[i]['fault']['name']} not tracked", r["active_faults"], {}
-        )
+    # Empty affected_nodes is a no-op (doesn't close existing window)
+    results = process_events([
+        _evt(1.0, fault={"name": "clog", "type": "network", "affected_nodes": ["node-1"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "clog", "type": "network", "affected_nodes": []}),
+    ])
+    assert_eq("clog with nodes opens window", results[0]["active_faults"],
+              {"network_clog": {"vtime": 1.0}})
+    assert_eq("empty nodes is noop", results[1]["active_faults"],
+              {"network_clog": {"vtime": 1.0}})
 
-    # Restore after only instantaneous faults - no-op
-    events = [
-        {"fault": {"name": "kill"}, "moment": {"_vtime_ticks": 4294967296}},
-        {"fault": {"name": "restore"}, "moment": {"_vtime_ticks": 8589934592}},
-    ]
-    results = process_events(events)
-    assert_eq("restore after kill is empty", results[1]["active_faults"], {})
-
-    # Partition then new partition replaces
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {
-            "fault": {"name": "partition", "affected_nodes": ["node-2"]},
-            "moment": {"_vtime_ticks": 8589934592},
-        },  # vtime=2.0
-    ]
-    results = process_events(events)
-    assert_eq("first partition", results[0]["active_faults"], {"partition": 1.0})
-    assert_eq("second partition replaces", results[1]["active_faults"], {"partition": 2.0})
-
-    # Empty affected_nodes closes the fault window
-    events = [
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {
-            "fault": {"name": "clog", "affected_nodes": []},
-            "moment": {"_vtime_ticks": 8589934592},
-        },  # vtime=2.0
-    ]
-    results = process_events(events)
-    assert_eq("clog with nodes opens window", results[0]["active_faults"], {"clog": 1.0})
-    assert_eq("clog with empty nodes closes window", results[1]["active_faults"], {})
-
-    # Missing affected_nodes closes the fault window
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["ALL"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {"fault": {"name": "partition"}, "moment": {"_vtime_ticks": 8589934592}},  # vtime=2.0
-    ]
-    results = process_events(events)
-    assert_eq("partition with nodes opens window", results[0]["active_faults"], {"partition": 1.0})
-    assert_eq("partition without affected_nodes closes window", results[1]["active_faults"], {})
-
-    # Empty affected_nodes only closes its own fault type
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["ALL"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
-        {
-            "fault": {"name": "clog", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 8589934592},
-        },  # vtime=2.0
-        {
-            "fault": {"name": "clog", "affected_nodes": []},
-            "moment": {"_vtime_ticks": 12884901888},
-        },  # vtime=3.0
-    ]
-    results = process_events(events)
-    assert_eq("both active", results[1]["active_faults"], {"partition": 1.0, "clog": 2.0})
-    assert_eq("empty clog closes only clog", results[2]["active_faults"], {"partition": 1.0})
+    # Missing affected_nodes is a no-op
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "partition", "type": "network"}),
+    ])
+    assert_eq("partition with nodes opens window", results[0]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+    assert_eq("missing nodes is noop", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
 
     # Event without moment gets active_faults but no vtime_seconds
-    events = [
-        {
-            "fault": {"name": "partition", "affected_nodes": ["node-1"]},
-            "moment": {"_vtime_ticks": 4294967296},
-        },  # vtime=1.0
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
         {"output_text": "no moment here"},
-    ]
-    results = process_events(events)
-    assert_eq(
-        "event without moment still gets active_faults",
-        results[1]["active_faults"],
-        {"partition": 1.0},
-    )
+    ])
+    assert_eq("event without moment still gets active_faults", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
     assert_eq("event without moment has no vtime_seconds", "vtime_seconds" not in results[1], True)
+
+    # Untracked faults (kill, stop without type/affected_nodes) produce empty active_faults
+    results = process_events([
+        _evt(1.0, fault={"name": "kill"}),
+        _evt(1.0, fault={"name": "stop"}),
+    ])
+    assert_eq("kill not tracked", results[0]["active_faults"], {})
+    assert_eq("stop not tracked", results[1]["active_faults"], {})
+
+    # Restore after only untracked faults is no-op
+    results = process_events([
+        _evt(1.0, fault={"name": "kill"}),
+        _evt(2.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("restore after kill is empty", results[1]["active_faults"], {})
+
+    # =====================================================================
+    # active_faults: natural expiration
+    # =====================================================================
+    print()
+    print("active_faults: natural expiration")
+
+    # Partition expires via max_duration
+    results = process_events([
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 10}),
+        _evt(10.0, output_text="mid-window"),
+        _evt(16.0, output_text="after expiry"),
+    ])
+    assert_eq("partition active mid-window", results[1]["active_faults"],
+              {"network_partition": {"vtime": 5.0}})
+    assert_eq("partition expired after max_duration", results[2]["active_faults"], {})
+
+    # Clog expires via max_duration
+    results = process_events([
+        _evt(1.0, fault={"name": "clog", "type": "network", "affected_nodes": ["A"], "max_duration": 3}),
+        _evt(5.0, output_text="after"),
+    ])
+    assert_eq("clog expired", results[1]["active_faults"], {})
+
+    # Partition without max_duration never expires
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"]}),
+        _evt(1000.0, output_text="much later"),
+    ])
+    assert_eq("no max_duration never expires", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+
+    # Expiration at exact boundary (end is exclusive: end_vtime <= vtime expires)
+    results = process_events([
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 5}),
+        _evt(10.0, output_text="at exact end"),
+    ])
+    assert_eq("expired at exact boundary", results[1]["active_faults"], {})
+
+    # Restore before natural expiration
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(5.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("restore before expiration clears", results[1]["active_faults"], {})
+
+    # =====================================================================
+    # active_faults: network fault overlap (outer boundary tracking)
+    # =====================================================================
+    print()
+    print("active_faults: network fault overlap")
+
+    # Inner fault completely covered by outer — ignored
+    results = process_events([
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 20}),
+        _evt(10.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 5}),
+        _evt(16.0, output_text="after inner would expire"),
+        _evt(26.0, output_text="after outer expires"),
+    ])
+    assert_eq("inner partition ignored, outer still active", results[2]["active_faults"],
+              {"network_partition": {"vtime": 5.0}})
+    assert_eq("outer partition expires at 25", results[3]["active_faults"], {})
+
+    # Extending fault: A=[10,15], B=[14,19] → window=[10,19]
+    results = process_events([
+        _evt(10.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 5}),
+        _evt(14.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 5}),
+        _evt(16.0, output_text="after original end, before extended end"),
+        _evt(20.0, output_text="after extended end"),
+    ])
+    assert_eq("extending fault keeps original vtime", results[1]["active_faults"],
+              {"network_partition": {"vtime": 10.0}})
+    assert_eq("still active after original end (extended)", results[2]["active_faults"],
+              {"network_partition": {"vtime": 10.0}})
+    assert_eq("expired after extended end", results[3]["active_faults"], {})
+
+    # Non-overlapping: first expires, then new one starts
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 3}),
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 3}),
+    ])
+    assert_eq("first partition", results[0]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+    assert_eq("new partition after first expired", results[1]["active_faults"],
+              {"network_partition": {"vtime": 5.0}})
+
+    # Partition and clog overlap independently
+    results = process_events([
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 20}),
+        _evt(10.0, fault={"name": "clog", "type": "network", "affected_nodes": ["A"], "max_duration": 3}),
+        _evt(14.0, output_text="clog expired, partition still active"),
+    ])
+    assert_eq("clog expired but partition still active", results[2]["active_faults"],
+              {"network_partition": {"vtime": 5.0}})
+
+    # Extending with None (no max_duration) absorbs finite end
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 5}),
+        _evt(3.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"]}),
+        _evt(100.0, output_text="much later"),
+    ])
+    assert_eq("None extends finite, keeps original vtime", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+    assert_eq("never expires after None extension", results[2]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+
+    # Existing None absorbs any new fault
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"]}),
+        _evt(3.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(5.0, output_text="check"),
+    ])
+    assert_eq("None absorbs new finite fault", results[2]["active_faults"],
+              {"network_partition": {"vtime": 1.0}})
+
+    # =====================================================================
+    # active_faults: pause clears non-clock faults
+    # =====================================================================
+    print()
+    print("active_faults: pause behavior")
+
+    # Pause clears network and node windows
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 100}),
+        _evt(3.0, info={"message": "status", "details": {"paused": True}}),
+    ])
+    assert_eq("network + node active before pause", results[1]["active_faults"],
+              {"network_partition": {"vtime": 1.0}, "node_pause": {"A": 2.0}})
+    assert_eq("pause clears network + node", results[2]["active_faults"], {})
+
+    # Pause preserves clock windows
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+        _evt(2.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(3.0, info={"message": "status", "details": {"paused": True}}),
+    ])
+    assert_eq("clock survives pause", results[2]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 10.0, "vtime": 1.0}})
+
+    # =====================================================================
+    # active_faults: node pause/throttle
+    # =====================================================================
+    print()
+    print("active_faults: node pause/throttle")
+
+    # Node pause opens a window
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 10}),
+    ])
+    assert_eq("node pause opens window", results[0]["active_faults"],
+              {"node_pause": {"A": 1.0}})
+
+    # Node throttle opens a window
+    results = process_events([
+        _evt(1.0, fault={"name": "throttle", "type": "node", "affected_nodes": ["B"], "max_duration": 10}),
+    ])
+    assert_eq("node throttle opens window", results[0]["active_faults"],
+              {"node_throttle": {"B": 1.0}})
+
+    # Multiple containers paused simultaneously
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "pause", "type": "node", "affected_nodes": ["B"], "max_duration": 100}),
+    ])
+    assert_eq("multiple containers paused", results[1]["active_faults"],
+              {"node_pause": {"A": 1.0, "B": 2.0}})
+
+    # Mixed pause and throttle on different containers
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "throttle", "type": "node", "affected_nodes": ["B"], "max_duration": 100}),
+    ])
+    assert_eq("mixed pause and throttle", results[1]["active_faults"],
+              {"node_pause": {"A": 1.0}, "node_throttle": {"B": 2.0}})
+
+    # Node pause expires via max_duration
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 5}),
+        _evt(3.0, output_text="mid"),
+        _evt(7.0, output_text="after"),
+    ])
+    assert_eq("node pause active mid-window", results[1]["active_faults"],
+              {"node_pause": {"A": 1.0}})
+    assert_eq("node pause expired", results[2]["active_faults"], {})
+
+    # Restore does NOT affect node windows
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 100}),
+        _evt(3.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("restore keeps node_pause", results[2]["active_faults"],
+              {"node_pause": {"A": 2.0}})
+
+    # Node pause with empty affected_nodes is ignored
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "type": "node", "affected_nodes": []}),
+    ])
+    assert_eq("node pause empty nodes ignored", results[0]["active_faults"], {})
+
+    # Node pause without type is ignored
+    results = process_events([
+        _evt(1.0, fault={"name": "pause", "affected_nodes": ["A"], "max_duration": 10}),
+    ])
+    assert_eq("node pause without type ignored", results[0]["active_faults"], {})
+
+    # Node kill/stop are not tracked
+    results = process_events([
+        _evt(1.0, fault={"name": "kill", "type": "node", "affected_nodes": ["A"], "max_duration": 10}),
+        _evt(2.0, fault={"name": "stop", "type": "node", "affected_nodes": ["B"], "max_duration": 10}),
+    ])
+    assert_eq("kill not tracked", results[0]["active_faults"], {})
+    assert_eq("stop not tracked", results[1]["active_faults"], {})
+
+    # =====================================================================
+    # active_faults: clock skip (permanent)
+    # =====================================================================
+    print()
+    print("active_faults: clock skip (permanent)")
+
+    # Permanent clock skip tracked
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+    ])
+    assert_eq("permanent clock skip tracked", results[0]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 10.0, "vtime": 1.0}})
+
+    # Cumulative offsets
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+        _evt(2.0, fault={"name": "skip", "type": "clock", "details": {"offset": 5.0}}),
+    ])
+    assert_eq("cumulative offsets", results[1]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 15.0, "vtime": 2.0}})
+
+    # Negative offset reduces cumulative
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+        _evt(2.0, fault={"name": "skip", "type": "clock", "details": {"offset": -10.0}}),
+    ])
+    assert_eq("offsets cancel out, entry removed", results[1]["active_faults"], {})
+
+    # Clock skip with zero offset is ignored
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 0.0}}),
+    ])
+    assert_eq("zero offset ignored", results[0]["active_faults"], {})
+
+    # Clock skip without details is ignored
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock"}),
+    ])
+    assert_eq("skip without details ignored", results[0]["active_faults"], {})
+
+    # Clock skip survives pause
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+        _evt(2.0, info={"message": "status", "details": {"paused": True}}),
+        _evt(3.0, output_text="after pause"),
+    ])
+    assert_eq("clock skip survives pause", results[2]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 10.0, "vtime": 1.0}})
+
+    # =====================================================================
+    # active_faults: clock skip (jitter)
+    # =====================================================================
+    print()
+    print("active_faults: clock skip (jitter)")
+
+    # Jitter tracked with duration
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "max_duration": 10, "details": {"offset": 30.0}}),
+    ])
+    assert_eq("jitter tracked", results[0]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 30.0, "vtime": 1.0}})
+
+    # Jitter expires and offset drops out
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "max_duration": 5, "details": {"offset": 30.0}}),
+        _evt(3.0, output_text="mid"),
+        _evt(7.0, output_text="after"),
+    ])
+    assert_eq("jitter active mid-window", results[1]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 30.0, "vtime": 1.0}})
+    assert_eq("jitter expired", results[2]["active_faults"], {})
+
+    # Jitter + permanent coexist
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "details": {"offset": 10.0}}),
+        _evt(2.0, fault={"name": "skip", "type": "clock", "max_duration": 5, "details": {"offset": 30.0}}),
+        _evt(4.0, output_text="both active"),
+        _evt(8.0, output_text="jitter expired"),
+    ])
+    assert_eq("permanent + jitter cumulative", results[2]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 40.0, "vtime": 2.0}})
+    assert_eq("after jitter expires, permanent remains", results[3]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 10.0, "vtime": 1.0}})
+
+    # Jitter survives pause
+    results = process_events([
+        _evt(1.0, fault={"name": "skip", "type": "clock", "max_duration": 100, "details": {"offset": 20.0}}),
+        _evt(2.0, info={"message": "status", "details": {"paused": True}}),
+        _evt(3.0, output_text="after pause"),
+    ])
+    assert_eq("jitter survives pause", results[2]["active_faults"],
+              {"clock_skip": {"cumulative_offset": 20.0, "vtime": 1.0}})
+
+    # =====================================================================
+    # active_faults: combined scenario (spec walkthrough)
+    # =====================================================================
+    print()
+    print("active_faults: combined scenario")
+
+    results = process_events([
+        _evt(0.0, info={"message": "status", "details": {"started": True}}),
+        _evt(5.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 10,
+                         "details": {"disruption_type": "Stopped", "asymmetric": False, "partitions": [["A", "B"], ["C"]]}}),
+        _evt(8.0, fault={"name": "clog", "type": "network", "affected_nodes": ["A"], "max_duration": 6,
+                         "details": {"disruption_type": "Stopped"}}),
+        _evt(10.0, output_text="check at t=10"),
+        _evt(12.0, fault={"name": "pause", "type": "node", "affected_nodes": ["C"], "max_duration": 8}),
+        _evt(16.0, output_text="check at t=16"),
+        _evt(17.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+        _evt(17.0, info={"message": "status", "details": {"paused": True}}),
+    ])
+    assert_eq("t=10: partition + clog active", results[3]["active_faults"],
+              {"network_partition": {"vtime": 5.0}, "network_clog": {"vtime": 8.0}})
+    assert_eq("t=16: only node_pause (network expired)", results[5]["active_faults"],
+              {"node_pause": {"C": 12.0}})
+    assert_eq("t=17: pause clears everything", results[7]["active_faults"], {})
+
+    # Mixed: network + node + clock
+    results = process_events([
+        _evt(1.0, fault={"name": "partition", "type": "network", "affected_nodes": ["ALL"], "max_duration": 100}),
+        _evt(2.0, fault={"name": "pause", "type": "node", "affected_nodes": ["A"], "max_duration": 100}),
+        _evt(3.0, fault={"name": "skip", "type": "clock", "details": {"offset": 5.0}}),
+        _evt(4.0, fault={"name": "restore", "type": "network", "affected_nodes": ["ALL"]}),
+    ])
+    assert_eq("all three active at t=3", results[2]["active_faults"],
+              {"network_partition": {"vtime": 1.0}, "node_pause": {"A": 2.0},
+               "clock_skip": {"cumulative_offset": 5.0, "vtime": 3.0}})
+    assert_eq("restore removes only network", results[3]["active_faults"],
+              {"node_pause": {"A": 2.0}, "clock_skip": {"cumulative_offset": 5.0, "vtime": 3.0}})
 
     print()
     if failures:

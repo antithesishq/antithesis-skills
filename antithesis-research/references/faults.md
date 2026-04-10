@@ -86,19 +86,22 @@ intervals. Common uses: toggling admin config, triggering compaction/GC,
 forking background processes. Custom faults can use the Antithesis SDK to draw
 random numbers for probabilistic behavior.
 
-## Process Fault Availability
+## Fault Availability
 
-The **`basic_test` webhook** (the default way to launch runs) **disables node
-termination faults** (process kill and stop). This means containers will not be killed
-or restarted during a standard run.
+Not all fault types are enabled by default. The set of enabled faults depends on
+the tenant configuration and the webhook used to launch runs. For example, node
+termination (kill/stop) and clock faults are commonly disabled in default
+configurations.
 
-Customers can enable process kill/stop faults by contacting Antithesis support.
-Alternatively, you can implement ad-hoc process-level faults yourself via test
-commands, custom faults, or any other mechanism available in your environment.
+If a property or test depends on a specific fault type being active (e.g. crash
+recovery requires node termination, clock-sensitive logic requires clock jitter),
+flag it as a requirement in the property catalog and confirm with the user that
+the fault is enabled for their tenant. Properties that depend on disabled faults
+will not be exercised and may show as unfound or vacuously passing.
 
-When analyzing a system, keep this in mind: properties that depend on crash
-recovery or restart behavior will not be exercised by default. Note them in the
-property catalog and flag that they require process faults to be enabled.
+Customers can adjust fault availability by contacting Antithesis support.
+Alternatively, some fault scenarios can be approximated via test commands, custom
+faults, or other mechanisms available in the environment.
 
 ## Requesting Quiet Periods with `ANTITHESIS_STOP_FAULTS`
 

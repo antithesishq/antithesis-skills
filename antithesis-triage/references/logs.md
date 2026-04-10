@@ -223,34 +223,93 @@ Antithesis logs interleave two sources:
   links.
 - `disruption_type` values: `Stopped` (packets dropped), `Slowed` (packets
   delayed), `Jammed` (packets queued until a future delivery time).
-- **Container Kill / Stop / Pause** (`kill`|`stop`|`pause`/`node`): The named
-  container is killed, stopped, or paused for `max_duration` seconds. Killed
-  or stopped containers are restarted by Antithesis after the duration. A
-  restart policy in docker-compose may restart it sooner.
+- **Container Kill / Stop** (`kill`|`stop`/`node`): The named container is
+  killed or stopped for `max_duration` seconds, then restarted by Antithesis.
+  `max_duration` may be `"0"` (string) meaning the restart has no controlled
+  end. A restart policy may restart the container sooner.
+- **Container Pause** (`pause`/`node`): The named container is frozen in place
+  for `max_duration` seconds. The container remains on the network but cannot
+  process anything — other containers will see timeouts when trying to
+  communicate with it.
 - **CPU Throttle** (`throttle`/`node`): CPU on the target container is slowed
-  for a duration.
+  for `max_duration` seconds.
 - **Clock Skew** (`skip`/`clock`): System clock is jumped forward or backward
-  by `details.offset` seconds, then reversed after `max_duration`.
+  by `details.offset` seconds. If `max_duration` is present, the offset is
+  temporary (jitter) and reversed after the duration. If absent, the offset is
+  permanent. Clock offsets are cumulative — each new skip shifts from wherever
+  the clock already is.
+- Only one node fault can be active on a given container at a time. A second
+  node fault targeting a container with an active fault is silently dropped.
 
 ### Active (ongoing) faults
 
 The `process-logs.py` script adds an `active_faults` field to every event. This
-field is a dictionary mapping fault names to the virtual time (in seconds) when
-each fault window opened.
+field is a dictionary tracking currently active fault windows. The schema:
 
-Only faults that create sustained windows are tracked:
+```json
+{
+  "active_faults": {
+    "network_partition": {"vtime": 5.0},
+    "network_clog": {"vtime": 10.0},
+    "node_pause": {"container_a": 12.0, "container_b": 13.0},
+    "node_throttle": {"container_c": 14.0},
+    "clock_skip": {"cumulative_offset": 30.0, "vtime": 12.0}
+  }
+}
+```
 
-- **`partition`** and **`clog`** with non-empty `affected_nodes` open a window.
-  A new fault of the same type replaces the previous one. If `affected_nodes`
-  is empty or missing, the fault is disabled and the window closes.
-- **`restore`** closes all network fault windows.
-- Node faults (`kill`, `stop`, `pause`, `throttle`) and clock faults (`skip`)
-  are instantaneous — they are not tracked in `active_faults`.
+**Keys and values:**
+
+- **`network_partition`** / **`network_clog`** — `{"vtime": <float>}` pointing
+  to the start of the outer fault window. Overlapping faults of the same type
+  are merged: the window tracks the earliest start and latest end. Events with
+  empty or missing `affected_nodes` are ignored.
+- **`node_pause`** / **`node_throttle`** — map from container name to the vtime
+  when the fault started. One entry per affected container.
+- **`clock_skip`** — `{"cumulative_offset": <float>, "vtime": <float>}`.
+  `cumulative_offset` is the sum of all active clock offsets (permanent +
+  jitter). `vtime` is the most recent clock fault event. Removed when the net
+  offset reaches zero.
+
+**What is tracked:**
+
+- Network faults (`partition`, `clog`) with non-empty `affected_nodes` and
+  `max_duration` create timed windows. Without `max_duration`, the window stays
+  open until a `restore` or `pause` event.
+- `restore` closes all network fault windows.
+- `pause` and `throttle` node faults create windows that expire after
+  `max_duration`.
+- Clock faults (`skip`) with `details.offset != 0` are tracked. Permanent
+  offsets (no `max_duration`) never expire. Jitter (with `max_duration`) expires
+  and its offset drops from the cumulative total.
+
+**What is NOT tracked:**
+
+- `node/kill` and `node/stop` — may have no controlled end; their semantics are
+  obvious (container goes down and comes back).
+- Thread pausing — does not produce fault injector log events, so it cannot be
+  tracked.
+
+**Clearing behavior:**
+
+- A `restore` event clears all network windows. Node and clock windows are
+  unaffected.
+- A fault injector `paused: true` status event clears all network and node
+  windows. Clock windows survive pause (clock offsets are real state changes
+  that persist).
+- Fault windows with `max_duration` expire automatically when `vtime` passes
+  `start + max_duration`.
 
 To find events that occurred during a network partition:
 
 ```bash
-jq '[.[] | select(.active_faults.partition != null)]' "$LOG"
+jq '[.[] | select(.active_faults.network_partition != null)]' "$LOG"
+```
+
+To find events during any node fault:
+
+```bash
+jq '[.[] | select(.active_faults | keys[] | startswith("node_"))]' "$LOG"
 ```
 
 To find events that happened during any ongoing fault:
