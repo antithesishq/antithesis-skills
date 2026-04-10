@@ -1,9 +1,9 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# Run this script to inform Antithesis that it can start running Test Composer
-# Commands. You can also use the Antithesis SDK to emit setup-complete from your
-# system if that is easier.
+# Run this script to inform Antithesis that it can start running test commands.
+# You can also use the Antithesis SDK to emit setup-complete from your system if
+# that is easier.
 #
 # Antithesis sets the `ANTITHESIS_OUTPUT_DIR` environment variable
 # automatically. This script is setup to emit `setup_complete` to the

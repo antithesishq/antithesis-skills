@@ -38,7 +38,7 @@ A typical client container:
 
 This readiness signaling happens before any test-template command runs. Do not plan for a `first_` command to emit `setup_complete`; `first_` commands are timeline actions that start only after Antithesis has already received the readiness signal.
 
-The client container image includes the test template directory at `/opt/antithesis/test/v1/{name}/`. Helper files or directories kept inside that template should use a `helper_` prefix so Test Composer ignores them.
+The client container image includes the test template directory at `/opt/antithesis/test/v1/{name}/`. Helper files or directories kept inside that template should use a `helper_` prefix so Antithesis ignores them.
 
 ## Topology Examples
 

@@ -36,7 +36,7 @@ If scratchbook artifacts already exist, treat them as inputs and extend them ins
 - **Safety property (correctness):** A bad thing never happens
 - **Liveness property (progress):** A good thing eventually happens
 - **Reachability property:** A code path or behavior is reachable or unreachable
-- **Test Template:** A directory of Test Commands located at `/opt/antithesis/test/v1/{name}/`. There may be more than one test template. Each timeline executes commands from a single Test Template. Files or subdirectories prefixed with `helper_` are ignored by Test Composer.
+- **Test Template:** A directory of test commands located at `/opt/antithesis/test/v1/{name}/`. There may be more than one test template. Each timeline executes commands from a single test template. Files or subdirectories prefixed with `helper_` are ignored by Antithesis.
 - **Test Command:** An executable file in a Test Template with a valid prefix. Valid prefixes: `parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`
 - **Timeline:** A single linear execution of the target system and workload. Antithesis runs many timelines in parallel and branches them to search for interesting behaviors.
 

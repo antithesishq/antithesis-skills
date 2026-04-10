@@ -63,7 +63,7 @@ Ask the user only for blockers or scoping decisions you cannot infer safely, suc
 ## Definitions and Concepts
 
 - **SUT:** System under test.
-- **Test template:** A directory of test commands at `/opt/antithesis/test/v1/{name}/`. Each timeline runs commands from one test template. Files or subdirectories prefixed with `helper_` are ignored by Test Composer, so use that prefix for helper scripts kept alongside commands.
+- **Test template:** A directory of test commands at `/opt/antithesis/test/v1/{name}/`. Each timeline runs commands from one test template. Files or subdirectories prefixed with `helper_` are ignored by Antithesis, so use that prefix for helper scripts kept alongside commands.
 - **Test command:** An executable in a test template with a valid prefix: `parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`.
 - **Timeline:** One linear execution of the SUT and workload. Antithesis runs many timelines in parallel and branches them to search for interesting behaviors.
 - **`Always` / `AlwaysOrUnreachable`:** Assertions for safety and correctness properties.
@@ -74,7 +74,7 @@ Ask the user only for blockers or scoping decisions you cannot infer safely, suc
 
 Use the `antithesis-documentation` skill to access these pages. Prefer `snouty docs`.
 
-- Test templates reference: `https://antithesis.com/docs/test_templates/test_composer_reference.md`
+- Test commands reference: `https://antithesis.com/docs/test_templates/test_composer_reference.md`
 - SDK reference: `https://antithesis.com/docs/using_antithesis/sdk.md`
 - Properties and assertions: `https://antithesis.com/docs/properties_assertions/assertions.md`
 - Fault injection: `https://antithesis.com/docs/environment/fault_injection.md`
@@ -136,7 +136,7 @@ Review criteria:
 - Test commands are written in the project's language, not Bash, and reuse the project's clients and libraries where possible
 - No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
-- Helper files or directories are prefixed with `helper_` so Test Composer ignores them
+- Helper files or directories are prefixed with `helper_` so Antithesis ignores them
 - `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope, with provenance frontmatter (`commit` and `updated`) reflecting the current codebase state
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
 - Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.

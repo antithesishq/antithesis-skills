@@ -6,7 +6,7 @@ Create test templates whose commands exercise the SUT in useful, diverse ways.
 
 ## Test Template Structure
 
-A test template is a directory at `/opt/antithesis/test/v1/{name}/` containing test command files. A timeline runs commands from one test template. If you are unsure how to split coverage, start with one template. Files and subdirectories prefixed with `helper_` are ignored by Test Composer, so use that prefix for shared helpers that need to live inside the template.
+A test template is a directory at `/opt/antithesis/test/v1/{name}/` containing test command files. A timeline runs commands from one test template. If you are unsure how to split coverage, start with one template. Files and subdirectories prefixed with `helper_` are ignored by Antithesis, so use that prefix for shared helpers that need to live inside the template.
 
 ## Test Command Prefixes and Their Behavior
 
@@ -24,8 +24,8 @@ A test template is a directory at `/opt/antithesis/test/v1/{name}/` containing t
 - Commands should eventually exit.
 - Antithesis already checks that commands exit 0, so a non-zero exit should mean something is genuinely wrong.
 - Treat commands as levers for the fuzzer. Diverse commands produce richer system states.
-- Reserve `setup_complete` for a container entrypoint or other long-lived startup process that runs before Test Composer starts executing timeline commands.
-- Test template directories may include helper files or helper directories prefixed with `helper_`; Test Composer ignores them.
+- Reserve `setup_complete` for a container entrypoint or other long-lived startup process that runs before Antithesis starts executing timeline commands.
+- Test template directories may include helper files or helper directories prefixed with `helper_`; Antithesis ignores them.
 - Any non-helper executable placed directly in a template should be a real test command with a valid prefix.
 - Write commands in the project's language, not Bash, so they can reuse existing clients, helpers, and libraries.
 
