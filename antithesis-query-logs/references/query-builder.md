@@ -279,7 +279,7 @@ Shows the current run. Pre-filled when navigating from a triage report.
 Each row has three parts:
 
 1. **Field selector**: `div.select_container.query_select` (first one)
-   - Categories: `general`, `assertions`, `test composer`, `fault injector`
+   - Categories: `general`, `assertions`, `test templates`, `fault injector`
      (the UI category label is plural "assertions", but field names are singular — `assertion.message`)
    - Assertion fields: `message`, `type`, `status`, `function`, `file`
    - General fields: `output_text`, `source`, `vtime`, `moment`, `custom`

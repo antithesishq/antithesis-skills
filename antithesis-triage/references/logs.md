@@ -26,7 +26,7 @@ The JSON log format is an array of event objects. Every event has `source` and
   "info"?: { ... },                 // fault_injector status
   "event"?: string,                 // container lifecycle (create/init/start)
   "antithesis_setup"?: { ... },     // SDK setup-complete signal
-  "command"?: string,               // test composer task lifecycle
+  "command"?: string,               // test template task lifecycle
   ...                               // other fields may be included
 }
 ```
