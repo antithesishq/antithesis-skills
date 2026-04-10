@@ -87,9 +87,10 @@ All examples below assume the log path is in `$LOG`:
 LOG="/path/to/clean.json"
 ```
 
-**Null-safe string matching:** Many event fields are optional and may be `null`.
-Use jq's `//` (coalesce) operator before string functions like `test()` or
-`startswith()` to avoid errors: `.output_text // "" | test("pattern")`.
+**Null-safe string matching:** Many event fields are optional and may be `null`,
+including `source.name`. Use jq's `//` (coalesce) operator before string
+functions like `test()` or `startswith()` to avoid errors:
+`.output_text // "" | test("pattern")`, `(.source.name // "") | startswith("node")`.
 
 ### Suggested first-look workflow
 

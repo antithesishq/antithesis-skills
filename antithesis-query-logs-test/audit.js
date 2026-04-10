@@ -350,20 +350,24 @@
     );
 
     report.checks.push(
-      await runCheck("setup.getFailedProperties", function () {
-        return triage.report.getFailedProperties();
+      await runCheck("setup.getAllProperties", function () {
+        return triage.report.getAllProperties();
       }, function (r) {
-        var props = r.properties || [];
+        var failed = (r.properties || []).filter(function (p) {
+          return p.status === "failed";
+        });
         return {
-          count: props.length,
-          firstName: props.length > 0 ? props[0].name : null,
+          count: failed.length,
+          firstName: failed.length > 0 ? failed[0].name : null,
         };
       }, { keepResult: true }),
     );
 
-    var failedCheck = findCheck(report.checks, "setup.getFailedProperties");
-    var failedProps = failedCheck && failedCheck.result
-      ? failedCheck.result.properties || []
+    var allCheck = findCheck(report.checks, "setup.getAllProperties");
+    var failedProps = allCheck && allCheck.result
+      ? (allCheck.result.properties || []).filter(function (p) {
+          return p.status === "failed";
+        })
       : [];
 
     if (failedProps.length === 0) {

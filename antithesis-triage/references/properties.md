@@ -2,14 +2,22 @@
 
 `report` refers to `window.__antithesisTriage.report` in this file.
 
-## Primary property queries:
+## Getting all properties
 
-- `report.getAllProperties()` — all properties
-- `report.getFailedProperties()` — failed properties only
-- `report.getPassedProperties()` — passed properties only
-- `report.getUnfoundProperties()` — unfound properties only
+`report.getAllProperties()` returns every property in a single JSON object.
+All properties are already expanded by `waitForReady()`, so this is a
+synchronous read of the current DOM state — no tab switching or expansion
+occurs.
 
-Each property in the returned `properties` array includes:
+```json
+{
+  "expectedCount": 42,
+  "counts": { "failed": 3, "passed": 37, "unfound": 2 },
+  "properties": [ ... ]
+}
+```
+
+Each entry in the `properties` array:
 
 ```json
 {
@@ -22,6 +30,33 @@ Each property in the returned `properties` array includes:
 ```
 
 `passingCount` and `failingCount` are comma-formatted count strings representing the total across all execution histories in the run (not just the 3-4 example rows shown in the UI).
+
+### Filtering properties with jq
+
+Use `jq` to filter the output of `getAllProperties()` rather than calling
+separate status-specific methods:
+
+```bash
+# Failed properties only
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getAllProperties()" \
+  | jq '.properties | map(select(.status == "failed"))'
+
+# Passed properties only
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getAllProperties()" \
+  | jq '.properties | map(select(.status == "passed"))'
+
+# Unfound properties only
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getAllProperties()" \
+  | jq '.properties | map(select(.status == "unfound"))'
+
+# Properties in a specific group
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getAllProperties()" \
+  | jq '.properties | map(select(.group | any(test("SDK: Go"))))'
+```
 
 ### Using pass/fail ratios for triage prioritization
 
@@ -46,11 +81,20 @@ Numeric/boolean variants (e.g., `AlwaysGreaterThan`, `SometimesAll`) follow the 
 
 ## Property examples
 
-- `report.getPropertyExamples()` - all properties with example tables
-- `report.getFailedPropertyExamples()` - failed properties with example tables
+`report.getPropertyExamples()` returns all properties that have example tables,
+along with their example rows. All example tables are already expanded by
+`waitForReady()`, so this is a synchronous read of the DOM. Use jq to filter
+by status.
 
 Returns each property with `group`, `name`, `status`, and `examples` array
 containing `{ index: 0, status: "failing", time: "85.75s" }` entries.
+
+```bash
+# Failed property examples only
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisTriage.report.getPropertyExamples()" \
+  | jq '.properties | map(select(.status == "failed"))'
+```
 
 Each property may expose multiple example rows (typically 3-4), mixing failing
 and passing examples. When triaging, start with the **first failing example**
