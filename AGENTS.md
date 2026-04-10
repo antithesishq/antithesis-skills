@@ -47,5 +47,6 @@ PRs should include:
 
 For notable changes (new skills, breaking changes, significant fixes), add a
 `changelog - breaking` or `changelog - non-breaking` label to the PR. A bot
-updates `CHANGELOG.md` automatically on merge using the PR title. Do not edit
-`CHANGELOG.md` directly.
+updates `CHANGELOG.md` automatically on merge using the PR title — breaking
+entries are prefixed with `BREAKING CHANGE:`. Do not edit `CHANGELOG.md`
+directly.

@@ -1,6 +1,9 @@
 #!/usr/bin/env python3
 """Manage CHANGELOG.md for a rolling, date-based changelog.
 
+Entries are grouped by date (UTC) with newest first. Breaking changes
+are prefixed with "BREAKING CHANGE: " in the entry text.
+
 Subcommands:
   add-entry    Add an entry under today's UTC date section.
   validate     Check that CHANGELOG.md is well-formed.
@@ -18,13 +21,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 CHANGELOG = REPO_ROOT / "CHANGELOG.md"
 
 DATE_RE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-
-CATEGORIES = ("### Breaking Changes", "### Non-breaking Changes")
-
-SECTION_MAP = {
-    "breaking": CATEGORIES[0],
-    "non-breaking": CATEGORIES[1],
-}
 
 EXPECTED_HEADER_FRAGMENT = "# Change Log"
 
@@ -91,47 +87,31 @@ def _today_utc() -> str:
 # -- Subcommands -------------------------------------------------------------
 
 
-def cmd_add_entry(section: str, entry: str) -> int:
+def cmd_add_entry(entry: str, breaking: bool = False) -> int:
     """Add an entry under today's UTC date section."""
-    target = SECTION_MAP.get(section)
-    if target is None:
-        print(f"ERROR: unknown section '{section}'", file=sys.stderr)
-        print(f"Valid sections: {', '.join(SECTION_MAP)}", file=sys.stderr)
-        return 1
-
     today = _today_utc()
     today_heading = f"## {today}"
+
+    prefix = "BREAKING CHANGE: " if breaking else ""
+    formatted = f"- {prefix}{entry}"
 
     content = _read_changelog()
     header, sections = _split_sections(content)
 
     # If today's section doesn't exist, create it at the top.
     if not sections or sections[0][0] != today_heading:
-        new_body = f"\n{CATEGORIES[0]}\n\n\n{CATEGORIES[1]}\n"
-        sections.insert(0, (today_heading, new_body))
+        sections.insert(0, (today_heading, "\n"))
 
     _, body = sections[0]
     body_lines = body.split("\n")
 
-    # Find the target category heading and insert after it + one blank line.
-    insert_idx = None
-    for i, line in enumerate(body_lines):
-        if line == target:
-            insert_idx = i + 2
-            break
-
-    if insert_idx is None:
-        print(
-            f"ERROR: category '{target}' not found in today's section",
-            file=sys.stderr,
-        )
-        return 1
-
-    body_lines.insert(insert_idx, f"- {entry}")
+    # Insert after the first blank line (right after the date heading).
+    body_lines.insert(1, formatted)
     sections[0] = (today_heading, "\n".join(body_lines))
 
     _write_changelog(_reassemble(header, sections))
-    print(f"Added entry to {target} under {today}")
+    label = "breaking" if breaking else "non-breaking"
+    print(f"Added {label} entry under {today}")
     return 0
 
 
@@ -175,10 +155,6 @@ def cmd_validate() -> int:
             )
         prev_date = date_str
 
-        for cat in CATEGORIES:
-            if cat not in body:
-                errors.append(f"section {date_str} missing '{cat}'")
-
     if errors:
         _report_errors(errors)
         return 1
@@ -206,10 +182,9 @@ def main() -> int:
         "add-entry", help="Add an entry under today's date section"
     )
     add_entry_parser.add_argument(
-        "--section",
-        required=True,
-        choices=list(SECTION_MAP),
-        help="Category section (breaking or non-breaking)",
+        "--breaking",
+        action="store_true",
+        help="Mark entry as a breaking change",
     )
     add_entry_parser.add_argument("entry", help="Entry text (without leading '- ')")
 
@@ -221,7 +196,7 @@ def main() -> int:
     if args.command == "validate":
         return cmd_validate()
     elif args.command == "add-entry":
-        return cmd_add_entry(args.section, args.entry)
+        return cmd_add_entry(args.entry, breaking=args.breaking)
 
     return 1
 
