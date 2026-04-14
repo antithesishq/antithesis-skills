@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-04-14
 
+- Add quiet period guidance to workload skill ([PR #122](https://github.com/antithesishq/antithesis-skills/pull/122))
 - Add deterministic randomness cross-reference to test command guidance ([PR #119](https://github.com/antithesishq/antithesis-skills/pull/119))
 - Improve test command guidance in workload skill reference ([PR #118](https://github.com/antithesishq/antithesis-skills/pull/118))
 - Setup skill: add mid-workflow re-evaluation prompt between implementation phases ([PR #116](https://github.com/antithesishq/antithesis-skills/pull/116))
