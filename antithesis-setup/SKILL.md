@@ -40,7 +40,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 ## Workflow
 
-This skill is broken out into multiple steps, each in a different reference file. Read and implement each reference file listed below one at a time to fully set up a project.
+This skill is broken out into multiple steps, each in a different reference file. Read and implement each reference file listed below one at a time to fully set up a project. After implementing each step, check whether what you learned invalidates any decisions from earlier steps. Instrumentation decisions (step 2) are the most common thing that needs revision once you start building images (step 3).
 
 - `references/directory-init.md`: initialize or merge the `antithesis/` directory from `assets/antithesis/`
 - `references/instrumentation.md`: decide how each SUT service is instrumented, how the SDK is installed, how symbols are delivered, and where the bootstrap property lives
