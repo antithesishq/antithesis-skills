@@ -73,7 +73,7 @@ Symlinks to existing scripts are supported.
 - **Scheduling:** Runs only after at least one driver has started. Kills other running commands when it starts (except `anytime_`, which completes).
 - **Faults:** All fault injection stops when this command starts.
 - **Concurrency:** Running `anytime_` commands complete; no new commands start alongside.
-- **Notes:** The timeline branch will not resume testing after this command runs, so destructive actions are safe. Should include retry loops or health checks since the system may need time to stabilize after faults stop.
+- **Notes:** The timeline branch will not resume testing after this command runs, so destructive actions are safe. Should include retry loops or health checks since the system may need time to stabilize after faults stop. If you need a mid-run liveness check where testing continues afterward, use `ANTITHESIS_STOP_FAULTS` instead (see Requesting Quiet Periods from Driver Commands).
 
 ### `finally_`
 
@@ -107,6 +107,45 @@ These two command types are similar but serve different purposes:
 | `anytime_` | Yes (during drivers) | Any except `first_`; during `eventually_`/`finally_`, running instances complete but new ones are not started |
 | `eventually_` | No | Running `anytime_` commands complete |
 | `finally_` | No | Running `anytime_` commands complete |
+
+## Requesting Quiet Periods from Driver Commands
+
+The `eventually_` and `finally_` commands pause faults but are terminal — the timeline branch won't resume afterward. When a driver command needs a mid-run liveness check where testing continues, use the `ANTITHESIS_STOP_FAULTS` mechanism instead.
+
+Antithesis injects an `ANTITHESIS_STOP_FAULTS` binary into every container and sets the corresponding environment variable. To request a quiet period:
+
+```bash
+[ "${ANTITHESIS_STOP_FAULTS}" ] && "${ANTITHESIS_STOP_FAULTS}" <DURATION_SECONDS>
+```
+
+The guard clause lets the script run harmlessly outside the Antithesis environment (e.g., during local testing).
+
+When invoked:
+
+1. All faults stop — network faults are restored, node faults are cleared, and no new faults are injected for the requested duration.
+2. Containers are restored — killed or stopped containers are restarted, but they take some time to become fully operational.
+3. Faults resume automatically after the requested duration elapses.
+4. Overlapping requests merge — if multiple calls overlap, the quiet period extends to cover the largest interval.
+
+### Liveness Check Pattern
+
+A typical pattern inside a driver command:
+
+1. Run workload operations while faults are active.
+2. Call `ANTITHESIS_STOP_FAULTS` with enough seconds for the system to recover.
+3. Wait for the system to stabilize (poll for health, retry reads, etc.).
+4. Assert liveness properties (e.g., "all replicas eventually converge," "queued work is eventually processed").
+5. Resume the workload — faults restart automatically after the quiet period.
+
+This is especially useful during rolling operations (upgrades, config changes, migrations) where you need to verify recovery at each step without ending the timeline.
+
+### When to Use Which
+
+| Mechanism | Faults paused? | Test continues after? | Use case |
+|-----------|---------------|----------------------|----------|
+| `eventually_` command | Yes | No (terminal branch) | Final liveness validation |
+| `finally_` command | Yes | No (terminal branch) | Post-driver invariant checks |
+| `ANTITHESIS_STOP_FAULTS` | Yes | Yes (faults resume) | Mid-run recovery checks, rolling operations |
 
 ## Guidance
 
