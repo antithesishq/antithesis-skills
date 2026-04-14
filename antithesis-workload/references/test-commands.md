@@ -114,6 +114,7 @@ These two command types are similar but serve different purposes:
 - Treat commands as levers for the fuzzer. Diverse commands produce richer system states.
 - Reserve `setup_complete` for a container entrypoint or other long-lived startup process that runs before Antithesis starts executing timeline commands.
 - Driver commands connect to the SUT under active fault injection — handle transient network faults gracefully (see `component-implementation.md` for details).
+- All randomness in test commands must go through the Antithesis SDK's random module for deterministic replay (see `assertions.md` for details).
 - Write commands in the project's language, not Bash, so they can reuse existing clients, helpers, and libraries.
 
 ## Output
