@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-04-14
+
+- Setup skill: add mid-workflow re-evaluation prompt between implementation phases ([PR #116](https://github.com/antithesishq/antithesis-skills/pull/116))
+
 ## 2026-04-10
 
 - rename test composer -> antithesis/test template ([PR #113](https://github.com/antithesishq/antithesis-skills/pull/113))
