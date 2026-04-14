@@ -147,10 +147,33 @@ This is especially useful during rolling operations (upgrades, config changes, m
 | `finally_` command | Yes | No (terminal branch) | Post-driver invariant checks |
 | `ANTITHESIS_STOP_FAULTS` | Yes | Yes (faults resume) | Mid-run recovery checks, rolling operations |
 
+## Design Principles
+
+### Try everything sometimes
+
+The goal is to have some chance of producing any legal sequence of operations against the SUT's API. Exercise the full API surface, including configuration, administration, and setup functions — not just the "main" workflow. These are easy to overlook but tend to hide bugs.
+
+Don't avoid "expected" failures. If the system is supposed to shut down under certain conditions, or crash and recover from specific faults, those paths need to happen in tests. Recovery processes hide a disproportionate number of bugs, and properties like "a surprise shutdown never results in inconsistent data" are just as important as properties about a healthy system.
+
+Exercise concurrency if the system supports it. Multiple clients, concurrent transactions, or pipelined requests should all appear in the workload. The degree of concurrency is a tunable parameter — too much can swamp the system and produce uninteresting failures, too little misses an entire class of bugs.
+
+### Notice misbehavior when it happens
+
+Validate continuously with a work-validate-work pattern, not just at the end. There are three reasons this matters. First, bugs can cancel each other out — the system enters a broken state, then by random luck recovers before a final validation check would notice. Second, debugging is harder when there's a long, irrelevant history between the cause and the detection. Third, it's wasteful to run an entire test to completion before discovering a bug that happened early on.
+
+Distinguish always-properties from eventually-properties. Always-properties (like "a write is reflected in subsequent reads") should be checked continuously. Eventually-properties (like "the system recovers availability after a fault") need a quiet period to verify — use `eventually_` commands or `ANTITHESIS_STOP_FAULTS` depending on whether the timeline should continue afterward. Don't let expected transient failures (network errors, unavailable services during faults) clutter results as false positives; the real property is that the system eventually recovers, not that it never fails.
+
+Some properties only make sense when all work is done — final state consistency, graceful shutdown, aggregate correctness. Use `finally_` commands for these.
+
+### Leverage autonomy
+
+Randomize aggressively. Every decision in a test command is an opportunity for Antithesis to explore the state space: which operations to call, in what order, with what inputs, how the system is configured, how many processes run concurrently, when to validate. The more degrees of freedom, the more interesting behavior Antithesis can discover.
+
+Break commands into the smallest coherent pieces so Antithesis has maximum flexibility in composing test scenarios. Don't tune randomness in ways that rule out valid sequences. A test that always calls `a` twice in a row might find some bugs slightly faster on average, but it can never discover a bug that requires the sequence `a-b-a` without an intervening second `a`. Ruling out valid sequences creates blind spots where bugs hide, and that tradeoff is almost never worth the marginal speedup.
+
 ## Guidance
 
 - Antithesis already checks that commands exit 0, so a non-zero exit should mean something is genuinely wrong.
-- Treat commands as levers for the fuzzer. Diverse commands produce richer system states.
 - Reserve `setup_complete` for a container entrypoint or other long-lived startup process that runs before Antithesis starts executing timeline commands.
 - Driver commands connect to the SUT under active fault injection — handle transient network faults gracefully (see `component-implementation.md` for details).
 - All randomness in test commands must go through the Antithesis SDK's random module for deterministic replay (see `assertions.md` for details).
