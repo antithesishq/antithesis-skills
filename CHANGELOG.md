@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-04-15
+
+- add flowchart to readme, documented permissions, improved setup skill prereqs ([PR #125](https://github.com/antithesishq/antithesis-skills/pull/125))
+
 ## 2026-04-14
 
 - Add design principles to workload skill ([PR #123](https://github.com/antithesishq/antithesis-skills/pull/123))
