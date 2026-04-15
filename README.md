@@ -2,12 +2,10 @@
 
 Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
-> [!NOTE]
+> Table of contents:  
 > **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
 
-<p align="center">
-  <img src="assets/skills-flowchart.png" alt="Antithesis skills workflow" />
-</p>
+## Skills overview
 
 `antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's used by the research, setup, and workload skills. You can also use it to ask questions about how to use Antithesis.
 
@@ -34,6 +32,10 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
 
 ## Recommended workflow
+
+<p align="center">
+  <img src="assets/skills-flowchart.png" alt="Antithesis skills workflow" width=600 />
+</p>
 
 We recommend that you run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
 
