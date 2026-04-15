@@ -6,16 +6,16 @@ You need the following to use antithesis-skills:
 - **npm** — the installer runs via `npx`, which ships with [npm](https://www.npmjs.com/).
 - **A container runtime** — [Docker](https://github.com/docker) and [Docker Compose](https://docs.docker.com/compose/install/), or [Podman](https://podman.io/).
 - **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.
+- **[agent-browser](https://github.com/vercel-labs/agent-browser)** — optional, used by the triage, debug, and query-logs skills to interact with the Antithesis web UI.
 
 ## Installation by platform
 
-- [Debian](#debian)
+- [Debian-based Linux](#debian-based-linux)
 - [macOS](#macos)
-- [Ubuntu](#ubuntu)
 
-## Debian
+## Debian-based Linux
 
-These instructions are written for Debian Trixie but should work on other Debian releases.
+These instructions use `apt` and work on Debian, Ubuntu, and other Debian-based distributions.
 
 ### Base Tools
 
@@ -54,6 +54,15 @@ sudo apt install -y podman podman-compose
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
+
+### agent-browser (optional)
+
+```bash
+npm install -g agent-browser
+agent-browser install --with-deps
+```
+
+The `install --with-deps` flag installs required system dependencies and downloads Chrome for Testing.
 
 ### AI Agent
 
@@ -117,6 +126,15 @@ podman machine start
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
 
+### agent-browser (optional)
+
+```bash
+brew install agent-browser
+agent-browser install
+```
+
+The `install` step downloads Chrome for Testing on first use.
+
 ### AI Agent
 
 Install one (or both) of the following:
@@ -133,58 +151,3 @@ brew install --cask claude-code
 brew install --cask codex
 ```
 
-## Ubuntu
-
-### Base Tools
-
-```bash
-sudo apt update
-sudo apt install -y curl
-```
-
-### npm
-
-```bash
-sudo apt install -y npm
-```
-
-### Container Runtime
-
-Install one of the following:
-
-**Docker and Docker Compose:**
-
-```bash
-sudo apt install -y docker.io docker-compose-v2
-sudo usermod -aG docker $USER
-```
-
-Log out and back in for the group change to take effect.
-
-**Podman:**
-
-```bash
-sudo apt install -y podman podman-compose
-```
-
-### Snouty CLI
-
-```bash
-curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
-```
-
-### AI Agent
-
-Install one (or both) of the following:
-
-**Claude Code:**
-
-```bash
-curl -fsSL https://claude.ai/install.sh | bash
-```
-
-**OpenAI Codex:**
-
-```bash
-npm install -g @openai/codex
-```

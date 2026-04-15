@@ -2,6 +2,11 @@
 
 Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
+> Table of contents:  
+> **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
+
+## Skills overview
+
 `antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's used by the research, setup, and workload skills. You can also use it to ask questions about how to use Antithesis.
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will:
@@ -27,6 +32,10 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
 
 ## Recommended workflow
+
+<p align="center">
+  <img src="assets/skills-flowchart.png" alt="Antithesis skills workflow" width=600 />
+</p>
 
 We recommend that you run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
 
@@ -100,6 +109,23 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 ## Prerequisites
 
 You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
+
+## Permissions
+
+These skills invoke external tools (Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
+
+Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
+
+| Skill                      | Tools used                      |
+| -------------------------- | ------------------------------- |
+| `antithesis-research`      | No explicit external tools      |
+| `antithesis-setup`         | `docker`/`podman`, `snouty`     |
+| `antithesis-workload`      | `snouty`                        |
+| `antithesis-launch`        | `docker`/`podman`, `snouty`     |
+| `antithesis-triage`        | `snouty`, `agent-browser`, `jq` |
+| `antithesis-debug`         | `agent-browser`                 |
+| `antithesis-query-logs`    | `snouty`, `agent-browser`       |
+| `antithesis-documentation` | `snouty docs`                   |
 
 ## Install
 
