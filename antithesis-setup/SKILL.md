@@ -24,7 +24,12 @@ Success means:
 
 ## Prerequisites
 
-- DO NOT PROCEED if the Antithesis scratchbook (usually at `antithesis/scratchbook/`) doesn't exist. Use the `antithesis-research` skill to create it.
+- **Research artifacts required.** Before proceeding, check whether `antithesis/scratchbook/` exists and contains research output (at minimum `sut-analysis.md` and `deployment-topology.md`). If the scratchbook is missing or empty, **stop and warn the user**:
+
+  > The `antithesis-research` skill has not been run yet (no scratchbook found at `antithesis/scratchbook/`). Setup depends on research artifacts — especially the SUT analysis and deployment topology — to make informed decisions about instrumentation, image structure, and service composition. Please run `antithesis-research` first, review its output, then return to setup.
+
+  Do not attempt to proceed without research artifacts. The setup skill will make significantly worse decisions without the context that research provides.
+
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
 
 ## Documentation Grounding

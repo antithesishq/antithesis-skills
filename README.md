@@ -2,6 +2,9 @@
 
 Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
+> [!NOTE]
+> **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
+
 <p align="center">
   <img src="assets/skills-flowchart.png" alt="Antithesis skills workflow" />
 </p>
@@ -104,6 +107,23 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 ## Prerequisites
 
 You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
+
+## Permissions
+
+These skills invoke external tools (Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
+
+Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
+
+| Skill                      | Tools used                      |
+| -------------------------- | ------------------------------- |
+| `antithesis-research`      | No explicit external tools      |
+| `antithesis-setup`         | `docker`/`podman`, `snouty`     |
+| `antithesis-workload`      | `snouty`                        |
+| `antithesis-launch`        | `docker`/`podman`, `snouty`     |
+| `antithesis-triage`        | `snouty`, `agent-browser`, `jq` |
+| `antithesis-debug`         | `agent-browser`                 |
+| `antithesis-query-logs`    | `snouty`, `agent-browser`       |
+| `antithesis-documentation` | `snouty docs`                   |
 
 ## Install
 
