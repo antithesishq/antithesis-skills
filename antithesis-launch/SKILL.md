@@ -6,6 +6,7 @@ description: >
   bailing on validation failure, and then submitting `snouty run` with sane
   metadata. Use when the user wants to send, submit, or launch an Antithesis
   run. This skill takes duration in minutes as input.
+compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
 metadata:
   version: "2026-04-17 94e2698"
 ---

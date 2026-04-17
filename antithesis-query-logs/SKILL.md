@@ -5,6 +5,7 @@ description: >
   correlate property failures, and answer temporal questions about ordering
   and causation (e.g., did event A always precede failure B? do failures
   occur even without a preceding fault?).
+compatibility: Requires snouty (https://github.com/antithesishq/snouty) and agent-browser (https://github.com/vercel-labs/agent-browser).
 metadata:
   version: "2026-04-17 94e2698"
 ---

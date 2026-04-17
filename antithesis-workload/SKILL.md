@@ -3,6 +3,7 @@ name: antithesis-workload
 description: >
   Implement Antithesis workloads by turning the property catalog into SDK
   assertions and test commands, then refine coverage after triage.
+compatibility: Requires snouty (https://github.com/antithesishq/snouty).
 metadata:
   version: "2026-04-17 94e2698"
 ---
