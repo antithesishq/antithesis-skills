@@ -6,6 +6,8 @@ description: >
   bailing on validation failure, and then submitting `snouty run` with sane
   metadata. Use when the user wants to send, submit, or launch an Antithesis
   run. This skill takes duration in minutes as input.
+metadata:
+  version: "2026-04-14 077d0ea"
 ---
 
 # Antithesis Launch

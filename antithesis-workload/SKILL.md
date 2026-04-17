@@ -3,6 +3,8 @@ name: antithesis-workload
 description: >
   Implement Antithesis workloads by turning the property catalog into SDK
   assertions and test commands, then refine coverage after triage.
+metadata:
+  version: "2026-04-14 077d0ea"
 ---
 
 # Antithesis Workload

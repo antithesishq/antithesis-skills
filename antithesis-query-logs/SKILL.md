@@ -5,6 +5,8 @@ description: >
   correlate property failures, and answer temporal questions about ordering
   and causation (e.g., did event A always precede failure B? do failures
   occur even without a preceding fault?).
+metadata:
+  version: "2026-04-14 077d0ea"
 ---
 
 # Antithesis Logs Explorer
