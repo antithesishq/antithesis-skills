@@ -7,7 +7,7 @@ description: >
   from inside the Antithesis environment. Supports both the simplified
   debugger (default) and the advanced notebook mode.
 metadata:
-  version: "2026-04-14 077d0ea"
+  version: "2026-04-17 94e2698"
 ---
 
 # Antithesis Multiverse Debugger
