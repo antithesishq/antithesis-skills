@@ -4,6 +4,8 @@ description: >
   Scaffold the Antithesis harness: initialize the working directory, write
   Dockerfiles and docker-compose.yaml with build directives, and prepare
   to submit your first Antithesis test run.
+metadata:
+  version: "2026-04-14 077d0ea"
 ---
 
 # Antithesis Setup

@@ -2,6 +2,8 @@
 name: antithesis-skills-feedback
 description: >
   Send Antithesis feedback or a bug report regarding Antithesis skills for AI agents.
+metadata:
+  version: "2026-04-14 077d0ea"
 ---
 
 # Antithesis Skills feedback
