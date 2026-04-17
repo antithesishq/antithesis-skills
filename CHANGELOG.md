@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-04-17
 
+- Declare environment requirements in skill frontmatter via compatibility field ([PR #130](https://github.com/antithesishq/antithesis-skills/pull/130))
 - Improve descriptions for triage and skills-feedback skills ([PR #128](https://github.com/antithesishq/antithesis-skills/pull/128))
 
 ## 2026-04-15
