@@ -1,7 +1,11 @@
 ---
 name: antithesis-skills-feedback
 description: >
-  Send Antithesis feedback or a bug report regarding Antithesis skills for AI agents.
+  File a bug report or feedback on the Antithesis skills by opening a
+  pre-filled GitHub issue URL (skill name, skill version, agent, short
+  summary). Load when the user wants to report a problem with, or give
+  feedback on, any Antithesis skill. Does not auto-submit — presents the
+  URL for the user to review.
 metadata:
   version: "2026-04-14 077d0ea"
 ---
