@@ -86,18 +86,38 @@ jobs:
         run: |
           python3 .ci-scripts/update_skill_versions.py update --sha "${COMMIT_SHA:0:7}"
 
-      - name: Commit and push
-        if: steps.pr.outputs.skip != 'true' && steps.pr.outputs.has_changelog != ''
-        env:
-          NUMBER: ${{ steps.pr.outputs.number }}
+      - name: Configure git
+        if: steps.pr.outputs.has_changelog != ''
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add CHANGELOG.md */SKILL.md
+
+      - name: Commit changelog
+        if: steps.pr.outputs.has_changelog != ''
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          git add CHANGELOG.md
           if git diff --cached --quiet; then
-            echo "No changes to commit"
+            echo "No changelog changes to commit"
             exit 0
           fi
           git commit -m "Update changelog for PR #${NUMBER}"
+
+      - name: Commit skill versions
+        if: steps.pr.outputs.has_changelog != ''
+        env:
+          NUMBER: ${{ steps.pr.outputs.number }}
+        run: |
+          git add */SKILL.md
+          if git diff --cached --quiet; then
+            echo "No skill version changes to commit"
+            exit 0
+          fi
+          git commit -m "Update skill versions for PR #${NUMBER}"
+
+      - name: Push
+        if: steps.pr.outputs.has_changelog != ''
+        run: |
           git pull --rebase origin main
           git push origin main
