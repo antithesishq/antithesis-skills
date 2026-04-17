@@ -14,6 +14,9 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+
       - name: Find merged PR
         id: pr
         env:
@@ -21,45 +24,11 @@ jobs:
           COMMIT_SHA: ${{ github.sha }}
           REPO: ${{ github.repository }}
         run: |
-          # Retry loop for GitHub API eventual consistency.
-          for attempt in 1 2 3; do
-            PR_JSON=$(gh api "repos/${REPO}/commits/${COMMIT_SHA}/pulls" \
-              --jq '.[0] // empty' 2>/dev/null || echo "")
-            if [ -n "$PR_JSON" ]; then
-              break
-            fi
-            echo "Attempt ${attempt}: no PR found, retrying in 10s..."
-            sleep 10
-          done
-
-          if [ -z "$PR_JSON" ]; then
-            echo "No PR found for commit — skipping"
-            echo "skip=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-
-          NUMBER=$(echo "$PR_JSON" | jq -r '.number')
-          TITLE=$(echo "$PR_JSON" | jq -r '.title')
-          URL=$(echo "$PR_JSON" | jq -r '.html_url')
-
-          HAS_CHANGELOG=$(echo "$PR_JSON" | jq -r \
-            '[.labels[].name] | map(select(startswith("changelog - "))) | first // empty')
-          BREAKING=$(echo "$PR_JSON" | jq -r \
-            '[.labels[].name] | map(select(. == "changelog - breaking")) | first // empty')
-
-          echo "number=$NUMBER" >> "$GITHUB_OUTPUT"
-          echo "title=$TITLE" >> "$GITHUB_OUTPUT"
-          echo "url=$URL" >> "$GITHUB_OUTPUT"
-          echo "has_changelog=$HAS_CHANGELOG" >> "$GITHUB_OUTPUT"
-          echo "breaking=$BREAKING" >> "$GITHUB_OUTPUT"
-          echo "skip=false" >> "$GITHUB_OUTPUT"
-
-      - name: Check out main
-        if: steps.pr.outputs.skip != 'true' && steps.pr.outputs.has_changelog != ''
-        uses: actions/checkout@v4
+          python3 .ci-scripts/find_merged_pr.py lookup \
+            --sha "$COMMIT_SHA" --repo "$REPO"
 
       - name: Set up Python
-        if: steps.pr.outputs.skip != 'true' && steps.pr.outputs.has_changelog != ''
+        if: steps.pr.outputs.has_changelog != ''
         uses: actions/setup-python@v5
         with:
           python-version: "3.x"
@@ -67,17 +36,14 @@ jobs:
       - name: Add changelog entry
         if: steps.pr.outputs.has_changelog != ''
         env:
-          TITLE: ${{ steps.pr.outputs.title }}
-          NUMBER: ${{ steps.pr.outputs.number }}
-          URL: ${{ steps.pr.outputs.url }}
+          ENTRY: ${{ steps.pr.outputs.entry }}
           BREAKING: ${{ steps.pr.outputs.breaking }}
         run: |
-          ENTRY="${TITLE} ([PR #${NUMBER}](${URL}))"
-          ARGS=""
           if [ -n "$BREAKING" ]; then
-            ARGS="--breaking"
+            python3 .ci-scripts/changelog.py add-entry --breaking "$ENTRY"
+          else
+            python3 .ci-scripts/changelog.py add-entry "$ENTRY"
           fi
-          python3 .ci-scripts/changelog.py add-entry $ARGS "$ENTRY"
 
       - name: Update skill versions
         if: steps.pr.outputs.has_changelog != ''
