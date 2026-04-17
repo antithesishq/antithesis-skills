@@ -6,6 +6,7 @@ description: >
   filesystems and runtime state, run shell commands, and extract evidence
   from inside the Antithesis environment. Supports both the simplified
   debugger (default) and the advanced notebook mode.
+compatibility: Requires agent-browser (https://github.com/vercel-labs/agent-browser).
 metadata:
   version: "2026-04-17 94e2698"
 ---
