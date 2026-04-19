@@ -129,21 +129,9 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 
 ## Install
 
-### Claude Code plugin
-
-If you use Claude Code, you can install all of our skills as a Claude plugin:
-
-```
-/plugin marketplace add antithesishq/antithesis-skills
-/plugin install antithesis-skills@antithesis-skills
-/reload-plugins
-```
-
-You may need to restart Claude before skills will be visible.
-
 ### npx skills installer
 
-Alternatively, use the `npx skills` installer:
+The recommended way to install our skills in all of your AI agents is via the `npx skills` installer:
 
 ```bash
 npx skills add antithesishq/antithesis-skills
