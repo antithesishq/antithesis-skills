@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-04-20
+
+- improve guidance to avoid musl based images ([PR #133](https://github.com/antithesishq/antithesis-skills/pull/133))
+
 ## 2026-04-17
 
 - Declare environment requirements in skill frontmatter via compatibility field ([PR #130](https://github.com/antithesishq/antithesis-skills/pull/130))
