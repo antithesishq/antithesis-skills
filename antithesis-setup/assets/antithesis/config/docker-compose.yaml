@@ -37,7 +37,7 @@
 services:
   noop:
     platform: linux/amd64
-    image: busybox:1.36
+    image: debian:stable-slim
     environment:
       NO_COLOR: "1"
     command: ["sh", "-c", "tail -f /dev/null"]
