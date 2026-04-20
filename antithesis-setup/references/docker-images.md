@@ -14,7 +14,7 @@ Use existing Docker images where possible (e.g., official postgres, minio for S3
 
 Find existing Dockerfiles in the project or create new ones. If creating a Dockerfile, create it at `antithesis/Dockerfile` and use named build stages to split different services.
 
-When you need to write a new Dockerfile, prefer glibc-based base images. Default to the latest Debian slim image unless the project already has a stronger existing convention or a service has a specific runtime requirement that points elsewhere. Avoid introducing Alpine or other musl-based images as the default Antithesis path unless there is a clear reason to do so.
+When you need to write a new Dockerfile, prefer glibc-based base images. Default to the `debian:stable-slim` image unless the project already has a stronger existing convention or a service has a specific runtime requirement that points elsewhere. Avoid introducing Alpine, busybox, or other musl-based images as they can break instrumentation, symbol collection, and debug workflows.
 
 Apply the `references/instrumentation.md` decisions while you adapt images:
 
