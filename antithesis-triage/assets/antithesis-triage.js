@@ -383,17 +383,24 @@
     requireReportPage();
 
     // Expand all property containers in up to 32 passes (groups and leaves).
+    // Scroll through the properties section to ensure off-screen containers
+    // become visible before attempting to expand them.
     for (var i = 0; i < 32; i++) {
       var changed = false;
 
-      document
-        .querySelectorAll(".property__expander-button")
-        .forEach(function (btn) {
-          var container = btn.closest(".property-container");
-          if (!container || !isVisible(container) || isExpanded(container))
-            return;
-          if (click(btn)) changed = true;
-        });
+      var buttons = document.querySelectorAll(".property__expander-button");
+      for (var j = 0; j < buttons.length; j++) {
+        var btn = buttons[j];
+        var container = btn.closest(".property-container");
+        if (!container || isExpanded(container)) continue;
+
+        // Scroll into view if not visible, then expand
+        if (!isVisible(container)) {
+          container.scrollIntoView({ block: "center" });
+          await wait(50);
+        }
+        if (click(btn)) changed = true;
+      }
 
       if (!changed) break;
       await wait(250);
@@ -401,12 +408,24 @@
   }
 
   function exampleCounts(container) {
+    // Try the container's own text first
     var text = clean(container.textContent);
     var match = text.match(
       /([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/,
     );
-    if (!match) return { passingCount: null, failingCount: null };
-    return { passingCount: match[1], failingCount: match[2] };
+    if (match) return { passingCount: match[1], failingCount: match[2] };
+
+    // If not found, look specifically in the run summary element
+    var summary = container.querySelector(".selected_property_run_summary");
+    if (summary) {
+      var summaryText = clean(summary.textContent);
+      match = summaryText.match(
+        /([\d,]+)\s+passing\s+example.*?([\d,]+)\s+failing\s+example/,
+      );
+      if (match) return { passingCount: match[1], failingCount: match[2] };
+    }
+
+    return { passingCount: null, failingCount: null };
   }
 
   // Assumes leaf properties are already expanded (waitForReady expands all
