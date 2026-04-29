@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-04-29
 
+- Fix pass/fail count extraction for off-screen and summary-scoped properties ([PR #136](https://github.com/antithesishq/antithesis-skills/pull/136))
 - Add multi-test-directories reference doc to workload skill ([PR #137](https://github.com/antithesishq/antithesis-skills/pull/137))
 
 ## 2026-04-20
