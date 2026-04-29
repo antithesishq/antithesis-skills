@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-04-29
+
+- Add multi-test-directories reference doc to workload skill ([PR #137](https://github.com/antithesishq/antithesis-skills/pull/137))
+
 ## 2026-04-20
 
 - improve guidance to avoid musl based images ([PR #133](https://github.com/antithesishq/antithesis-skills/pull/133))
