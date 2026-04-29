@@ -5,7 +5,7 @@ description: >
   assertions and test commands, then refine coverage after triage.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-04-20 bc08fb6"
+  version: "2026-04-29 93475d1"
 ---
 
 # Antithesis Workload
