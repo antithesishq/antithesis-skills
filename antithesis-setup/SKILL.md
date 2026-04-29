@@ -6,7 +6,7 @@ description: >
   to submit your first Antithesis test run.
 compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-04-29 93475d1"
+  version: "2026-04-29 1cd5f5a"
 ---
 
 # Antithesis Setup
