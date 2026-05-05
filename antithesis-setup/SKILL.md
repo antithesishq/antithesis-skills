@@ -33,6 +33,21 @@ Success means:
 
   Do not attempt to proceed without research artifacts. The setup skill will make significantly worse decisions without the context that research provides.
 
+- **Verify research provenance.** Setup runs once per project and produces durable, expensive output (Dockerfiles, compose, instrumentation), so misalignment is costly. Read whatever provenance frontmatter is present in `antithesis/scratchbook/sut-analysis.md` and `antithesis/scratchbook/deployment-topology.md`. Use whatever fields you find — the schema may evolve over time, so don't treat partial or older frontmatter as broken. Describe what you found in plain language. Examples:
+
+  - Full schema: "this scratchbook is for SUT at `/path/X` at commit `abc12345abcd` (2026-05-05), external refs: A, B."
+  - Partial: "the catalog records `commit` and `updated` but no `sut_path` or `external_references`."
+  - Absent: "no provenance recorded; the scratchbook predates this convention."
+  - Disagreement across files: "sut-analysis is for `/path/A` at commit `abc`; deployment-topology is for `/path/B` at commit `def` — these disagree."
+
+  Then ask the user:
+
+  > Is this still the system you're targeting?
+
+  If the user says no, **do not proceed**. Stop and tell the user to re-run `antithesis-research`. Setup against confirmed-stale research will produce mismatched scaffolding.
+
+  The user-facing commit display uses the short hash (first 12 characters) for readability; the frontmatter still stores the full SHA.
+
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
 
 ## Documentation Grounding
@@ -101,3 +116,4 @@ Review criteria:
 - Every service has `NO_COLOR=1` set in its environment (via docker-compose.yaml and/or Dockerfile) to prevent ANSI escape codes in container output
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use
 - If the user asks to launch a run, the `antithesis-launch` skill is used instead of running `snouty run` directly
+- Whatever research provenance was present in `sut-analysis.md` and `deployment-topology.md` was described to the user and confirmed before scaffolding began (provenance frontmatter format is defined in the `antithesis-research` skill, `references/scratchbook-setup.md`)

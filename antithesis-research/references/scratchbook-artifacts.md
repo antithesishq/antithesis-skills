@@ -17,6 +17,10 @@ The scratchbook lives at `antithesis/scratchbook/` in the target repository and 
 | `evaluation/synthesis.md` | research | refinement (future) | Categorized evaluation findings and actions taken |
 | `evaluation/{lens}.md` | research | refinement (future) | Per-lens evaluation evidence |
 
+## Provenance
+
+Every top-level artifact begins with YAML provenance frontmatter recording `sut_path`, `commit`, `updated`, and `external_references`. The format is defined in `references/scratchbook-setup.md`. Downstream skills (`antithesis-setup`, `antithesis-workload`) verify this provenance against the user's current target before consuming the artifacts. An artifact lacking frontmatter is treated as legacy.
+
 ## Layout
 
 ```
@@ -54,7 +58,7 @@ This consistency means a slug uniquely identifies a property across all artifact
 
 The property catalog (`property-catalog.md`) is the human-readable summary of all discovered properties. It is designed for scanning and prioritization.
 
-The catalog carries YAML frontmatter that records provenance — the git commit and date of the codebase it was analyzed against. See `references/property-catalog.md` for the frontmatter format and the full catalog specification.
+The catalog carries the standard provenance frontmatter (see "Provenance" above and `references/scratchbook-setup.md`). The catalog also has structural requirements (slug format, property table layout, Open Questions conventions) documented in `references/property-catalog.md`.
 
 Each property's evidence file lives at `properties/{slug}.md`, where the slug matches the property's heading in the catalog.
 

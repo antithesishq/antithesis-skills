@@ -49,7 +49,13 @@ The detection task: for each property in the catalog, search the existing test a
 
 ## Present and recommend
 
-Note the catalog's provenance frontmatter (`commit` and `updated` fields) and include it when presenting status — e.g., "The property catalog is up-to-date as of `<commit short hash>` (`<date>`)." This lets the user judge whether the catalog reflects the current codebase or needs re-research.
+Read whatever provenance frontmatter is present in the catalog and include it when presenting status. Use whatever fields you find — the schema may evolve over time, so don't treat partial or older frontmatter as broken. Describe what's there in plain language. Examples:
+
+- Full schema: "working from the catalog at commit `abc12345abcd` (2026-05-05), SUT path `/foo`, external refs: A, B."
+- Partial: "working from the catalog at commit `abc12345abcd` (2026-05-05) — no SUT path or external refs recorded."
+- Absent: "working from the catalog (no provenance recorded; predates the convention)."
+
+Workload runs every property cycle, so don't ask the user to re-confirm provenance every run — display it as context and continue. The user will speak up if it no longer matches the system they're working on. The user-facing commit display uses the short hash (first 12 characters) for readability; the frontmatter still stores the full SHA.
 
 Show the user the status of each property, then recommend one to implement next. Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties. Wait for the user to confirm or choose differently before proceeding.
 
@@ -140,6 +146,7 @@ Review criteria:
 - No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
 - Test templates are structured correctly at the path that will map to `/opt/antithesis/test/v1/{name}/` in the container
 - Helper files or directories are prefixed with `helper_` so Antithesis ignores them
-- `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope, with provenance frontmatter (`commit` and `updated`) reflecting the current codebase state
+- Whatever provenance frontmatter was present in the catalog was displayed when presenting status, so the user could spot a mismatch with the system they're working on
+- `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope, with provenance frontmatter reflecting the current codebase state (refresh `commit` and `updated`; preserve `sut_path` and `external_references` from the existing catalog). The frontmatter format is defined in the `antithesis-research` skill, `references/scratchbook-setup.md`.
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
 - Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.
