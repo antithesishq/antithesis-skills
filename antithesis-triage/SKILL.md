@@ -7,7 +7,7 @@ description: >
   details. Load after a run completes or when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), agent-browser (https://github.com/vercel-labs/agent-browser), and jq.
 metadata:
-  version: "2026-05-05 0bf2748"
+  version: "2026-05-05 6b4af7b"
 ---
 
 # Antithesis Report Triage
