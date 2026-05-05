@@ -28,6 +28,8 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 
 Update `antithesis/scratchbook/property-catalog.md` whenever properties are added or changed — including the provenance frontmatter (`commit` and `updated` fields) so the catalog reflects the current codebase state. For new properties, write a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md`. For changed properties, update the existing evidence file to reflect the new understanding.
 
+When the work resolves an open question on a property (or surfaces a new one), keep the Open Questions list under the property in sync with the evidence file. See the `antithesis-research` skill, `references/property-catalog.md` ("Open Questions Conventions").
+
 ## Cross-Reference
 
 Use `antithesis-research` if triage reveals a new subsystem, guarantee, or failure mode that needs fresh research.

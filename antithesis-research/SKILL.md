@@ -156,7 +156,8 @@ Review criteria:
 - Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks
 - `antithesis/scratchbook/deployment-topology.md` exists and describes a minimal container topology — every container is justified
 - Every cataloged property has a corresponding evidence file at `antithesis/scratchbook/properties/{slug}.md` that captures the evidence trail, relevant code paths, and key observations
-- Open questions in evidence files have been investigated and resolved — no unresolved questions remain in evidence files for active properties
+- Each property's catalog entry includes an Open Questions list that mirrors the unresolved questions from its evidence file (short summaries; full context stays in the evidence file). Resolved questions are removed; remaining questions are tagged per `references/property-catalog.md` ("Open Questions Conventions").
+- Each `(partial: ...)` or `(needs human input)` tag is backed by an investigation log entry in the evidence file (see `references/property-catalog.md` "Investigation Log") that records what was examined, what was found, and what wasn't. Untagged (not yet investigated) questions don't require a log entry. Unresolved questions that need human input are an acceptable outcome — they must be visible in the catalog overview, not buried in evidence files.
 - Properties invalidated by investigation are marked in the catalog with the reason
 - `antithesis/scratchbook/property-relationships.md` exists and groups related properties into clusters with brief notes on suspected connections and dominance
 - Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
