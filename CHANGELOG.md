@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-05-05
 
+- Ask about external references and record artifact provenance ([PR #141](https://github.com/antithesishq/antithesis-skills/pull/141))
 - Surface open questions in property catalog overview ([PR #140](https://github.com/antithesishq/antithesis-skills/pull/140))
 
 ## 2026-04-29
