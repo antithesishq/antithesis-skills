@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-05
+
+- Surface open questions in property catalog overview ([PR #140](https://github.com/antithesishq/antithesis-skills/pull/140))
+
 ## 2026-04-29
 
 - Fix pass/fail count extraction for off-screen and summary-scoped properties ([PR #136](https://github.com/antithesishq/antithesis-skills/pull/136))
