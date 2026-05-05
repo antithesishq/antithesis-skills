@@ -23,11 +23,17 @@ Research a target system and produce scratchbook artifacts that unblock the rest
 
 ## Prerequisites and Scoping
 
-Start from the repo, checked-in docs, and existing scratchbook files first. Ask the user only for blockers or scoping decisions you cannot infer safely, such as:
+At the start of every research run, ask the user about external references:
+
+> Before I start, are there docs, design notes, related repos, issue trackers, or anything else outside this directory tree that I should also consult? "Just this directory" is fine.
+
+Capture the answer verbatim. Each external reference becomes a `path` (or URL) plus a brief `why` note. The orchestrator (this skill) holds the answer for the full duration of the run and threads it as input to every reference workflow that produces a top-level artifact: `sut-discovery.md`, `sut-analysis.md`, `property-discovery.md`, `deployment-topology.md`, `property-evaluation.md`. Each of those references' agent-instruction sections accepts the list as input. The list is also recorded in the provenance frontmatter of every top-level artifact (see `references/scratchbook-setup.md`).
+
+Beyond the scope question, ask only for blockers or scoping decisions you cannot infer safely:
+
 - The repo or codebase location, if it is not already clear
 - Which subsystem or component matters most, if the work is narrower than the whole repo
 - Known incidents, closed bugs, or specific failure modes worth targeting
-- External documentation, issue trackers, or design docs not present in the repo
 
 If scratchbook artifacts already exist, treat them as inputs and extend them instead of rewriting them unless the user asks for a fresh pass.
 
@@ -77,9 +83,10 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
    `assert_sometimes!`, `assert_reachable!`, `assert_unreachable!`, or their
    non-macro equivalents). For each assertion found, record the file path, line
    number, assertion type, and message string. Write the results to
-   `antithesis/scratchbook/existing-assertions.md`. If no assertions are found,
-   write the file with a note confirming the codebase has no existing
-   instrumentation.
+   `antithesis/scratchbook/existing-assertions.md`. Begin the file with
+   provenance frontmatter per `references/scratchbook-setup.md`. If no
+   assertions are found, write the file with a note confirming the codebase has
+   no existing instrumentation.
 5. Read `references/property-discovery.md` and `references/property-catalog.md`
 6. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
 7. Read `references/deployment-topology.md`
@@ -139,6 +146,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 - `antithesis/scratchbook/evaluation/synthesis.md`
 - `antithesis/scratchbook/evaluation/{lens}.md` (one per evaluation lens)
 
+All top-level scratchbook artifacts (everything in the list above except per-property evidence files) include provenance frontmatter recording `sut_path`, `commit`, `updated`, and `external_references`. Per-property evidence files inherit context from `property-catalog.md` and do not need their own frontmatter. See `references/scratchbook-setup.md`.
+
 These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
 
 ## Self-Review
@@ -150,7 +159,10 @@ Review criteria:
 - `antithesis/scratchbook/sut-analysis.md` exists and covers architecture, state management, concurrency model, and failure-prone areas
 - `antithesis/scratchbook/existing-assertions.md` exists and lists all Antithesis SDK assertions found in the codebase (or explicitly states none were found)
 - Evidence files correctly distinguish between instrumentation that already exists in the codebase, instrumentation that is partially present, and instrumentation that is missing — no evidence file suggests adding an assertion that is already there
-- `antithesis/scratchbook/property-catalog.md` exists, has provenance frontmatter (`commit` and `updated`), and lists concrete, testable properties — not vague goals like "test failover"
+- `antithesis/scratchbook/property-catalog.md` exists, has provenance frontmatter per `references/scratchbook-setup.md`, and lists concrete, testable properties — not vague goals like "test failover"
+- Every top-level artifact begins with provenance frontmatter per `references/scratchbook-setup.md`
+- The `external_references` list reflects the user's stated scope answer; entries that were referenced have a `why` note explaining their use
+- The scope question was asked at the start of the run, and the user's answer was passed to every sub-agent that performed analysis
 - Each property has a descriptive kebab-case slug as its canonical ID
 - Each property has a priority and a rationale for its chosen Antithesis assertion type (`Always`, `Sometimes`, `Reachable`, etc.)
 - Properties that need internal branch guidance or replay anchors call out likely SUT-side instrumentation points, not just workload-visible checks

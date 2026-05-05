@@ -13,7 +13,7 @@ Build a comprehensive understanding of the system — its architecture, componen
 
 ## Research External Sources
 
-If the user provides documentation links, GitHub issues, or design docs — read them. Focus on:
+Read the user-named external references gathered during scoping (see `SKILL.md` "Prerequisites and Scoping"). They are typically:
 
 - **Architecture docs:** Reveal the intended design and the guarantees the system claims to make.
 - **Open bugs (especially in target components):** These are known weaknesses. Antithesis may find deeper variants.
@@ -68,4 +68,4 @@ These partial failure modes often reveal the most interesting bugs because syste
 
 ## Output
 
-Write the analysis to `antithesis/scratchbook/sut-analysis.md`.
+Write the analysis to `antithesis/scratchbook/sut-analysis.md`. Begin with provenance frontmatter (see `references/scratchbook-setup.md`).

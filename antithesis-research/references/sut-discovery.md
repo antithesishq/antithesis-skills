@@ -14,7 +14,8 @@ but filters its work through its assigned focus.
 ## Prerequisites
 
 - The repo or codebase location is known
-- Any user-provided documentation links, issue trackers, or design docs are available
+- The user has answered the scope question (see `SKILL.md` "Prerequisites and Scoping")
+- Any user-named external references are available
 
 ## Attention Focuses
 
@@ -152,6 +153,7 @@ Spawn one agent per focus. Each agent receives:
 - The general SUT analysis methodology from `references/sut-analysis.md`
 - One attention focus (its full description and "look for" guidance from above)
 - Access to the codebase, documentation, and issue tracker
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
 - These instructions:
 
 > Examine the system through the lens of your assigned attention focus, using the
@@ -170,6 +172,7 @@ but receives different context. Instead of a "look for" list, it receives:
   the detailed "Look for:" lists — the wildcard should know what territory is
   covered, not how the others search it.
 - Access to the codebase, documentation, and issue tracker
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
 
 ### Agent Output Format
 
@@ -217,4 +220,4 @@ last and uses knowledge of the covered territory to find gaps.
 
 ## Output
 
-The output feeds into `antithesis/scratchbook/sut-analysis.md`.
+The output feeds into `antithesis/scratchbook/sut-analysis.md`, including provenance frontmatter per `references/scratchbook-setup.md`.

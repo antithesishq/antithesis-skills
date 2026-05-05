@@ -165,18 +165,23 @@ Before spawning agents, create a directory for evaluation evidence files at
 - The path to `antithesis/scratchbook/properties/` (evidence files directory)
 - One evaluation lens (its full description from above)
 - The path to write its evidence file
+- The list of user-named external references with their `why` notes
+- The `sut_path`, current `commit`, and today's date (so the agent can write provenance frontmatter on its evidence file)
 - These instructions:
 
 > Evaluate the property catalog through the lens of your assigned evaluation
 > focus. Read the property evidence files when you need deeper context on a
 > specific property. Produce concrete, specific findings — not vague concerns.
 > Write your full analysis to the evidence file path provided, then return a
-> structured summary.
+> structured summary. Begin your evidence file with the standard provenance
+> frontmatter per `references/scratchbook-setup.md` before your analysis content.
 
-**Wildcard agent:** Receives the same inputs plus a one-line summary of each
-other lens (e.g., "Lens 1: Antithesis Fit — evaluates whether properties are in
-Antithesis's sweet spot vs. unit/integration test territory"). Does not receive
-the detailed guidance for other lenses.
+**Wildcard agent:** Receives the same inputs (including the user-named external
+references and the `sut_path`/`commit`/date for provenance frontmatter) plus a
+one-line summary of each other lens (e.g., "Lens 1: Antithesis Fit — evaluates
+whether properties are in Antithesis's sweet spot vs. unit/integration test
+territory"). Does not receive the detailed guidance for other lenses. Same
+provenance-frontmatter instruction as the standard agent applies.
 
 ### Agent Output Format
 
@@ -226,8 +231,11 @@ Provide the paths to each agent's evidence file so the synthesizer can dig in
 when needed — when scope assessments conflict, when a finding's summary is
 ambiguous, or when verifying that the evidence supports the concern.
 
-Write the synthesis results to `antithesis/scratchbook/evaluation/synthesis.md`.
-Include each finding, its category, and the action to be taken.
+Write the synthesis results to `antithesis/scratchbook/evaluation/synthesis.md`
+with provenance frontmatter per `references/scratchbook-setup.md`. The
+synthesizer is the writer for `synthesis.md` and has access to `sut_path`,
+`commit`, and `external_references` from the orchestrator. Include each finding,
+its category, and the action to be taken.
 
 ### Addressing Findings
 
@@ -247,6 +255,7 @@ After categorization:
    - The existing property catalog (to avoid duplicating existing properties)
    - The path to existing assertions
    - The property catalog format from `references/property-catalog.md`
+   - The list of user-named external references with their `why` notes
 
    Each agent returns properties in catalog format and writes evidence files.
    Targeted discovery agents may carry forward unresolved questions in their
@@ -255,7 +264,10 @@ After categorization:
    gap-fill properties into the catalog using the same deduplication and merge
    process from property discovery synthesis; this includes reconciling the
    Open Questions list under each new property. Update property relationships
-   with any new clusters.
+   with any new clusters. When re-writing the catalog with the new gap-fill
+   properties, refresh `commit` and `updated` in the provenance frontmatter to
+   reflect the current codebase state. Preserve the existing `sut_path` and
+   `external_references`.
 
 3. **Biases**: Collect and present to the human with the evaluation evidence.
    Include: the bias finding, the evidence from the evaluation agent(s), and
@@ -275,13 +287,15 @@ If your environment does not support sub-agents:
    assertions.
 2. For each evaluation lens 1-3 in order, make an explicit evaluation pass over
    the catalog. After each pass, record findings. Write the detailed analysis
-   for each lens to the corresponding evaluation evidence file.
+   for each lens to the corresponding evaluation evidence file. Begin each lens
+   evidence file with provenance frontmatter per `references/scratchbook-setup.md`.
 3. Run the wildcard pass (Lens 4) last. Unlike the other passes, the wildcard
    builds on awareness of what the first 3 found, looking for what they missed.
 4. Categorize all findings as Gap, Bias, or Refinement.
 5. Address findings: apply refinements, fill gaps by running targeted discovery
    passes, collect biases for the human.
-6. Write the synthesis to `antithesis/scratchbook/evaluation/synthesis.md`.
+6. Write the synthesis to `antithesis/scratchbook/evaluation/synthesis.md`. Begin
+   `synthesis.md` with provenance frontmatter per `references/scratchbook-setup.md`.
 
 Treat each lens pass (1-3) as a fresh examination. Resist the pull to skip a
 lens because an earlier pass "already covered" it.

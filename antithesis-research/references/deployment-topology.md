@@ -4,6 +4,10 @@
 
 Design the simplest container topology that covers the code you want to verify. Every extra container adds complexity and slows down Antithesis's exploration. Include only what is necessary.
 
+## External References
+
+If the user named external references during scoping (see `SKILL.md` "Prerequisites and Scoping"), check them for documented production topology, deployment diagrams, sizing guidance, or topology-relevant design notes before designing the minimal Antithesis topology. The orchestrator passes the list as input.
+
 ## Three Component Groups
 
 ### Dependencies
@@ -91,7 +95,7 @@ The workload client always needs the SDK to emit assertions. The SUT services ma
 
 ## Document the Plan
 
-Write to `antithesis/scratchbook/deployment-topology.md`. For each component, document:
+Write to `antithesis/scratchbook/deployment-topology.md`. Begin with provenance frontmatter per `references/scratchbook-setup.md`. For each component, document:
 
 - Container name
 - Image source (existing Dockerfile, official image, or new Dockerfile to create)
@@ -102,4 +106,4 @@ Write to `antithesis/scratchbook/deployment-topology.md`. For each component, do
 
 ## Output
 
-Write the topology plan to `antithesis/scratchbook/deployment-topology.md`.
+Write the topology plan to `antithesis/scratchbook/deployment-topology.md`, including provenance frontmatter (see `references/scratchbook-setup.md`).
