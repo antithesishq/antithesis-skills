@@ -4,6 +4,18 @@
 
 Map each property in the catalog to a concrete Antithesis SDK assertion. For each property, read the evidence file at `antithesis/scratchbook/properties/{slug}.md` alongside the catalog entry. The evidence file contains the specific code paths, failure scenarios, instrumentation points, and key observations that inform assertion design. Some assertions belong in workload code; others belong inside the SUT.
 
+## Read the Open Questions List Before Mapping
+
+Before turning a property's prose into assertion code, read its Open Questions list (see the `antithesis-research` skill, `references/property-catalog.md` "Open Questions Conventions"). Property prose is written parametrically when terms are uncertain — the Open Questions list is what flags the uncertainty. The catalog's prose may use a term like "acknowledged writes" without committing to a specific definition; the Open Questions list is where you'll find that the definition is unresolved.
+
+When a property's Open Questions list contains a question that affects what the assertion needs to check — i.e., the answer would change which code path or condition you'd assert on:
+
+- Ask the human running the skill which interpretation to use, and why. The human is the canonical contact for the property catalog; if they don't know, they decide who else to involve.
+- If the human resolves the question, update the catalog: remove the question from the list, refine the prose field if the resolution makes a term more specific, and proceed to map.
+- If the human can't resolve it now, skip mapping this property in the current pass and pick another from the catalog. Note the deferral in the work output (e.g., the PR description or session summary) so the next pass doesn't loop on the same property.
+
+A question that doesn't affect the assertion logic doesn't block mapping — proceed.
+
 ## Match the Assertion to the Property Type
 
 - **`Always`**: Use for safety and correctness invariants that must hold every time the check runs. Example: a balance never goes negative.

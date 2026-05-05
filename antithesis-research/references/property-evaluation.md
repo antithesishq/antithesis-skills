@@ -234,7 +234,10 @@ Include each finding, its category, and the action to be taken.
 After categorization:
 
 1. **Refinements**: Apply directly. Update the affected properties in the
-   catalog, their evidence files, and property relationships if needed.
+   catalog, their evidence files, and property relationships if needed. When a
+   refinement modifies a property, ensure the Open Questions list under the
+   property stays in sync with its evidence file per
+   `references/property-catalog.md` ("Open Questions Conventions").
 
 2. **Gaps**: Spawn targeted discovery agents to fill them. Each agent receives:
    - The gap description from evaluation (used as a targeted attention focus)
@@ -246,9 +249,13 @@ After categorization:
    - The property catalog format from `references/property-catalog.md`
 
    Each agent returns properties in catalog format and writes evidence files.
-   Synthesize gap-fill properties into the catalog using the same
-   deduplication and merge process from property discovery synthesis. Update
-   property relationships with any new clusters.
+   Targeted discovery agents may carry forward unresolved questions in their
+   new evidence files; they populate the Open Questions list per
+   `references/property-catalog.md` ("Open Questions Conventions"). Synthesize
+   gap-fill properties into the catalog using the same deduplication and merge
+   process from property discovery synthesis; this includes reconciling the
+   Open Questions list under each new property. Update property relationships
+   with any new clusters.
 
 3. **Biases**: Collect and present to the human with the evaluation evidence.
    Include: the bias finding, the evidence from the evaluation agent(s), and
