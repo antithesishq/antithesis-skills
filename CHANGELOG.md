@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-06
+
+- Add antithesis-k8s-onboarding-assistance skill ([PR #142](https://github.com/antithesishq/antithesis-skills/pull/142))
+
 ## 2026-05-05
 
 - Ask about external references and record artifact provenance ([PR #141](https://github.com/antithesishq/antithesis-skills/pull/141))
