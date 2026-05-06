@@ -18,6 +18,11 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 **`antithesis-research` produces planning artifacts that you should review carefully.**
 
+`antithesis-k8s-onboarding-assistance` is for customers running on Kubernetes. It's an interview-driven assistant that helps the customer (and the Antithesis engagement team) figure out what's in the k8s setup, what to keep/drop/stub for testing, and produces structured questions the customer can take to their ops team. K8s customers run it before `antithesis-setup`.
+
+> [!NOTE]
+> `antithesis-k8s-onboarding-assistance` is more experimental than the other skills here. Unlike the others, we can't realistically dogfood it without a real customer engagement — we genuinely don't know how well it works in practice yet. If you use it, please file feedback aggressively. Every real engagement teaches us something we couldn't learn synthetically.
+
 `antithesis-triage` enables agents to parse and analyze the results of your Antithesis test runs.
 
 `antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) — inspecting container filesystems and runtime state, running shell commands, and extracting evidence from inside the Antithesis environment.
@@ -38,6 +43,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 </p>
 
 We recommend that you run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
+
+If your system runs on Kubernetes, run `antithesis-k8s-onboarding-assistance` before `antithesis-setup`. It works with you to figure out which parts of your production k8s setup belong in the test environment, what should be stubbed, and what to drop.
 
 Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty run` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
 
@@ -92,6 +99,19 @@ Here's an example:
 
 This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT.
 
+### antithesis-k8s-onboarding-assistance
+
+```
+/antithesis-k8s-onboarding-assistance We use Kubernetes in production. Help us figure out the test environment for Antithesis.
+```
+
+This skill produces the following artifacts, relative to the project directory:
+
+- `antithesis/scratchbook/k8s-minimization.md` — the final report describing the test environment (components, dependencies, stubs, decisions). Once setup gains k8s support, setup reads this file directly; until then, it serves as a structured handoff packet for the Antithesis engagement team.
+- `antithesis/scratchbook/k8s-minimization-work/working.md` — the live decision history across passes, including reversals and open assumptions.
+- `antithesis/scratchbook/k8s-minimization-work/ops-questions.md` — the current open questions for the customer's ops team, formatted for paste-into-Slack response.
+- `antithesis/scratchbook/k8s-minimization-work/escalation.md` — generated on demand if the customer needs to loop in their Antithesis engagement team for help.
+
 ### antithesis-launch
 
 ```
@@ -118,14 +138,15 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 
 | Skill                      | Tools used                      |
 | -------------------------- | ------------------------------- |
-| `antithesis-research`      | No explicit external tools      |
-| `antithesis-setup`         | `docker`/`podman`, `snouty`     |
-| `antithesis-workload`      | `snouty`                        |
-| `antithesis-launch`        | `docker`/`podman`, `snouty`     |
-| `antithesis-triage`        | `snouty`, `agent-browser`, `jq` |
-| `antithesis-debug`         | `agent-browser`                 |
-| `antithesis-query-logs`    | `snouty`, `agent-browser`       |
-| `antithesis-documentation` | `snouty docs`                   |
+| `antithesis-research`                  | No explicit external tools      |
+| `antithesis-k8s-onboarding-assistance` | No explicit external tools      |
+| `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
+| `antithesis-workload`                  | `snouty`                        |
+| `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
+| `antithesis-triage`                    | `snouty`, `agent-browser`, `jq` |
+| `antithesis-debug`                     | `agent-browser`                 |
+| `antithesis-query-logs`                | `snouty`, `agent-browser`       |
+| `antithesis-documentation`             | `snouty docs`                   |
 
 ## Install
 
@@ -142,6 +163,7 @@ The installer presents an interactive menu. Choose the following options:
 1. **Skills** — select the skills you need:
    - `antithesis-documentation`
    - `antithesis-research`
+   - `antithesis-k8s-onboarding-assistance`
    - `antithesis-setup`
    - `antithesis-triage`
    - `antithesis-workload`
