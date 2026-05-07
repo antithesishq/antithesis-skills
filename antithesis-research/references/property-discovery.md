@@ -139,6 +139,7 @@ Spawn one agent per focus. Each agent receives:
 - The path to `antithesis/scratchbook/existing-assertions.md` — read this before
   writing evidence files; for each property, note which assertions already exist
   vs. which are missing
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
 - These instructions:
 
 > Examine the codebase through the lens of your assigned attention focus. Produce
@@ -159,6 +160,7 @@ but receives different context. Instead of a "look for" list, it receives:
   the others search it.
 - The path to `antithesis/scratchbook/existing-assertions.md`
 - Access to the codebase
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
 
 ### Agent Output
 
@@ -178,7 +180,18 @@ already exists in the codebase, is partially present, or is missing.
 
 **Returned to synthesis:**
 
-- Properties in catalog format (may be empty)
+- Properties in catalog format (may be empty). Populate the Open Questions list
+  directly from the questions written into the evidence file, following
+  `references/property-catalog.md` ("Open Questions Conventions"). At this
+  stage, questions are typically untagged — they haven't been investigated
+  yet. The synthesis "Investigate Open Questions" step adds tags.
+- If a question you raised would contradict a prose claim you'd otherwise
+  write in **Property**, **Invariant**, **Antithesis Angle**, or **Why It
+  Matters**, write the prose at the level of generality the analysis
+  supports — don't overcommit to an answer the Open Questions list says is
+  uncertain. The list does the work of surfacing uncertainty; the prose
+  doesn't need parenthetical hedges. See `references/property-catalog.md`
+  ("Honest Summaries").
 - For each property, the evidence file slug and a brief rationale summary —
   enough for synthesis to deduplicate, resolve conflicts, and evaluate assertion
   type, but not the full evidence narrative
@@ -212,21 +225,25 @@ After all agents complete, synthesize into a single property catalog:
   evidence, code paths, or failure mechanisms into clusters. Note any suspected
   dominance (where one property likely implies another). This is lightweight —
   flag connections you noticed during synthesis, don't do deep analysis.
-- **Investigate open questions:** For each property that has open questions in
-  its evidence file, spawn an agent to investigate. Run these in parallel — one
-  agent per property with open questions. Each agent receives the path to the
-  evidence file in the scratchbook, codebase access, and the path to
-  `antithesis/scratchbook/existing-assertions.md`. The agent reads the evidence
-  file's explanation of why each question matters, investigates the code to
-  answer it, and writes the updated evidence file back to the same path with
-  questions resolved — including correcting any instrumentation suggestions
-  against `existing-assertions.md` to accurately reflect what already exists vs.
-  what is missing. The agent returns a short structured summary (not the full
-  evidence file) describing: which questions were resolved, whether the property
-  changed (different invariant, different assertion type), and whether the
-  property was invalidated with the reason. After all agents return, review the
-  summaries. If any property was invalidated or changed, update the catalog and
-  re-evaluate property relationships accordingly.
+- **Apply provenance frontmatter:** Write `sut_path`, current `commit`, today's `updated`, and the list of `external_references` (from the user's scope answer) to `property-catalog.md` and `property-relationships.md` per `references/scratchbook-setup.md`.
+- **Investigate open questions:** see "Investigate Open Questions" below.
+
+#### Investigate Open Questions
+
+For each property that has open questions in its evidence file, spawn an agent to investigate. Run these in parallel — one agent per property with open questions.
+
+Each agent receives the path to the evidence file, codebase access, and the path to `antithesis/scratchbook/existing-assertions.md`.
+
+Each agent must:
+
+- Read the evidence file's explanation of why each question matters and investigate the code to answer it.
+- Not fabricate answers. If a question can't be resolved from code, docs, or other available evidence, leave it open with partial findings noted. Tag `(partial: ...)` when there are partial findings; tag `(needs human input)` only after exhausting investigation against code and docs. Some questions legitimately need human input — that is a normal outcome, not a failure of the step.
+- Record an investigation log in the evidence file under an `### Investigation Log` heading (see `references/property-catalog.md` "Investigation Log") so the "attempted" check in `SKILL.md` self-review is auditable.
+- Update the evidence file: remove resolved questions, note partial findings, apply human-input tags. Correct any instrumentation suggestions against `existing-assertions.md` to reflect what already exists vs. what is missing.
+
+Each agent returns a short structured summary (not the full evidence file) describing: which questions were resolved, which remain (and in what state), whether the property changed (different invariant, different assertion type), and whether the property was invalidated with the reason.
+
+After all agents return, review the summaries. Update the catalog whenever a property is invalidated, changed, or has remaining unresolved questions — sync the Open Questions list under each affected property from the evidence file, following `references/property-catalog.md` ("Open Questions Conventions"). If a resolution makes a parametric term in the prose more specific, refine the prose field accordingly. Re-evaluate property relationships if any property changed or was invalidated.
 
 ## Single-Agent Mode
 
@@ -246,35 +263,49 @@ focuses as a sequential checklist:
    consistency.
 6. Assign a descriptive kebab-case slug to each property and organize into final
    form per the catalog format.
-7. For each property, write an evidence file to `properties/{slug}.md` in the
+7. Apply provenance frontmatter to `property-catalog.md` per `references/scratchbook-setup.md`.
+8. For each property, write an evidence file to `properties/{slug}.md` in the
    scratchbook. Capture the supporting evidence, relevant code paths, failure
    scenario, and key observations you encountered during your passes. For each
    property's SUT-side instrumentation suggestions, cross-reference
    `existing-assertions.md` and explicitly note whether each suggested assertion
    already exists in the codebase, is partially present, or is missing.
-8. Review the complete property set and write `property-relationships.md` in the
+9. Review the complete property set and write `property-relationships.md` in the
    scratchbook. Group properties that share evidence, code paths, or failure
    mechanisms into clusters. Note any suspected dominance relationships. This is
    lightweight — flag connections you noticed during the passes, don't do deep
-   analysis.
-9. For each property with open questions in its evidence file, investigate the
-   code to answer them. Read the evidence file's explanation of why each
-   question matters, trace the code to answer it, and update the evidence file
-   with the answer and its implications — including correcting any instrumentation
-   suggestions against `existing-assertions.md`. If the answer changes the
-   property or invalidates it, update accordingly. Mark invalidated properties
-   in the catalog with the reason.
+   analysis. Apply provenance frontmatter per `references/scratchbook-setup.md`.
+10. For each property with open questions in its evidence file, investigate the
+    code to answer them:
 
-Treat each pass (1–10) as a fresh examination. Resist the pull to skip a focus
-because earlier passes "already covered" that area — the point is to look at the
-same code from different angles. The wildcard pass is the exception — it runs last
-and uses knowledge of the covered territory to find gaps.
+    - Read the evidence file's explanation of why each question matters and
+      trace the code to answer it.
+    - Don't fabricate answers. Tag `(partial: ...)` when partial findings exist;
+      tag `(needs human input)` only after exhausting investigation against code
+      and docs.
+    - Record an investigation log in the evidence file under an `### Investigation Log` heading (see `references/property-catalog.md` "Investigation Log") so
+      the "attempted" check in `SKILL.md` self-review is auditable.
+    - Update the evidence file with resolved answers and their implications,
+      including correcting any instrumentation suggestions against
+      `existing-assertions.md`.
+    - Sync the Open Questions list under each property from the evidence file,
+      following `references/property-catalog.md` ("Open Questions Conventions").
+      If a resolution makes a parametric term in the prose more specific,
+      refine the prose field accordingly.
+    - If an answer changes the property or invalidates it, update accordingly.
+      Mark invalidated properties in the catalog with the reason.
+
+Treat each focus pass (Focuses 1–10) as a fresh examination. Resist the pull to
+skip a focus because earlier passes "already covered" that area — the point is
+to look at the same code from different angles. The wildcard pass is the
+exception — it runs last and uses knowledge of the covered territory to find
+gaps.
 
 ## Output
 
 - `antithesis/scratchbook/property-catalog.md` — using the format defined in
-  `references/property-catalog.md`, including provenance frontmatter with the
-  current git commit hash and date
+  `references/property-catalog.md`, including provenance frontmatter per
+  `references/scratchbook-setup.md`
 - `antithesis/scratchbook/properties/{slug}.md` — one per cataloged property
 - `antithesis/scratchbook/property-relationships.md` — suspected clusters and
-  connections
+  connections, including provenance frontmatter per `references/scratchbook-setup.md`
