@@ -462,6 +462,89 @@
       });
       return { ok: true, rows: visible, totalCount: items.length };
     },
+
+    // Find the events-log download anchor that lives in the visible Debug
+    // Timeline panel, distinguishing it from copies that live in hidden
+    // notebook overlays. After the page settles, multiple anchors with the
+    // same `download` attribute can exist in the DOM — some inside 0×0
+    // overlay wrappers, one inside the visible sequence_printer_wrapper.
+    // Returns the visible anchor or null. (Internal helper.)
+    _findVisibleEventsAnchor: function (format) {
+      var fmt = (format || "json").toLowerCase();
+      var filenameMap = { txt: "events.log", json: "events.json", csv: "events.csv" };
+      var filename = filenameMap[fmt];
+      if (!filename) return null;
+      var links = document.querySelectorAll(
+        'a.sequence_printer_menu_button[download="' + filename + '"]',
+      );
+      for (var i = 0; i < links.length; i++) {
+        var w = links[i].closest(".sequence_printer_wrapper");
+        if (!w) continue;
+        var r = w.getBoundingClientRect();
+        if (r.width > 0 && r.height > 0) return links[i];
+      }
+      return null;
+    },
+
+    // Returns true once a visible events-log anchor exists. The events panel
+    // renders later than the simplified view's top interaction area (which
+    // simplified.waitForReady checks), and after the page settles multiple
+    // copies of the events.* anchor may exist — only the one in the visible
+    // sequence_printer_wrapper indicates real readiness. Callers should poll
+    // this before prepareLogDownload.
+    //
+    // format: "txt" | "json" | "csv"  (default "json")
+    eventsLogReady: function (format) {
+      return !!this._findVisibleEventsAnchor(format);
+    },
+
+    // Prepare the events-log download anchor for capture by agent-browser.
+    //
+    // The MVD page renders multiple .sequence_printer_wrapper elements, but
+    // only the visible "Debug Timeline" panel carries events.{log,json,csv}
+    // download anchors; the hidden notebook overlays carry sequence-items.*
+    // instead. We locate the events anchor by its `download` attribute, force
+    // the <a-menu>'s shadow-root menu visible so the link is interactable,
+    // and tag the link with `data-mvd-dl="active"`. The caller then uses
+    //   agent-browser download 'a.sequence_printer_menu_button[data-mvd-dl]' <path>
+    // to capture the file.
+    //
+    // Synchronous — caller must poll eventsLogReady(format) first.
+    //
+    // format: "txt" | "json" | "csv"  (default "json")
+    prepareLogDownload: function (format) {
+      var fmt = (format || "json").toLowerCase();
+      var filenameMap = { txt: "events.log", json: "events.json", csv: "events.csv" };
+      var filename = filenameMap[fmt];
+      if (!filename) {
+        return { error: "unsupported format: " + format + "; use txt, json, or csv" };
+      }
+      var link = this._findVisibleEventsAnchor(fmt);
+      if (!link) {
+        return { error: "no visible events log anchor for format: " + fmt + " (poll eventsLogReady first)" };
+      }
+      var aMenu = link.closest("a-menu");
+      var shadowMenu =
+        aMenu && aMenu.shadowRoot && aMenu.shadowRoot.querySelector("menu");
+      if (!shadowMenu) {
+        return { error: "shadow menu not found for download link" };
+      }
+      shadowMenu.style.display = "flex";
+      shadowMenu.style.position = "fixed";
+      shadowMenu.style.top = "0";
+      shadowMenu.style.left = "0";
+      shadowMenu.style.zIndex = "99999";
+      document.querySelectorAll("[data-mvd-dl]").forEach(function (e) {
+        e.removeAttribute("data-mvd-dl");
+      });
+      link.setAttribute("data-mvd-dl", "active");
+      return {
+        ok: true,
+        format: fmt,
+        filename: filename,
+        selector: 'a.sequence_printer_menu_button[data-mvd-dl]',
+      };
+    },
   };
 
   // ---------------------------------------------------------------------------

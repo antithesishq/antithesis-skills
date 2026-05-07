@@ -15,6 +15,47 @@ You should also make sure the `agent-browser` skill is available. If it is not a
 npx skills add vercel-labs/agent-browser
 ```
 
+## Launching an MVD session
+
+Before opening a debugger URL, you may need to launch the session first.
+`snouty debug` is the launch command. The interface is in flux: feature-detect
+by inspecting `snouty debug --help` before deciding which flow to run.
+
+### Step 1: detect the supported parameter
+
+```bash
+snouty debug --help
+```
+
+Look for `run_id` or `session_id` in the parameter list.
+
+### Step 2a — if `run_id` is supported (preferred path)
+
+Launch the session directly given the run + moment:
+
+```bash
+snouty debug \
+  --antithesis.debugging.run_id "$RUN_ID" \
+  --antithesis.debugging.input_hash "$INPUT_HASH" \
+  --antithesis.debugging.vtime "$VTIME" \
+  --antithesis.report.recipients "$EMAIL"
+```
+
+Snouty returns the debugging-session URL on success; proceed to "Opening a
+debugger URL" below.
+
+### Step 2b — if only `session_id` is supported (current state)
+
+`session_id` and `run_id` are not interchangeable. Until `snouty debug` gains
+`run_id` support, ask the user to:
+
+1. Start the MVD session manually from the triage report (or however they
+   normally launch).
+2. Paste the resulting debugging-session URL back to you.
+
+Then proceed with "Opening a debugger URL" using that URL. This is a temporary
+fallback; once snouty supports `run_id`, this step goes away.
+
 ## Session naming
 
 Use a fresh, unique browser session for each debugging run so concurrent agents

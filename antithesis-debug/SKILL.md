@@ -33,9 +33,9 @@ Use this when the user gives:
 - a bug report URL that should be debugged interactively
 - a request to inspect container filesystem, runtime state, or events inside Antithesis
 
-For auth and report navigation, use the `antithesis-triage` skill. It already
-encodes the right `agent-browser` session model. This skill handles the
-debugger itself.
+For auth and report navigation, use the `antithesis-visit-web-page` skill. It
+owns the `agent-browser` session and authentication flow. This skill handles
+the debugger itself.
 
 ## Gathering user input
 
@@ -133,6 +133,14 @@ relevant file before performing that task.
 5. Read `references/actions.md` — authorize actions and read results
 6. Report findings with evidence chain
 
+### Download the events log for offline analysis
+
+1. Read `references/setup-session.md` — launch / open the debugger URL
+2. Read `references/download-log.md` — run `assets/download-mvd-log.sh`
+   to capture and (for JSON) annotate the events log
+3. Analyze the local file with `jq` (event shape matches the triage
+   skill's logs reference)
+
 ## Runtime injection
 
 The JS runtime is required for **both** simplified and advanced modes. It
@@ -222,8 +230,8 @@ agent-browser --session "$SESSION" eval \
 - **Start in simplified mode.** The simplified debugger handles most debugging
   tasks. Only switch to advanced mode when you specifically need the notebook
   API.
-- **Defer to antithesis-triage for auth.** If the debugger URL requires
-  authentication, use the `antithesis-triage` skill's
+- **Defer to antithesis-visit-web-page for auth.** If the debugger URL
+  requires authentication, use the `antithesis-visit-web-page` skill's
   `references/setup-auth.md` for the interactive login flow. Use the same
   `--session-name antithesis` so auth state is shared.
 - **Use disposable sessions.** Generate a unique `SESSION` for each debugging

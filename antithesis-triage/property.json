@@ -1,0 +1,37 @@
+{
+  "counterexample_count": 11,
+  "counterexamples": [
+    {
+      "moment": {
+        "input_hash": "1953917995480797787",
+        "vtime": "182.42924608523026"
+      }
+    },
+    {
+      "moment": {
+        "input_hash": "4038006772091147322",
+        "vtime": "181.52766803186387"
+      }
+    },
+    {
+      "moment": {
+        "input_hash": "7249623954355301396",
+        "vtime": "181.67649806430563"
+      }
+    }
+  ],
+  "description": "This group collects test properties defined with the [Antithesis SDK's](https://antithesis.com/docs/using_antithesis/sdk/) assert.Always* methods. An Always assertion is one that should be hit on every test run, and must evaluate to true every time it is hit. A failure of one of these properties could indicate that the assertion in question evaluated to false at least once, OR that it was not reached at all. If it's okay for your program not to hit the assertion at all, use the assert.AlwaysOrUnreachable method instead.",
+  "example_count": 1731,
+  "examples": [
+    {
+      "moment": {
+        "input_hash": "6247583012788407497",
+        "vtime": "231.3688659959007"
+      }
+    }
+  ],
+  "is_event": true,
+  "is_group": true,
+  "name": "Invariant: expected record exists in FDB",
+  "status": "Failing"
+}

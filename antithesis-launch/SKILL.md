@@ -24,7 +24,7 @@ Launch an Antithesis run in this order only:
 1. `docker compose build`
 2. `snouty validate`
 3. if validation fails, stop and report the error
-4. `snouty run`
+4. `snouty launch`
 
 ## Required Input
 
@@ -42,8 +42,9 @@ Launch an Antithesis run in this order only:
 
 ## Run Arguments
 
-- Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test`.
-- `snouty run --config` requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
+- Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
+
+- `snouty launch --config` requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
 - Always set all of these explicitly:
   - `--duration`: the user-provided duration
   - `--source`: repo name
@@ -58,7 +59,7 @@ Launch an Antithesis run in this order only:
 ```sh
 docker compose -f "$CONFIG_DIR/docker-compose.yaml" build
 snouty validate "$CONFIG_DIR"
-snouty run \
+snouty launch \
   --webhook "$WEBHOOK" \
   --config "$CONFIG_DIR" \
   --duration "$DURATION" \
@@ -71,6 +72,8 @@ snouty run \
 
 - Report the config directory, compose build command, validate command, and final `snouty run` command shape before submission.
 - If validation fails, stop immediately and show the failing command plus the key error.
+- `snouty launch` will return json text which contains a run_id. Report the run_id. You will need this run id to triage the run
+  when it is done.
 
 ## Self-Review
 

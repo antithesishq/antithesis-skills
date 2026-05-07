@@ -36,6 +36,11 @@ results on a multiverse map.
 
 ## Prerequisites
 
+
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `agent-browser` is not installed. See `https://raw.githubusercontent.com/vercel-labs/agent-browser/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `agent-browser` is older than version `v0.23.4`. You can upgrade with `agent-browser upgrade`.
+- DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 - A completed Antithesis run. If you don't have a specific run URL, use the
   `antithesis-triage` skill's run discovery workflow to find one first.
 - `agent-browser` installed and authenticated to the Antithesis tenant
