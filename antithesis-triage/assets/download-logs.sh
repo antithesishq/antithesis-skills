@@ -49,7 +49,7 @@ while [[ $# -gt 0 ]]; do
     --begin-input-hash)  BEGIN_INPUT_HASH="$2"; shift 2 ;;
     -h|--help)           usage ;;
     --)                  shift; while [[ $# -gt 0 ]]; do POSITIONAL+=("$1"); shift; done ;;
-    -*)                  echo "Error: unknown option: $1" >&2; usage ;;
+    -[!0-9]*)            echo "Error: unknown option: $1" >&2; usage ;;
     *)                   POSITIONAL+=("$1"); shift ;;
   esac
 done
