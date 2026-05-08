@@ -2,11 +2,13 @@
 name: antithesis-visit-web-page
 description: >
   Instructions to authenticate to the tenant and read antithesis web pages. Specific cases where this skill is needed are: 
-    1) Performing log queries across all histories in an antithesis run, in combination with the log query skill.
-    2) Interpreting the error log from a failed run
-    3) Using multiverse debugging (MVD) sessions, 
-    4) Interpreting Causality reports.
-    5) Looking up the run_id when given only a triage-report URL that cannot be matched against the runs list (`report_id → run_id` is not currently exposed by the API).
+    1) Finding more examples of successes and failures for a property than what is provided in the property status 
+    2) Performing log queries across all histories in an antithesis run, in combination with the log query skill. This answers questions such as "how often is failure X preceeded by an event Y".
+    3) Interpreting the error log from a failed run
+    4) Using multiverse debugging (MVD) sessions, 
+    5) Interpreting Causality reports.
+    6) Looking up the run_id when given only a triage-report URL that cannot be matched against the runs list (`report_id → run_id` is not currently exposed by the API).
+    7) Looking up the session_id in order to launch a debug session with `snouty debug` by reading a triage report
   For cases not specifically listed here, using `snouty runs` is preferred to using this skill.
 compatibility: agent-browser (https://github.com/vercel-labs/agent-browser) and jq.
 metadata:
@@ -161,9 +163,41 @@ present, read `references/error-reports.md` for the error report workflow.
 
 ## Workflows
 
-### Error page
+1) Finding more examples of successes and failures for a property than what is provided in the property status 
 
-Read 
-### Handling runs discovery
+Use the `antithesis-query-logs` skill. Search for the propertythat you want more examples of by matching fields from the 
+original propery. Make sure to set status to be either "passing" or "failing" depending on what you want.
+
+2) Performing log queries across all histories in an antithesis run, in combination with the log query skill. This answers questions such as "how often is failure X preceeded by an event Y".
+
+Use the `antithesis-query-logs` skill.
+
+3) Interpreting the error log from a failed run
+
+The triage report will contain an error log from the failed run. 
+
+4) Using multiverse debugging (MVD) sessions
+
+Use skill `antithesis-debug`.
+
+5) Interpreting Causality reports.
+
+You will need to ask the user for the URL for the causality report. The main information you will want is in the logs up to the
+bug moment, which in the report are augmented with bug probabilities at that stage of the original run.
+
+6) Looking up the run_id when given only a triage-report URL that cannot be matched against the runs list (`report_id → run_id` is not currently exposed by the API).
+
+The run_id is at the bottom of the main triage page.
+
+7) Looking up the session_id in order to launch a debug session with `snouty debug` by reading a triage report
+
+If you are invoked to obtain the session_id for a run, load the triage report that matches the run_id,
+which you can find with `snouty runs --json show ${RUN_ID}`. The session_id is at the bottom of the main
+triage report page. Make sure the run_id is what you expect. 
+
+## Handling runs discovery
 
 `snouty runs list` is the preferred way to discover runs. If this skill is invoked as a fallback to discover runs, read `references/run-discovery-ui.md` for the runs discovery fallback workflow.
+
+
+
