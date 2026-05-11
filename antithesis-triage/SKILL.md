@@ -69,12 +69,24 @@ If the "status" of a specific run is "failed" and the "links"."triage_report" va
    b. Find the moment 
    c. Download the example's log using `snouty runs --json logs $RUN_ID $INPUT_HASH $VTIME`. Make sure vtime does not get rounded. Input has and vtime should match exactly what is contained in the example's `moment` structure
    d. Analyze the downloaded log locally
-   e. If you aren't certain what caused the issue, consider downloading another example's log from the same property. Passing logs can be useful to compare against.
-4. Cross-reference the log against the source code of the system under test (SUT) if you have access to it.
+   e. If you aren't certain what caused the issue, consider downloading logs from other counter-examples and examples for the same property. Compare each occurrence and try to see if there are any similarities or differences that might explain the failure cause. Logs from passing examples can be useful to compare against to find differences between success and failure cases. 
+   
+   When searching for additional logs for property failures, first use:
+
+   ```bash
+   snouty runs --json events ${RUN_ID} ${PROPERTY_NAME}
+   ```
+
+   This returns SOME but not necessarily ALL cases of the property passing or failing in the run. PROPERTY_NAME should match the "name" field
+   in the property data you are investigating. Match the "hit" and "condition" fields against the examples or counterexamples you are trying to find more like. Note that it is likely the examples and  counterexamples you already know about will be in the list returned. Check the moment of the property returned from `snouty runs events` against the moment in the examples or counter-examples you have already downloaded. 
+
+   If still more examples or counter-examples are needed, use the `antithesis-query-logs` skill to find more. Use the property `name` and `status` fields to filter the logs query. You may also need to set vtime > the highest vtime you have already processed to avoid getting duplicates.
+
+4. **Important:** Cross-reference the log against the source code of the system under test (SUT) and the workload if you have access to it.
 5. Deeply investigate the failure to develop an understanding of the timeline of events which led up to and potentially caused it.
 6. Report your findings.
 
-**Important:** Make sure you download and review example logs and the source code of the SUT if you have access to it. The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
+**Important:** The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
 
 ### Verify cascade vs independent failures
 
@@ -97,7 +109,7 @@ mean all instances are cascades. The temporal query gives you the true count.
 
 ## General guidance
 
-- **Download log files for local analysis.** Whenever possible try to download log files locally rather than using the web-ui log viewer.
+- **Download log files for local analysis.** Whenever possible download log files locally rather than using the web-ui log viewer.
 - **Review logs before concluding on failures.** When a failed property has examples with a moment supplied, download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - ****For property failures, consider the "details" section if provided.** These are curated fields supplied by the property
 author designed to illuminate the failure.
