@@ -57,7 +57,13 @@ Read whatever provenance frontmatter is present in the catalog and include it wh
 
 Workload runs every property cycle, so don't ask the user to re-confirm provenance every run — display it as context and continue. The user will speak up if it no longer matches the system they're working on. The user-facing commit display uses the short hash (first 12 characters) for readability; the frontmatter still stores the full SHA.
 
-Show the user the status of each property, then recommend one to implement next. Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties. Wait for the user to confirm or choose differently before proceeding.
+**Recommend one property at a time — don't dump the full catalog.** A catalog can easily have dozens or hundreds of properties; an exhaustive status list is overwhelming and rarely what the user needs. This is the default: pick one, explain why, and wait for confirmation.
+
+The exception is when the user explicitly asks to discuss what to work on rather than receive a single recommendation. In that case, give a high-level summary (counts by status, notable clusters, anything unusual) and have the conversation. Surface specific properties only as the conversation calls for them.
+
+Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties.
+
+Explain **why** you picked the property you picked, and wait for the user to confirm or choose differently before proceeding.
 
 For the chosen property, read both the catalog entry and its evidence file.
 
@@ -101,7 +107,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 ### Implement next property
 
-1. Detect implementation status and present to user (see Scoping above)
+1. Detect implementation status, then recommend one property and explain why (see "Detect implementation status" and "Present and recommend" above)
 2. Get user confirmation on which property to implement
 3. Read `references/component-implementation.md`
 4. Read `references/assertions.md`
