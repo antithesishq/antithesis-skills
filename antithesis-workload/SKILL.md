@@ -61,7 +61,10 @@ Workload runs every property cycle, so don't ask the user to re-confirm provenan
 
 The exception is when the user explicitly asks to discuss what to work on rather than receive a single recommendation. In that case, give a high-level summary (counts by status, notable clusters, anything unusual) and have the conversation. Surface specific properties only as the conversation calls for them.
 
-Prefer partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties.
+Strategy for picking the recommendation:
+
+- **Getting started** — when few or no properties are implemented yet — recommend a **simple** property: one whose test doesn't have a lot of moving parts. The highest-priority properties tend to require the most setup and coordination, which is the wrong place to start. Simple properties build momentum, exercise the SDK and test harness end-to-end, and let you and the user develop a feel for the workflow. Tell the user this is the strategy you're using and why.
+- **Once you're cooking** — multiple properties implemented and the harness validated end-to-end — switch to priority-based ordering: partially-implemented properties that need completion, then unimplemented properties that cluster with recently implemented ones (see `antithesis/scratchbook/property-relationships.md`), then other high-priority unimplemented properties. Tell the user when you're making this switch.
 
 Explain **why** you picked the property you picked, and wait for the user to confirm or choose differently before proceeding.
 
