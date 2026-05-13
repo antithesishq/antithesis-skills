@@ -23,7 +23,7 @@ Success means:
 - the SUT dependency graph includes the relevant Antithesis SDK where assertions or lifecycle hooks will run
 - at least one minimal bootstrap property exists in a simple SUT path and is expected to show up in the first Antithesis run
 - The harness is ready for the `antithesis-workload` skill to add or iterate on test templates, assertions, and workload code
-- If the user asks to submit or launch a run, use the `antithesis-launch` skill — do not run `snouty run` directly
+- If the user asks to submit or launch a run, use the `antithesis-launch` skill — do not run `snouty launch` directly
 
 ## Prerequisites
 
@@ -88,7 +88,7 @@ This skill is broken out into multiple steps, each in a different reference file
   complete until the relevant images expose `/opt/antithesis/catalog/` or
   `/symbols/` correctly for their language.
 - Treat local testing as required before the first submission.
-- Use `snouty run` directly to submit runs. Run `compose build` before `snouty run` to ensure images are up to date.
+- Use `snouty launch` directly to submit runs. Run `compose build` before `snouty launch` to ensure images are up to date.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the
   deployment explicitly requires it.
 - Disable color/ANSI output in every container. Antithesis stores raw bytes and
@@ -115,5 +115,5 @@ Review criteria:
 - All built images target `amd64` (verified via `podman image inspect` or `docker image inspect`)
 - Every service has `NO_COLOR=1` set in its environment (via docker-compose.yaml and/or Dockerfile) to prevent ANSI escape codes in container output
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use
-- If the user asks to launch a run, the `antithesis-launch` skill is used instead of running `snouty run` directly
+- If the user asks to launch a run, the `antithesis-launch` skill is used instead of running `snouty launch` directly
 - Whatever research provenance was present in `sut-analysis.md` and `deployment-topology.md` was described to the user and confirmed before scaffolding began (provenance frontmatter format is defined in the `antithesis-research` skill, `references/scratchbook-setup.md`)

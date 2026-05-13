@@ -5,7 +5,7 @@
 # Prefix `container_name:` and `image:` with the project name.
 # Set `hostname:` to match `container_name:` on every service — Antithesis uses
 # container names for fault injection and log attribution.
-# Local images use `build:` so `compose build` can build them before `snouty run`.
+# Local images use `build:` so `compose build` can build them before `snouty launch`.
 # Public images (e.g. postgres, redis) use `image:` directly.
 # Every service MUST include `platform: linux/amd64` — Antithesis runs on x86-64.
 # Every service MUST set `NO_COLOR=1` — Antithesis stores raw bytes and does
