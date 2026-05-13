@@ -2,7 +2,7 @@
 name: antithesis-debug
 description: >
   Use this skill to interactively debug Antithesis test runs using the
-  multiverse debugger. Open a debugging-session URL, inspect container
+  multiverse debugger (MVD session). Open a debugging-session URL, inspect container
   filesystems and runtime state, run shell commands, and extract evidence
   from inside the Antithesis environment. Supports both the simplified
   debugger (default) and the advanced notebook mode.
@@ -27,11 +27,11 @@ session when debugging is complete.
 
 ## When to use this skill
 
-Use this when the user gives:
+Use this  when:
 
-- an Antithesis debugging-session URL
-- a bug report URL that should be debugged interactively
-- a request to inspect container filesystem, runtime state, or events inside Antithesis
+- the user gives an Antithesis debugging-session URL
+- the user makes a request to inspect container filesystem, runtime state, or events inside Antithesis
+- the triage skill has launched an MVD session when investigating the results of a run
 
 For auth and report navigation, use the `antithesis-triage` skill. It already
 encodes the right `agent-browser` session model. This skill handles the

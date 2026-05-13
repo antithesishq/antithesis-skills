@@ -66,7 +66,25 @@ click a log line:
 - The vtime input updates to that row's virtual time.
 - The container selector updates to the container that emitted that log line.
 
-You can also type a vtime directly into the vtime input field.
+### Setting vtime programmatically
+
+To anchor the debugger at a specific vtime (e.g. for time-travel between two
+moments), use `setMoment`:
+
+```bash
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.setMoment(128.5)"
+```
+
+Returns `{ ok, vtime }`.
+
+**Important:** the vtime input commits via its `focusout` handler, not on
+Enter. Typing into the input (via `agent-browser fill`, `keyboard type`, or a
+manual `setNativeValue` + `Event("input")`) only updates the *displayed* value
+— the moment used by `runCommand` does not change until the input blurs.
+`setMoment` handles this by calling `input.blur()` after writing the value;
+that's the only reliable way to commit. `getMoment` reads the displayed value,
+which may be uncommitted if `setMoment` wasn't used.
 
 ### Reading the current moment and container
 

@@ -107,3 +107,56 @@ completion.
 - Each `bash\`...\`` invocation creates an action that requires authorization
   before it runs.
 - Default timeout for `bash...run()` is 30 virtual minutes. Pass`timeout: Time.seconds(N)` for shorter timeouts.
+
+
+## Time-travel sweep — probe the same container at multiple moments
+
+### Simplified-mode sweep (preferred when you only need shell output)
+
+Preferred when you don't need branch arithmetic. Uses `setMoment` to fires the input's
+`focusout` handler to commit the new moment.
+
+Example: 
+
+```bash
+SCRIPT='cat /repos/sm-repo.git/refs/heads/main 2>&1; stat -c "%y" /repos/sm-repo.git/refs/heads/main 2>&1'
+for VT in 125.0 125.7 126.5 127.5 128.0 128.5 129.0 129.5; do
+  agent-browser --session "$SESSION" eval \
+    "window.__antithesisDebug.simplified.setMoment($VT)"
+  COUNT=$(agent-browser --session "$SESSION" eval \
+    'window.__antithesisDebug.simplified.getOutputCount().count' \
+    | grep -oE '[0-9]+' | tail -1)
+  agent-browser --session "$SESSION" eval \
+    "window.__antithesisDebug.simplified.runCommand($(printf '%s' "$SCRIPT" | jq -R -s .))"
+  agent-browser --session "$SESSION" eval \
+    "window.__antithesisDebug.simplified.waitForNewOutput($COUNT, { timeoutMs: 30000 })"
+  agent-browser --session "$SESSION" eval \
+    'window.__antithesisDebug.simplified.getLastOutput()'
+done
+```
+Make sure to set the container once via the dropdown before starting the loop.
+
+### Advanced-mode sweep (when you need event sets, branching, or `wait_until`)
+
+For each time you want to travel to, position the branch to that time: 
+
+```js
+branch = moment.rewind_to($TIME).branch()
+```
+
+Each `bash\`...\`.run(...)` is its own action that requires explicit
+authorization. Critically, **only the first action in source order
+materializes as an `action_auth` cell** — subsequent ones do not appear until
+the prior completes, so a naive print sweep won't all auto-show. Two
+options:
+
+1. Edit source to one probe at a time, authorize, read result, edit again.
+   Slow but reliable.
+2. Use `action()` to group multiple `bash\`...\`.run(...)` calls under a
+   single authorize click. See `notebook.md` for the `action()` pattern.
+
+**Pitfall observed:** after using `setSource` to write a fresh notebook with
+`[environment, moment] = prepare_multiverse_debugging()`, all cells reported
+`ReferenceError: environment is not defined` and didn't clear on reload.
+Switching to separate assignments (`_t = prepare_multiverse_debugging(); env
+= _t[0]; mom = _t[1]`) cleared it. See `notebook.md` Troubleshooting.

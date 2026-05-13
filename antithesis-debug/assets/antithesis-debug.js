@@ -236,6 +236,25 @@
       if (modeError) return modeError;
       var input = document.querySelector("input.input_input");
       if (!input) return { error: "moment input not found" };
+      // NOTE: this reads the input's displayed value, which may differ
+      // from the *committed* moment used by runCommand. Typing into the
+      // input (or pressing Enter) only updates the display; the commit
+      // happens via the input's `focusout` handler. Use `setMoment`
+      // below to set+commit reliably.
+      return { ok: true, vtime: input.value };
+    },
+
+    setMoment: function (vtime) {
+      var modeError = requireSimplifiedMode();
+      if (modeError) return modeError;
+      var input = document.querySelector("input.input_input");
+      if (!input) return { error: "moment input not found" };
+      // The input commits via its `focusout` handler — pressing Enter
+      // does NOT trigger it. setNativeValue fires the `input` event
+      // (so the displayed value updates), then blur() fires `focusout`
+      // which actually changes the moment used by runCommand.
+      setNativeValue(input, String(vtime));
+      input.blur();
       return { ok: true, vtime: input.value };
     },
 
