@@ -7,7 +7,7 @@ description: >
   details. Load after a run completes or when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
-  version: "2026-05-06 079e8bd"
+  version: "2026-05-12 51c4311"
 ---
 
 # Antithesis Run Triage
