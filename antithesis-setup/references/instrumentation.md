@@ -38,7 +38,7 @@ Write the result down in the Antithesis notebook when the answer is non-obvious.
 
 - Instrument the actual binaries or runtime artifacts that will execute inside Antithesis, not an unrelated local build output.
 - Install the language-appropriate Antithesis SDK into the dependency graph of the code that will emit assertions or lifecycle events.
-- Build and validate instrumentation before the first `snouty run`.
+- Build and validate instrumentation before the first `snouty launch`.
 - If you add assertions later, rerun the relevant instrumentor or rebuild path so assertion cataloging stays current.
 - If a language relies on `/opt/antithesis/catalog/`, avoid symlink chains deeper than one hop inside that tree.
 - If a language relies on `/symbols`, place the files in the image that contains the instrumented software.

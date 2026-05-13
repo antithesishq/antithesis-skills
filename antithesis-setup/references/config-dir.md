@@ -16,7 +16,7 @@ The `antithesis/config/` directory should include the files Antithesis needs to 
 
 ## Submission Flow
 
-When using `snouty run --webhook basic_test --config antithesis/config`:
+When using `snouty launch --json --webhook basic_test --config antithesis/config`:
 
-- Build compose services referenced via `build:` by using `compose build` before `snouty run`.
+- Build compose services referenced via `build:` by using `compose build` before `snouty launch`.
 - Let Snouty consume the config directory, interpolate environment variables, and launch the run.
