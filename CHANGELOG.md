@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-13
+
+- Use `snouty launch` instead of `snouty run` ([PR #146](https://github.com/antithesishq/antithesis-skills/pull/146))
+
 ## 2026-05-12
 
 - Recommend a simple property first ([PR #145](https://github.com/antithesishq/antithesis-skills/pull/145))
