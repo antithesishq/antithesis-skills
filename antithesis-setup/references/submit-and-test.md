@@ -22,7 +22,7 @@ Before submitting to Antithesis, test locally:
 ## Environment Setup
 
 - Determine `ANTITHESIS_REPOSITORY` before submission. If it is readable from the current environment, reuse it. Otherwise, ask the user for the registry value.
-- Ensure `ANTITHESIS_REPOSITORY` is exported in the environment before running `snouty run`.
+- Ensure `ANTITHESIS_REPOSITORY` is exported in the environment before running `snouty launch`.
 - Ensure Docker or Podman is authenticated to the registry.
 - For Antithesis-provisioned registries, onboarding covers auth setup.
 - For user-owned registries, configure Docker/Podman login manually.
@@ -38,7 +38,8 @@ export ANTITHESIS_REPOSITORY=registry.example.com/team/project
 podman compose -f antithesis/config/docker-compose.yaml build
 
 # Submit run
-snouty run \
+snouty launch \
+  --json \
   --webhook basic_test \
   --config antithesis/config \
   --test-name "PROJECT_NAME" \

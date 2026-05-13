@@ -29,7 +29,7 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
 
-`antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty run` with sensible metadata once the harness is ready.
+`antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
 
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
 
@@ -46,7 +46,7 @@ We recommend that you run `antithesis-research`, `antithesis-setup`, and `antith
 
 If your system runs on Kubernetes, run `antithesis-k8s-onboarding-assistance` before `antithesis-setup`. It works with you to figure out which parts of your production k8s setup belong in the test environment, what should be stubbed, and what to drop.
 
-Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty run` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
+Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty launch` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
 
 Don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
 
@@ -118,7 +118,7 @@ This skill produces the following artifacts, relative to the project directory:
 /antithesis-launch Launch an Antithesis run from this repo for 30 minutes.
 ```
 
-This skill discovers the Antithesis config, builds the harness, validates it with `snouty validate`, and only submits `snouty run` if validation succeeds.
+This skill discovers the Antithesis config, builds the harness, validates it with `snouty validate`, and only submits `snouty launch` if validation succeeds.
 
 ## Compatibility
 
