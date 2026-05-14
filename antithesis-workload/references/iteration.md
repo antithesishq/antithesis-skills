@@ -19,6 +19,7 @@ After running `antithesis-triage` on a completed test run and reviewing the resu
 
 - Add non-trivial `Sometimes(cond)` assertions when a semantic state should occur at least once.
 - Add new `parallel_driver_` commands to generate more diverse load patterns.
+- Vary probability and action weights across timelines — see `test-commands.md`, "Vary randomness across timelines".
 - Add `anytime_` validation commands to check invariants under active fault injection.
 - Refine `Always` assertions that are too broad or too narrow.
 - Add `Reachable` assertions to confirm the workload or SUT covers expected outcomes and branch results.
