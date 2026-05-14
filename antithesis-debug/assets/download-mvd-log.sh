@@ -95,7 +95,7 @@ agent-browser --session "$SESSION" wait --load networkidle >/dev/null 2>&1 || tr
 CURRENT_URL=$(agent-browser --session "$SESSION" get url 2>/dev/null || echo "unknown")
 if [[ "$CURRENT_URL" != *"/debugging-session/"* ]]; then
   echo "Error: did not land on a debugging-session page (at: $CURRENT_URL)" >&2
-  echo "If redirected to a login page, authenticate first using the visit-web-page skill's setup-auth flow." >&2
+  echo "If redirected to a login page, authenticate first using the antithesis-triage skill's setup-auth flow." >&2
   exit 2
 fi
 
