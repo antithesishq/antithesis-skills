@@ -133,14 +133,6 @@ relevant file before performing that task.
 5. Read `references/actions.md` — authorize actions and read results
 6. Report findings with evidence chain
 
-### Download the events log for offline analysis
-
-1. Read `references/setup-session.md` — launch / open the debugger URL
-2. Read `references/download-log.md` — run `assets/download-mvd-log.sh`
-   to capture and (for JSON) annotate the events log
-3. Analyze the local file with `jq` (event shape matches the triage
-   skill's logs reference)
-
 ## Runtime injection
 
 The JS runtime is required for **both** simplified and advanced modes. It

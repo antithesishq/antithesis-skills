@@ -86,9 +86,9 @@ agent-browser --session "$SESSION" eval 'document.title'
 ```
 
 If the page title indicates a login page or error, authentication is needed.
-Defer to the `antithesis-triage` skill's `references/setup-auth.md` for the
-interactive login flow. Use the same `--session-name antithesis` so auth state
-is shared.
+Defer to the `antithesis-visit-web-page` skill's `references/setup-auth.md`
+for the interactive login flow. Use the same `--session-name antithesis` so
+auth state is shared.
 
 ## Injecting the runtime
 
