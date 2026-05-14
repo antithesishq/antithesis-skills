@@ -14,8 +14,31 @@ Each action cell contains:
 - `.event` elements — individual output rows
 
 An action is **authorized** when the button has the `disabled` attribute.
-An action is **completed** when it is authorized AND the status label is present
-AND it does not start with "RUNNING".
+The runtime considers an action **completed** when it is authorized AND
+the status label is present AND does not start with "RUNNING".
+
+> **Known bug — `actionCompleted` / completion detection is unreliable.**
+> The runtime's predicate misses real completions: cells that visibly
+> show "DONE" plus full output frequently come back as
+> `actionCompleted: false, statusLabel: null`. The page can render
+> results without setting `.action_status_label`, or it uses status text
+> the runtime's "doesn't start with RUNNING" check incorrectly treats as
+> in-flight.
+>
+> **Treat `notebook.getCells()[i].text` as the source of truth** for
+> whether a cell has output. If `text` includes "DONE" and the rendered
+> result, the action is done — regardless of what `actionCompleted` says.
+> For long results, read the full DOM `innerText` of the cell (the
+> runtime truncates `text` at 500 chars).
+>
+> Likewise, `waitForResult(...)` can return a false-positive completion
+> almost immediately — its first poll may hit a transient status label
+> like `"RUN BASH COMMAND: PODMAN PS -A --FORMAT=JSON | JQ -C"` which
+> doesn't start with the literal "RUNNING" and is therefore treated as
+> done, with `eventCount: 0`. If `waitForResult` returns `ok:true` but
+> with an empty `events` array and a `RUN BASH COMMAND:` status, the
+> action is actually still running. Poll `notebook.getCells()` until the
+> target cell's `text` contains "DONE".
 
 ## Listing action cells
 

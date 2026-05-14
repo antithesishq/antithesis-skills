@@ -38,16 +38,30 @@ agent-browser --session "$SESSION" --session-name antithesis open "$URL"
 agent-browser --session "$SESSION" wait --load networkidle
 ```
 
-Then verify the page loaded:
+Then verify auth deterministically by checking the URL the browser landed on:
 
 ```bash
-agent-browser --session "$SESSION" eval 'document.title'
+agent-browser --session "$SESSION" get url
 ```
 
-If the page title indicates a login page or error, authentication is needed.
-Defer to the `antithesis-triage` skill's `references/setup-auth.md` for the
-interactive login flow. Use the same `--session-name antithesis` so auth state
-is shared.
+If the URL still starts with `https://$TENANT.antithesis.com/...` you are
+authenticated and can proceed. If it redirected to `accounts.google.com`
+(or any other login domain), authentication is needed — defer to the
+`antithesis-visit-web-page` skill's `references/setup-auth.md` for the
+interactive login flow. Use the same `--session-name antithesis` so auth
+state is shared.
+
+> **The `?auth=v2.public...` token in a debugger URL is NOT a session
+> token.** It scopes access to a specific report; a session cookie from a
+> full login is still required. Even a fresh PASETO token in the URL
+> won't bypass the SSO redirect on first contact. Plan to run the
+> interactive login flow once per `--session-name`.
+
+> **Auth domain note:** the `antithesis-visit-web-page` `setup-auth.md`
+> directs the user to `https://antithesis.com/login/?redirect=home`. That
+> establishes auth at the central domain; for tenant subdomains
+> (`$TENANT.antithesis.com`) the cookies propagate in the same browser
+> session-name, so after login you can re-open the tenant URL headless.
 
 ## Injecting the runtime
 
