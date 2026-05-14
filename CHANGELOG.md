@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-14
+
+- Improve randomness usage when creating workloads ([PR #147](https://github.com/antithesishq/antithesis-skills/pull/147))
+
 ## 2026-05-13
 
 - Use `snouty launch` instead of `snouty run` ([PR #146](https://github.com/antithesishq/antithesis-skills/pull/146))
