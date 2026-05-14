@@ -7,7 +7,7 @@ description: >
   feedback on, any Antithesis skill. Does not auto-submit — presents the
   URL for the user to review.
 metadata:
-  version: "2026-05-13 db3787b"
+  version: "2026-05-14 cbf16ee"
 ---
 
 # Antithesis Skills feedback
