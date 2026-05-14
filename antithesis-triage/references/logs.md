@@ -325,7 +325,7 @@ Antithesis tags each event with its virtual time, which represents an unambiguou
 
 Use virtual time as the source of truth for ordering logs rather than timestamps embedded in application logs. Timestamps printed by the application can be out of order due to faults like clock skew and thread pausing.
 
-Use `vtime_seconds` for all time-based analysis. For events that fall within the same rounded second, tiebreak by `moment.input_hash`.
+Use `vtime_seconds` for all time-based analysis. For events that fall within the same rounded second, tiebreak by `moment.vtime`.
 
 > **Note:** `vtime_seconds` is rounded to 5 decimal places (10 µs resolution) and
 > is intended for human-readable filters and ordering only. To address a moment

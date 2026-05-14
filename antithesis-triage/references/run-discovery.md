@@ -7,7 +7,7 @@ snouty runs --json list -n 200 [OPTIONS]
 
 Use `-n 200` as the default page size. Snouty's built-in default of 50 is often too small — it can miss the run when matching a triage-report URL (rule 3) or when looking for the oldest non-triaged run (rule 4). Bump higher (e.g. `-n 500` or `-n 1000`) if a search at 200 still doesn't find what the user is asking for.
 
-You may use `snouty runs list --help` to see the other OPTIONS. The `--status` option is useful if you know the status — for instance, if you are searching for every completed run. Note that the status `failed` usually means the run failed to start for some reason and the failure can be triaged. The status `cancelled` may or may not be triageable — check `links.triage_report` in the run's JSON; if a report URL is present, a report was generated and you can proceed with triage. If `links` is null or `triage_report` is absent, no report exists.
+You may use `snouty runs list --help` to see the other OPTIONS. The `--status` option is useful if you know the status. `snouty runs list` returns runs with one of the following statuses: `starting`, `in_progress`, `completed`, `cancelled`, `incomplete`, `unknown`. The status `incomplete` usually means the run failed to start for some reason and the failure can be triaged. To determine whether ANY run is triageable, check `links.triage_report` in the run's JSON: if a report URL is present, a report was generated and you can proceed with triage. If `links` is null or `triage_report` is absent, no report exists.
 
 
 ## How to tell what run_id the user wants to use
@@ -32,7 +32,7 @@ same json object.
 
 Here is an example report URL
 
-https://<TENANT_ID>.antithesis.com/report/NtBhCs8sN0tN0F1kxoTQR0bo/WEdsk-2wXhfTiLlPLnXsCl7nnkPTxGv6dJJCpk01dQY.html?auth=<<AUTH_KEY>>
+https://<TENANT_ID>.antithesis.com/report/<UNIQUE_ID>/<MORE_UNIUQUE_ID>.html?auth=<<AUTH_KEY>>
 
 If you are unable to match the report URL, ask the user to supply the run_id directly, or use a web-page-visiting skill to extract it from the report page. The run_id is in the bottom section of the Triage Report. The web-page approach is slower and more error-prone, so prefer asking the user for the run_id when possible.
 

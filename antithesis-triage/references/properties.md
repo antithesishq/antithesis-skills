@@ -1,7 +1,6 @@
 # Property queries
 
-Use `snouty runs` to retrieve properties and to download a log of a specific history. The properties
-return will give you what you need to get the logs.
+Use `snouty runs --json properties` to retrieve properties and `assets/download-logs.sh`to download a log of a specific history. The `properties` return data will give you what you need to get the logs.
 
 
 ## Getting all properties
@@ -9,6 +8,7 @@ return will give you what you need to get the logs.
 Use `snouty runs --json properties "$(OPTION)" "$(RUN_ID)"` to download all the properties for a run. 
 OPTION can be `--passing` or `--failing` to retrieve just passing or just failing properties.
 
+Example return:
 
 ```json
 {
@@ -50,7 +50,7 @@ OPTION can be `--passing` or `--failing` to retrieve just passing or just failin
 }
 ```
 A "counterexample" is a case where a property FAILED to hold.
-An "example" is a case where a property did hold.
+An "example" is a case where a property DID hold.
 
 * `example_count` gives the number of times the property PASSED 
 * `counterexample_count` gives the number of times the property FAILED. 
@@ -70,13 +70,15 @@ Each property may expose multiple example rows (typically 3-4), mixing failing
 and passing examples. When triaging, start with the **first failing example**
 (usually index 0) by default. Cross-referencing a passing example can help
 narrow down root cause by showing what's different in a healthy execution. If you want more
-examples you may query the log files for failures that match the property. You will need to retrieve the
-log file to get the details of the failure in order to perform the search.
+examples you may obtain more log files for failures that match the property. You will need to 
+retrieve the log file to get the details of the failure in order to perform the search,
+first using `snouty runs events` and then using the `antithesis-query-logs` skill 
+if more examples are needed.
 
 ### Filtering properties
 
 If you want to filter the properties based on passing or failing, this is supported 
-directly by `snouty runs --json properties` as an option.
+directly by `snouty runs --json properties` with an option.
 
 Otherwise use `jq` to filter the output of `snouty runs --json properties`.
 

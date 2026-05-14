@@ -48,9 +48,9 @@ Read `references/run-discovery.md` to get a list of recent runs. Then summarize 
 
 To lookup a specific run (report), read `references/run-info.md`. Then continue with other workflows as needed.
 
-### Diagnose failed run
+### Diagnose incomplete run
 
-If the "status" of a specific run is "failed" and the "links"."triage_report" value is specified, there is likely an error log in the triage report. Visit the triage report and read it as an error log page.
+If the "status" of a specific run is "incomplete" and the "links"."triage_report" value is specified, there is likely an error log in the triage report. Visit the triage report and read it as an error log page.
 
 ### Triage a run
 
