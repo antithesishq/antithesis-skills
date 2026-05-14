@@ -38,8 +38,14 @@ snouty debug \
   --antithesis.debugging.run_id "$RUN_ID" \
   --antithesis.debugging.input_hash "$INPUT_HASH" \
   --antithesis.debugging.vtime "$VTIME" \
+  --antithesis.debugging.description "$DESCRIPTION" \
   --antithesis.report.recipients "$EMAIL"
 ```
+
+Always pass a `description`, and make it **unique and findable later**
+(e.g., include the property name, a date stamp, or a ticket id). You'll
+use this string to locate the session in the list of debugging sessions
+when you (or a teammate) want to come back to it.
 
 Snouty returns the debugging-session URL on success; proceed to "Opening a
 debugger URL" below.
