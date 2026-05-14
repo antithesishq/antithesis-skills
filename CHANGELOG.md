@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-05-14
 
+- Add guidance for choosing interesting input values in workloads ([PR #148](https://github.com/antithesishq/antithesis-skills/pull/148))
 - Improve randomness usage when creating workloads ([PR #147](https://github.com/antithesishq/antithesis-skills/pull/147))
 
 ## 2026-05-13
