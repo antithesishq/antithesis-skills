@@ -104,6 +104,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 | `references/component-implementation.md` | Implementing workload-side components or wrappers |
 | `references/assertions.md`               | Turning properties into SDK assertions            |
 | `references/test-commands.md`            | Writing commands and organizing test templates    |
+| `references/interesting-values.md`       | Choosing the value menu for the property under test |
 | `references/iteration.md`                | Improving coverage and assertions after triage    |
 
 ## Recommended Workflows
@@ -115,7 +116,9 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 3. Read `references/component-implementation.md`
 4. Read `references/assertions.md`
 5. Read `references/test-commands.md`
-6. Implement the chosen property: assertions, test commands, and supporting code
+6. Read `references/interesting-values.md`
+7. Identify the property's value menu — boundary values plus configured-limit families. See `interesting-values.md` for the discovery process and worked examples
+8. Implement the chosen property: assertions, test commands, and supporting code
 
 ### Post-triage iteration
 
@@ -150,6 +153,7 @@ Review criteria:
 - Assertion messages are unique across the touched code; no broad property is implemented by reusing one message at multiple unrelated callsites
 - Workload-only instrumentation was not used where surgical SUT-side assertions would provide materially better search guidance for rare, dangerous, or timing-sensitive internal states
 - `Reachable(...)` markers are attached to distinct outcomes or branch results, not redundant early path-entry locations on the same straight-line flow
+- For bounded inputs in test commands, draws come from property-specific value menus (boundary values for the input type plus configured-limit families from the property's code paths) rather than arbitrary ranges, or the test command documents that the menu axis is not applicable. See `interesting-values.md`.
 - Test commands exist under `antithesis/test/` and use valid prefixes (`parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`)
 - Test commands are written in the project's language, not Bash, and reuse the project's clients and libraries where possible
 - No test command is responsible for Antithesis lifecycle signaling; `setup_complete` is emitted before test commands begin
