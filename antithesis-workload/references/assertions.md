@@ -103,6 +103,8 @@ Prefer outcome markers over earlier path-entry markers. If a later marker alread
 
 All randomness in test workloads must go through the Antithesis SDK's random module for deterministic replay. Whenever possible, the SUT should also leverage Antithesis randomness rather than using its own. If you are unable to use Antithesis provided randomness everywhere, the ability for Antithesis to quickly find bugs will be diminished.
 
+For guidance on which values to draw from — boundary values, configured-limit families — see `interesting-values.md`.
+
 ## Naming
 
 Give assertions clear, descriptive, unique names. These names appear in triage reports, so they should be immediately understandable and should localize one specific callsite or condition.

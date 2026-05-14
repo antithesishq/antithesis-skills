@@ -173,6 +173,8 @@ Break commands into the smallest coherent pieces so Antithesis has maximum flexi
 
 ### Vary randomness across timelines
 
+Workload randomness has two axes. The **shape axis**, covered below, is how often each menu item is drawn (probabilities, action weights). The **menu axis** — what values are on the menu in the first place — is covered in `interesting-values.md`. Both apply, and they compose.
+
 Vary the shape of randomness across timelines. Don't hardcode probabilities and action weights as module-level constants. At the start of each timeline, draw those parameters themselves from a wide range — including the extremes — so some timelines are heavily biased toward one class of action and others are biased the other way.
 
 This is not the same as the rule against ruling out valid sequences above. That warns against permanently encoding "always do `a` twice." This rule says reroll the bias per timeline — across many timelines every valid sequence is still reachable; within any one timeline you go deep.
