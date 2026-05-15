@@ -48,11 +48,9 @@ Read `references/run-discovery.md` to get a list of recent runs. Then summarize 
 
 To lookup a specific run (report), read `references/run-info.md`. Then continue with other workflows as needed.
 
-### Diagnose incomplete run
-
-If the "status" of a specific run is "incomplete" and the "links"."triage_report" value is specified, there is likely an error log in the triage report. Visit the triage report and read it as an error log page.
-
 ### Triage a run
+
+If the run has a status of "incomplete", refer to the `Diagnose Incomplete Run` section below.  
 
 1. Read `references/run-info.md` to load information on a run
 2. Read `references/properties.md` to load properties
@@ -106,6 +104,20 @@ examples from the triage report. A few examples can mislead — use the
 Do not generalize from a small sample. If you inspect 2-3 examples in the
 triage log viewer and they all show the same upstream failure, that does not
 mean all instances are cascades. The temporal query gives you the true count.
+
+### Diagnose incomplete run
+
+If the "status" of a specific run is "incomplete", there may be be an error log to examine. The steps to triage
+an "imcomplete" status run: 
+
+1. Do a `snouty runs --json show ${RUN_ID}
+2. Look at the `failure_moment` structure in the returned JSON. If present, use the input_hash and vtime from 
+   `failure_moment` to download a log in the analysis as described in `references/properties.md`. Analyze the 
+   log in accordance with `references/logs.md`
+4. Try and obtain the build logs, especially if there is no failure moment, using `snouty runs --json build-logs ${RUN_ID}`
+   and look for errors in the build. This may return an error if build logs are not available. Don't assume the API
+   service is down unless other failures occur.
+
 
 ## General guidance
 

@@ -4,11 +4,10 @@ description: >
   Instructions to authenticate to the tenant and read antithesis web pages. Specific cases where this skill is needed are: 
     1) Finding more examples of successes and failures for a property than what is provided in the property status 
     2) Performing log queries across all histories in an antithesis run, in combination with the log query skill. This answers questions such as "how often is failure X preceeded by an event Y".
-    3) Interpreting the error log from a failed run
-    4) Using multiverse debugging (MVD) sessions, 
-    5) Interpreting Causality reports.
-    6) Looking up the run_id when given only a triage-report URL that cannot be matched against the runs list (`report_id → run_id` is not currently exposed by the API).
-    7) Looking up the session_id in order to launch a debug session with `snouty debug` by reading a triage report
+    3) Using multiverse debugging (MVD) sessions, 
+    4) Interpreting Causality reports.
+    5) Looking up the run_id when given only a triage-report URL that cannot be matched against the runs list (`report_id → run_id` is not currently exposed by the API).
+    6) Looking up the session_id in order to launch a debug session with `snouty debug` by reading a triage report
   For cases not specifically listed here, using `snouty runs` is preferred to using this skill.
 compatibility: agent-browser (https://github.com/vercel-labs/agent-browser) and jq.
 metadata:
