@@ -171,12 +171,29 @@ Randomize aggressively. Every decision in a test command is an opportunity for A
 
 Break commands into the smallest coherent pieces so Antithesis has maximum flexibility in composing test scenarios. Don't tune randomness in ways that rule out valid sequences. A test that always calls `a` twice in a row might find some bugs slightly faster on average, but it can never discover a bug that requires the sequence `a-b-a` without an intervening second `a`. Ruling out valid sequences creates blind spots where bugs hide, and that tradeoff is almost never worth the marginal speedup.
 
+### Vary randomness across timelines
+
+Workload randomness has two axes. The **shape axis**, covered below, is how often each menu item is drawn (probabilities, action weights). The **menu axis** — what values are on the menu in the first place — is covered in `interesting-values.md`. Both apply, and they compose.
+
+Vary the shape of randomness across timelines. Don't hardcode probabilities and action weights as module-level constants. At the start of each timeline, draw those parameters themselves from a wide range — including the extremes — so some timelines are heavily biased toward one class of action and others are biased the other way.
+
+This is not the same as the rule against ruling out valid sequences above. That warns against permanently encoding "always do `a` twice." This rule says reroll the bias per timeline — across many timelines every valid sequence is still reachable; within any one timeline you go deep.
+
+When every step draws uniformly from a large action space, timelines converge toward the typical state and rarely reach the deep states where the interesting bugs hide. A single timeline that's deliberately skewed goes deep into one corner of the state space; across many timelines, the union of skews covers the surface, and finds bugs uniform mixing never reaches. This is sometimes called swarm testing.
+
+The per-timeline bias should also include action omission — the limiting case of skew, where an entire class of action is excluded from the menu for that timeline. For an action vocabulary `[a, b, c, d]`, drop each independently with some small probability at the start of the timeline, and re-roll if the result is empty.
+
+A simple implementation: for each tunable probability, replace `P = 0.3` with `P = random_choice([0.02, 0.3, 0.95])` from the SDK's random module (see `assertions.md`). Three buckets is illustrative; what matters is covering the extremes plus a middle case. For action weights, occasionally zero out one or more entries. Both stay deterministic under replay; both broaden the state space Antithesis can explore.
+
+This matters most when the action space is large. For small vocabularies or one-shot commands (`first_`, `singleton_driver_`) the gains are limited, and the parameters to vary are the ones tuned at the start of the timeline, not per-step decisions.
+
 ## Guidance
 
 - Antithesis already checks that commands exit 0, so a non-zero exit should mean something is genuinely wrong.
 - Reserve `setup_complete` for a container entrypoint or other long-lived startup process that runs before Antithesis starts executing timeline commands.
 - Driver commands connect to the SUT under active fault injection — handle transient network faults gracefully (see `component-implementation.md` for details).
 - All randomness in test commands must go through the Antithesis SDK's random module for deterministic replay (see `assertions.md` for details).
+- Vary probability and action weights across timelines so different timelines explore different corners of the state space (see "Vary randomness across timelines").
 - Write commands in the project's language, not Bash, so they can reuse existing clients, helpers, and libraries.
 
 ## Output

@@ -62,12 +62,26 @@ These fit properties where the individual boolean inputs matter on their own, fo
 
 When available, the SDK adds the named boolean inputs to assertion details under their names, which makes triage more informative than an anonymous combined expression.
 
+## Assert Bounds, Not Exact Values
+
+When a workload runs under fault injection, it can't directly observe everything that happened — requests fail in flight, acknowledgments are lost. The workload constructs bounds (see `component-implementation.md`, "Construct bounds, don't claim exact knowledge"), and the assertion's job is to check that observed state falls within those bounds.
+
+Use rich numeric assertions to encode the bound. If a workload sent 100 increment requests to a counter and 80 were acknowledged:
+
+- `AlwaysGreaterThanOrEqualTo(observed_delta, 80, "counter reflects all acknowledged increments")`
+- `AlwaysLessThanOrEqualTo(observed_delta, 100, "counter reflects no more than attempted increments")`
+
+Two assertions, not one, so triage shows which bound failed.
+
+Don't write `Always(observed_delta == 100, ...)` for the same property — that assertion will fire legitimately whenever the environment dropped requests, drowning real bugs in false positives.
+
 ## Anti-Rules
 
 - Do not use `Sometimes(true, ...)` in normal workload or SUT code. If the condition is constant true, use `Reachable(...)` instead.
 - Do not use `Sometimes(cond, ...)` when the only thing you care about is that execution hit a path. Use `Reachable(...)`.
 - Do not reuse one assertion message across multiple unrelated callsites. Every assertion message should be unique in the codebase.
 - Do not stack broad early `Reachable(...)` markers on a straight-line flow when a later, more specific outcome marker already proves the path was exercised.
+- Do not assert exact equality on values affected by transient errors. Use bounded assertions (see "Assert Bounds, Not Exact Values").
 
 ## Good and Bad Uses
 
@@ -102,6 +116,8 @@ Prefer outcome markers over earlier path-entry markers. If a later marker alread
 ## Use Deterministic Randomness
 
 All randomness in test workloads must go through the Antithesis SDK's random module for deterministic replay. Whenever possible, the SUT should also leverage Antithesis randomness rather than using its own. If you are unable to use Antithesis provided randomness everywhere, the ability for Antithesis to quickly find bugs will be diminished.
+
+For guidance on which values to draw from — boundary values, configured-limit families — see `interesting-values.md`.
 
 ## Naming
 
