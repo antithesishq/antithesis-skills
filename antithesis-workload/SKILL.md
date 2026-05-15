@@ -131,6 +131,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 - Keep Antithesis-only code out of production paths. If you must touch shared code, make the change surgical and easy to wall off.
 - Prefer simple workload code over highly configurable abstractions.
+- Design workloads to be fault-tolerant. Unlike happy-path tests where errors signal bugs, workloads run under fault injection and concurrent activity — transient errors are expected, not exceptional. Make progress toward a goal rather than bail on the first failure.
 - Assume `antithesis-setup` has already made the system runnable in a mostly idle state; this skill owns what the workload does once the system is up.
 - Assume `antithesis-setup` has already installed the relevant SDK and added one minimal bootstrap assertion in the SUT. This skill owns the broader property catalog beyond that initial integration check.
 - Write test commands in the project's language, not Bash, so they can reuse the project's clients, helpers, and libraries.
@@ -152,6 +153,9 @@ Review criteria:
 - `Sometimes(true, ...)` assertions should be rewritten as `Reachable(...)`.
 - Assertion messages are unique across the touched code; no broad property is implemented by reusing one message at multiple unrelated callsites
 - Workload-only instrumentation was not used where surgical SUT-side assertions would provide materially better search guidance for rare, dangerous, or timing-sensitive internal states
+- Workload code makes progress toward stated goals under transient errors rather than bailing on first failure
+- The workload records both attempted and acknowledged operations so later assertions can check bounds (e.g., "counter changed by some value in `[acknowledged, attempted]`")
+- Where retries are used, they're consistent with the SUT's idempotency contract
 - `Reachable(...)` markers are attached to distinct outcomes or branch results, not redundant early path-entry locations on the same straight-line flow
 - For bounded inputs in test commands, draws come from property-specific value menus (boundary values for the input type plus configured-limit families from the property's code paths) rather than arbitrary ranges, or the test command documents that the menu axis is not applicable. See `interesting-values.md`.
 - Test commands exist under `antithesis/test/` and use valid prefixes (`parallel_driver_`, `singleton_driver_`, `serial_driver_`, `first_`, `eventually_`, `finally_`, `anytime_`)
