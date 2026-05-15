@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-15
+
+- Make workload fault-tolerance mindset explicit ([PR #150](https://github.com/antithesishq/antithesis-skills/pull/150))
+
 ## 2026-05-14
 
 - Add guidance for choosing interesting input values in workloads ([PR #148](https://github.com/antithesishq/antithesis-skills/pull/148))
