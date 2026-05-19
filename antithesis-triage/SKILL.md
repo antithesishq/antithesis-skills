@@ -19,7 +19,7 @@ Use this skill to analyze Antithesis test runs.
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- DO NOT PROCEED if `snouty` is not at least version 0.4.0. Use `snouty --version` to find the version.
+- DO NOT PROCEED if `snouty` is not at least version 0.5.0. Use `snouty --version` to find the version.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 
 ## Gathering user input
