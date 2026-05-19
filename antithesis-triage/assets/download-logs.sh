@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 #
-# download-logs.sh — Download moment logs for an Antithesis run via snouty
+# download-logs.sh — Download logs for an Antithesis run via snouty
 # and (optionally) annotate them with active-faults metadata.
 #
 # Usage:
