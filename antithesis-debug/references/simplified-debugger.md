@@ -95,6 +95,13 @@ between two moments), you have two options:
    sleep 2                                                  # let React state settle before runCommand
    ```
 
+   **Pitfall: vtime input briefly `[disabled]` after page load.** Even after
+   `simplified.waitForReady()` returns `ready: true`, the input can render as
+   `textbox [disabled, ref=eNN]` for a second or two. `fill` against a
+   disabled input silently fails (`getMoment()` then returns `vtime: ""`).
+   Re-snapshot after a short sleep; once the snapshot shows the textbox
+   without the `[disabled]` marker, the `fill`+Tab sequence will commit.
+
    In a sweep, also add a `sleep 2` *after* each `waitForNewOutput`.
    Without this inter-iteration spacing, the loop alternates
    success/failure on a 2-cycle (every other iteration times out with
@@ -173,11 +180,46 @@ agent-browser --session "$SESSION" eval \
 > sweep through rows hops emitters, your commands will execute in
 > different containers across iterations.
 
-The simplified runtime does NOT expose a `setContainer(name)` helper. To
-pin a container, click any visible row from that container; then drive
-the vtime input directly with the `fill`+`Tab` pattern (see "Setting
-vtime programmatically" above), which changes the vtime without
-touching the container selector.
+The simplified runtime does NOT expose a `setContainer(name)` helper, but
+you have two ways to pin one without re-anchoring on a log row:
+
+1. **Click the container dropdown directly via `agent-browser`.** The
+   dropdown is a `[role="listbox"]` whose options become snapshotable refs
+   after the listbox is opened. This is reliable even when no visible log
+   row matches the desired container:
+
+   ```bash
+   # 1. Find the closed listbox (its current selection is clickable):
+   agent-browser --session "$SESSION" snapshot -i 2>&1 | grep -A1 '\[ref='
+   # => listbox [ref=e13]
+   #      generic "(host)" [ref=e20] clickable [cursor:pointer, tabindex]
+
+   # 2. Click the current-selection chip to open the list:
+   agent-browser --session "$SESSION" click @e20
+   sleep 1
+
+   # 3. Re-snapshot the listbox — options now have refs:
+   agent-browser --session "$SESSION" snapshot -i -s '[role="listbox"]'
+   # =>   option "(host)"        [ref=e27]
+   #      option "fdb-server-1"  [ref=e28]
+   #      option "workload-1"    [ref=e30]
+   #      ...
+
+   # 4. Click the option you want:
+   agent-browser --session "$SESSION" click @e28
+   agent-browser --session "$SESSION" eval \
+     "window.__antithesisDebug.simplified.getContainer()"
+   # => { container: "fdb-server-1", ok: true }
+   ```
+
+   The dropdown lists only containers running at the MVD recreate moment.
+   To inspect a container that had already crashed, you must use advanced
+   mode (see the main SKILL.md "when to escalate" list).
+
+2. **Click a log row from that container** with `clickLogRow(N)`. Simpler
+   when a visible row matches, but `clickLogRow` also resets the moment
+   to that row's vtime — so do the row click first, then set vtime via
+   `fill`+`Tab` (which doesn't touch the container).
 
 ## Running a bash command
 
@@ -216,9 +258,38 @@ touching the container selector.
 
 ### Command isolation
 
-Each command runs in an **observation branch** — an alternative fork of time. It
-does not affect the main timeline. Commands sent separately are independent; they
-do not run as follow-ups to each other.
+Each `runCommand` runs in its **own observation branch** — an alternative
+fork of time, independent of every other `runCommand`. Two practical
+consequences:
+
+1. **No `/tmp` persistence across commands.** If command A writes
+   `/tmp/foo` and command B tries to read it, B sees nothing — they ran
+   on different branches. **Pack each probe into a single command**:
+   write the file, grep it, summarize it, all in one script. If the
+   script is large or has nasty quoting, base64-encode it locally and
+   send `echo $B64 | base64 -d | bash` (see
+   `references/common-inspections.md` → "Probe with a base64-packaged
+   script").
+2. **No side effects on the main timeline.** Mutations from one
+   `runCommand` are not visible to a later `runCommand` or to the
+   subsequent timeline you'd see by advancing the recreate moment.
+
+### Pitfall: passing the wrong `countBefore` to `waitForNewOutput`
+
+`runCommand` returns `outputCountBefore` — the count BEFORE the new
+command. Pass that exact integer to `waitForNewOutput(countBefore, ...)`.
+Passing a stale value (e.g. always `0`) makes `waitForNewOutput` return
+the FIRST output it finds past that index, which is almost certainly the
+previous probe's stale output — `attempts: 1, waitedMs: 0` is the
+fingerprint. Always thread the count through:
+
+```bash
+RESP=$(agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.runCommand($SCRIPT_JSON)")
+COUNT=$(printf '%s' "$RESP" | jq -r '.outputCountBefore')
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.waitForNewOutput($COUNT, { timeoutMs: 60000 })"
+```
 
 ## Extracting and downloading a file
 

@@ -117,6 +117,57 @@ branch.wait(Time.seconds(10));
 Background execution advances the branch only until command delivery, not
 completion.
 
+## Probe with a base64-packaged script
+
+When a probe needs raw-byte escape sequences (FDB key prefixes, binary
+patterns) or complex nested quoting, composing the script directly through
+JS string escaping → bash → printf is fragile and easy to get wrong (a
+common failure mode: `printf` interpolating `\x02` into the actual byte
+0x02 before the inner tool can interpret it).
+
+Workaround: write the script as a literal heredoc locally, base64-encode
+it, and send `echo <B64> | base64 -d | bash`. Single layer of JS escaping
+handles base64 cleanly.
+
+**Simplified mode** — pack the whole probe (fdbcli + grep + summarize)
+into one base64-d command so `/tmp` lifetime isn't an issue:
+
+```bash
+SCRIPT=$(cat <<'EOF'
+(printf 'getrange "\\x02sm_24\\x00" "\\x02sm_24\\xff" 2000\nexit\n') \
+  | fdbcli -C /etc/foundationdb/fdb.cluster > /tmp/sm24.txt 2>&1
+echo "===TOTAL_FANOUT==="
+grep -c 'sm_repeater_fanout' /tmp/sm24.txt
+echo "===HITS_FOR_139==="
+grep -E 'sm_repeater_fanout.*\\x15\\x8b' /tmp/sm24.txt || echo NO_MATCH
+EOF
+)
+B64=$(printf '%s' "$SCRIPT" | base64 -w0)
+
+RESP=$(agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.runCommand('echo $B64 | base64 -d | bash')")
+COUNT=$(printf '%s' "$RESP" | jq -r '.outputCountBefore')
+agent-browser --session "$SESSION" eval \
+  "window.__antithesisDebug.simplified.waitForNewOutput($COUNT, { timeoutMs: 60000 })"
+```
+
+Note the double-backslashes inside the heredoc (`\\x02`, `\\x8b`): inside
+the single-quoted EOF, bash takes them literally as the two-char sequence
+`\x`; printf then preserves the backslash for the inner tool (`fdbcli`,
+`grep -E`) to interpret. A common mistake is using single-backslash
+(`\x02`) — printf consumes that to byte 0x02 before fdbcli sees it, and
+fdbcli reports `Command failed to completely parse`.
+
+**Advanced mode** — the same trick works inside a `bash...run`
+template literal when its escape stack gets hairy:
+
+```javascript
+const SCRIPT_B64 = "KHByaW50ZiAnZ2V0cmFuZ2UgIlxceDAyc21fMjRcXHgwMCIgIlx...";
+print(bash`echo ${SCRIPT_B64} | base64 -d | bash`.run({
+    branch, container: "fdb-server-1", required_by: [parent],
+}));
+```
+
 ## Notes
 
 - Use `environment.containers.list({moment})` to discover available container
