@@ -8,7 +8,7 @@ description: >
   debugger (default) and the advanced notebook mode.
 compatibility: Requires agent-browser v0.23.4+ (https://github.com/vercel-labs/agent-browser).
 metadata:
-  version: "2026-05-15 a0f67a6"
+  version: "2026-05-18 r135-mvd-update"
 ---
 
 # Antithesis Multiverse Debugger
@@ -77,6 +77,7 @@ agent-browser --session "$SESSION" eval \
 
 Switch to advanced mode only when you need:
 
+- **A target container that had crashed (or otherwise wasn't running) at the MVD recreate moment.** The simplified container dropdown only lists containers running at that point. To inspect a container while it was alive, you must time-travel back via `moment.rewind_to(...)` and target it by name via `bash...run({container: "<name>"})`. This is the one container-targeting case where advanced is strictly required.
 - Branching (`moment.branch()`) and advancing time (`branch.wait`, `branch.wait_until`)
 - Exploring multiple random histories from the same moment (`branch.send_input`)
 - Event set queries (`environment.events.up_to(moment)`, `.contains({source})`)

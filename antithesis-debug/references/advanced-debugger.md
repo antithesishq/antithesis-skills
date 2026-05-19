@@ -213,8 +213,11 @@ b.wait_until({
 A few things to internalize:
 
 - **Commands advance the branch.** Each `bash...run({branch, ...})` extends
-  the branch's timeline by the duration the command actually takes (often
-  a few ms). Subsequent commands run from the new tip.
+  the branch's timeline by the duration the command actually takes —
+  empirically ~50–80 ms per call for a typical short shell command (an
+  `fdbcli getrange` + a few `grep`s). Subsequent commands run from the
+  new tip. To inspect state at exactly vtime X, rewind to X − 0.005 or
+  so, so the actual probe-execution time lands near (not past) X.
 - **Without a wait, the SUT is frozen.** Between your commands, no
   simulated time passes. `wait` and `wait_until` are how you let the SUT
   run for a duration so background activity (fault injector, timers,
@@ -224,6 +227,16 @@ A few things to internalize:
   `CAMPAIGN SAW TERMINAL EVENT: 'RUN BASH COMMAND: ...' EXITED WITH
   NONZERO EXIT CODE N'`. You cannot "undo" the termination — make a fresh
   branch from the same (or an earlier) moment.
+
+  **`grep` is the most common landmine.** `grep PATTERN file` returns exit
+  1 on no match, which terminates the branch even though the probe
+  "worked." Wrap any terminal `grep` (or `find`, or anything else that
+  may legitimately return nonzero) with `|| true` or `|| echo
+  not-found` so the script always exits 0:
+
+  ```bash
+  grep 'sm_repeater_fanout' /tmp/sm24.txt | head -1 || echo NO_FANOUT
+  ```
 
 ### Time travel — sweeping multiple moments
 
