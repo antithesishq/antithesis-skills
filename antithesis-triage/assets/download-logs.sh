@@ -5,7 +5,7 @@
 #
 # Usage:
 #   download-logs.sh -o PATH [--raw] \
-#                    [--begin-vtime VT --begin-input-hash IH] \
+#                    [--begin-vtime VT [--begin-input-hash IH]] \
 #                    RUN_ID INPUT_HASH VTIME
 #
 # Calls `snouty runs --json logs RUN_ID INPUT_HASH VTIME`, which streams
@@ -65,8 +65,8 @@ for tool in snouty jq python3; do
   command -v "$tool" >/dev/null 2>&1 || { echo "Error: $tool not found in PATH" >&2; exit 4; }
 done
 
-if [[ -n "$BEGIN_VTIME" && -z "$BEGIN_INPUT_HASH" ]] || [[ -z "$BEGIN_VTIME" && -n "$BEGIN_INPUT_HASH" ]]; then
-  echo "Error: --begin-vtime and --begin-input-hash must be provided together" >&2
+if [[ -z "$BEGIN_VTIME" && -n "$BEGIN_INPUT_HASH" ]]; then
+  echo "Error: --begin-input-hash requires --begin-vtime" >&2
   exit 4
 fi
 
