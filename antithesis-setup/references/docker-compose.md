@@ -18,6 +18,8 @@ name: foobar
 
 Every service must set both `container_name:` and `hostname:` to the same value. Antithesis sometimes uses `hostname` rather than `container_name` in it's log messages, so making sure they are the same will eliminate ambiguity during log analysis.
 
+Do not use underscores in `hostname` or `container_name` — underscores are not valid DNS label characters and can break name resolution. Use hyphens (e.g. `foobar-server`, not `foobar_server`).
+
 ## Image References
 
 Services use one of two patterns:
@@ -37,6 +39,7 @@ services:
     container_name: foobar-server
     hostname: foobar-server
     platform: linux/amd64
+    init: true
     build:
       context: ../..
       dockerfile: Dockerfile
@@ -46,6 +49,7 @@ services:
     container_name: foobar-postgres
     hostname: foobar-postgres
     platform: linux/amd64
+    init: true
     image: docker.io/library/postgres:17.2
 ```
 
@@ -60,6 +64,41 @@ The compose config must run without internet access. All images must be pre-buil
 ## setup_complete Signal
 
 Ensure at least one entrypoint emits the `setup_complete` event. Use `antithesis/setup-complete.sh` or call the SDK's setup complete method. Only emit once the system is healthy and ready for testing. Do not emit `setup_complete` from `antithesis/test/` or from any `first_` command; those commands do not start until after Antithesis has already observed `setup_complete`.
+
+## Runtime Compose Rules
+
+### Set `init: true` on every service
+
+Without it, the service's own entrypoint becomes pid 1 — and Antithesis cannot collect core dumps from a pid 1 process. `init: true` inserts a tiny init process so the real service runs under it and crashes remain diagnosable.
+
+### Order services with healthchecks, not plain `depends_on`
+
+Plain `depends_on` waits only for the container to start — not for the service inside it to be ready. Give each dependency a `healthcheck` and reference it with `condition: service_healthy`:
+
+```yaml
+services:
+  postgres:
+    image: docker.io/library/postgres:17.2
+    init: true
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  server:
+    image: foobar-server:latest
+    init: true
+    depends_on:
+      postgres:
+        condition: service_healthy
+```
+
+### Things NOT to set
+
+- **`logging:` driver** — do NOT override. Antithesis collects stdout/stderr directly; a custom driver will still generate logs, but they will not appear in the debugging artifacts.
+- **`internal: true` on any network** — do NOT configure. It isolates the service from the Antithesis network and breaks connectivity.
+- **`pull_policy:`** — do NOT set. The Antithesis environment has no internet access, so anything that tries to pull at runtime will fail. Antithesis pulls all required images automatically before running `docker compose`.
 
 ## Named Volumes
 
