@@ -105,7 +105,10 @@ Review criteria:
 
 - `antithesis/config/docker-compose.yaml` exists and every service has `build:` (for local images) or `image:` (for public images) configured correctly
 - Every service in docker-compose.yaml includes `platform: linux/amd64`
-- Every service has `hostname:` set to match its `container_name:`
+- Every service has `hostname:` set to match its `container_name:`, and neither contains an underscore (use hyphens — underscores are not valid DNS label characters)
+- Every service sets `init: true` so the service process does not run as pid 1
+- Cross-service dependencies use `depends_on` with `condition: service_healthy` against a defined `healthcheck`, not plain `depends_on`
+- The runtime compose does NOT set a custom `logging:` driver, does not configure any `internal: true` network, and does not set `pull_policy:`
 - The instrumentation inventory from `references/instrumentation.md` is fully implemented: each service is instrumented, cataloged-only, or explicitly documented as uninstrumented
 - The relevant Antithesis SDK is installed in the SUT dependency graph
 - A bootstrap property exists in a simple, guaranteed-to-run code path (not behind rare behavior)

@@ -10,6 +10,8 @@
 # Every service MUST include `platform: linux/amd64` — Antithesis runs on x86-64.
 # Every service MUST set `NO_COLOR=1` — Antithesis stores raw bytes and does
 # not render ANSI escape codes, so color output is garbage.
+# Every service MUST set `init: true`
+# Use healthchecks + `depends_on: condition: service_healthy` to order startup
 #
 # Example:
 #   name: foobar
@@ -38,6 +40,7 @@ services:
   noop:
     platform: linux/amd64
     image: debian:stable-slim
+    init: true
     environment:
       NO_COLOR: "1"
     command: ["sh", "-c", "tail -f /dev/null"]
