@@ -1,6 +1,6 @@
 # Property queries
 
-`report` refers to `window.__antithesisTriage.report` in this file.
+`report` refers to `window.__antithesisAgentBrowser.report` in this file.
 
 ## Getting all properties
 
@@ -31,22 +31,22 @@ separate status-specific methods:
 ```bash
 # Failed properties only
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
+  "window.__antithesisAgentBrowser.report.getAllProperties()" \
   | jq '.properties | map(select(.status == "failed"))'
 
 # Passed properties only
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
+  "window.__antithesisAgentBrowser.report.getAllProperties()" \
   | jq '.properties | map(select(.status == "passed"))'
 
 # Unfound properties only
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
+  "window.__antithesisAgentBrowser.report.getAllProperties()" \
   | jq '.properties | map(select(.status == "unfound"))'
 
 # Properties in a specific group
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
+  "window.__antithesisAgentBrowser.report.getAllProperties()" \
   | jq '.properties | map(select(.group | any(test("SDK: Go"))))'
 ```
 
@@ -84,7 +84,7 @@ containing `{ index: 0, status: "failing", time: "85.75s" }` entries.
 ```bash
 # Failed property examples only
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getPropertyExamples()" \
+  "window.__antithesisAgentBrowser.report.getPropertyExamples()" \
   | jq '.properties | map(select(.status == "failed"))'
 ```
 
@@ -102,22 +102,18 @@ Eval `report.getExampleLogsUrl(propertyName, exampleIndex)` to retrieve the log 
 
 ## Download logs from a log URL
 
-Use `download-logs.sh` to fetch the log URL for a given example. The script
-handles navigation, waiting, download, and post-processing automatically:
+Use `assets/download-logs-from-url.sh` to fetch a log file from a given log URL:
 
 ```bash
-bash assets/download-logs.sh \
+bash assets/download-logs-from-url.sh \
   --url "$LOGS_URL" \
-  --output /tmp/triage/property-name.json
+  --output /tmp/logs/property-name.json
 ```
 
 Always download logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
 
-If you do not have access to `bash` on this machine, read the download-logs script and perform the steps manually.
+If you do not have access to `bash` on this machine, read the download script and perform the steps manually.
 
-The script creates its own browser session using shared `antithesis` auth,
-navigates to the URL, waits for the page to load, downloads the file, and
-post-processes the JSON automatically. The default format is JSON. Use
-`--format txt` or `--format csv` when asked, but prefer JSON whenever possible.
+The script creates its own browser session using shared `antithesis` auth, navigates to the URL, waits for the page to load, and downloads the file verbatim (no post-processing). The default format is JSON. Use `--format txt` or `--format csv` when asked, but prefer JSON whenever possible.
 
-To learn how to understand logs, refer to `references/logs.md`.
+To annotate a downloaded JSON log with `vtime_seconds` and `active_faults`, pipe it through `antithesis-triage/assets/process-logs.py` (or `antithesis-debug/assets/process-logs.py`).

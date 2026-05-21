@@ -333,10 +333,10 @@
   async function auditSetup() {
     var report = makeReport("setup");
 
-    // This phase runs on the report page with the triage runtime.
-    var triage = window.__antithesisTriage;
+    // This phase runs on the report page with the agent-browser runtime.
+    var triage = window.__antithesisAgentBrowser;
     if (!triage) {
-      report.errors.push("triage runtime not loaded");
+      report.errors.push("agent-browser runtime not loaded");
       report.ok = false;
       return report;
     }

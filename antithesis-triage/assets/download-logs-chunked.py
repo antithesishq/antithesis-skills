@@ -45,7 +45,7 @@ download-logs-chunked.py -o PATH [--begin-vtime FLOOR] RUN_ID INPUT_HASH VTIME
 Exit codes:
   0  success (possibly partial coverage)
   1  hard failure (lookback exhausted, snouty error other than timeout,
-     or unparseable event)
+     or unparsable event)
   2  usage error
 """
 
@@ -56,7 +56,6 @@ import json
 import subprocess
 import sys
 from typing import Any
-
 
 INITIAL_LOOKBACK = 60.0
 MIN_LOOKBACK = 1.0
@@ -107,18 +106,13 @@ def fetch_chunk(
     return True, events, False
 
 
-def is_only_anchor(
-    events: list[dict[str, Any]], anchor_hash: str, anchor_vtime: str
-) -> bool:
+def is_only_anchor(events: list[dict[str, Any]], anchor_hash: str, anchor_vtime: str) -> bool:
     """True if the chunk is empty or contains only the anchor moment."""
     if not events:
         return True
     if len(events) == 1:
         m = events[0].get("moment") or {}
-        return (
-            m.get("input_hash") == anchor_hash
-            and m.get("vtime") == anchor_vtime
-        )
+        return m.get("input_hash") == anchor_hash and m.get("vtime") == anchor_vtime
     return False
 
 
@@ -151,9 +145,7 @@ def chunked_download(
             use_begin = tentative_begin > floor_vtime
             begin_vtime = tentative_begin if use_begin else None
 
-            ok, events, timed_out = fetch_chunk(
-                run_id, cur_hash, cur_vtime_s, begin_vtime
-            )
+            ok, events, timed_out = fetch_chunk(run_id, cur_hash, cur_vtime_s, begin_vtime)
 
             if not ok and timed_out:
                 lookback = lookback / TIMEOUT_SHRINK_FACTOR
@@ -241,12 +233,32 @@ def chunked_download(
         return []
 
     # Stitch: fetched is in fetch order (newest first). Reverse for
-    # chronological. Drop the first event of every chunk except the
-    # oldest — it is the duplicate boundary with the previous chunk.
+    # chronological. Each newer chunk's first event is the anchor we passed
+    # in, which is also the last event of the previous (older) chunk —
+    # drop that one duplicate before extending.
+    #
+    # Defensively verify the boundary: if snouty stops returning the
+    # anchor inside the response, dropping chunk[0] would silently lose a
+    # real event. In that case, keep the whole chunk and warn.
     fetched.reverse()
     result = list(fetched[0])
     for chunk in fetched[1:]:
-        result.extend(chunk[1:])
+        prev_last = result[-1].get("moment") or {}
+        cur_first = (chunk[0].get("moment") or {}) if chunk else {}
+        boundary_matches = (
+            prev_last.get("input_hash") == cur_first.get("input_hash")
+            and prev_last.get("vtime") == cur_first.get("vtime")
+        )
+        if boundary_matches:
+            result.extend(chunk[1:])
+        else:
+            print(
+                "chunked: warn: chunk boundary does not match anchor "
+                f"(prev_last={prev_last}, cur_first={cur_first}); "
+                "keeping full chunk — snouty CLI behavior may have changed",
+                file=sys.stderr,
+            )
+            result.extend(chunk)
     return result
 
 
@@ -270,9 +282,7 @@ def main() -> int:
         print("chunked: --begin-vtime must be >= 0", file=sys.stderr)
         return 2
 
-    result = chunked_download(
-        args.run_id, args.input_hash, args.vtime, args.begin_vtime
-    )
+    result = chunked_download(args.run_id, args.input_hash, args.vtime, args.begin_vtime)
     if result is None:
         return 1
 

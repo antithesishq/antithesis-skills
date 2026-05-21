@@ -44,7 +44,7 @@ You can also check for errors at any time with:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getError()"
+  "window.__antithesisAgentBrowser.report.getError()"
 ```
 
 This returns the error object (same shape as `result.error`) or `null` if the
@@ -68,7 +68,7 @@ the available log viewers, then use `prepareDownload` with the correct index:
 ```bash
 # List log panes on the page (works on any page with log viewers).
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.getLogViewers()"
+  "window.__antithesisAgentBrowser.logs.getLogViewers()"
 ```
 
 Each entry has `index`, `label`, `itemCount`, and `visible`. Use the `index`
@@ -77,11 +77,11 @@ to prepare and download:
 ```bash
 # Prepare the download link for pane 0 as JSON.
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.prepareDownload('json', 0)"
+  "window.__antithesisAgentBrowser.logs.prepareDownload('json', 0)"
 
 # Download the file.
 agent-browser --session "$SESSION" download \
-  'a.sequence_printer_menu_button[data-triage-dl]' /tmp/error-logs.json
+  'a.sequence_printer_menu_button[data-ab-dl]' /tmp/error-logs.json
 ```
 
 Downloaded logs are minified single-line JSON — always use `jq` to inspect them, never `cat` or `wc -l`. `jq length <file>` is a good first command to start with.

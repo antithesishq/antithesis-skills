@@ -48,11 +48,13 @@ Use `environment.host` as the container reference for host-level commands
 (this is what the simplified debugger labels `(host)` in the dropdown):
 
 ```javascript
-print(bash`ls -laf /opt`.run({
+print(
+  bash`ls /opt`.run({
     branch,
     container: environment.host,
     required_by: [parent_action],
-}));
+  }),
+);
 ```
 
 ## Extract a file for download
@@ -163,9 +165,13 @@ template literal when its escape stack gets hairy:
 
 ```javascript
 const SCRIPT_B64 = "KHByaW50ZiAnZ2V0cmFuZ2UgIlxceDAyc21fMjRcXHgwMCIgIlx...";
-print(bash`echo ${SCRIPT_B64} | base64 -d | bash`.run({
-    branch, container: "fdb-server-1", required_by: [parent],
-}));
+print(
+  bash`echo ${SCRIPT_B64} | base64 -d | bash`.run({
+    branch,
+    container: "fdb-server-1",
+    required_by: [parent],
+  }),
+);
 ```
 
 ## Notes
@@ -178,14 +184,13 @@ print(bash`echo ${SCRIPT_B64} | base64 -d | bash`.run({
   before it runs.
 - Default timeout for `bash...run()` is 30 virtual minutes. Pass `timeout: Time.seconds(N)` for shorter timeouts.
 
-
 ## Time-travel sweep — probe the same container at multiple moments
 
 ### Simplified-mode sweep (preferred when you only need shell output)
 
 The simplified runtime intentionally does NOT expose a `setMoment(vt)`
 helper: the page's vtime input commits via React's `focusout` handler,
-which only fires on *trusted* (real) events. Any in-page setter would
+which only fires on _trusted_ (real) events. Any in-page setter would
 update the display without changing the committed moment. Drive the
 vtime input from agent-browser instead — find the input ref via a
 snapshot, then `fill` + Tab:
@@ -233,15 +238,20 @@ that follow keep the same container.
 For an absolute vtime, branch from a moment built with `rewind_to`:
 
 ```javascript
-sweep_action = new action({description: "sweep", tethered_authorization: true})
+sweep_action = new action({
+  description: "sweep",
+  tethered_authorization: true,
+});
 
 for (vt of [15, 18, 21, 24, 27, 30]) {
-  b = moment.rewind_to(vt).branch()
-  print(bash`date && ps -elf`.run({
+  b = moment.rewind_to(vt).branch();
+  print(
+    bash`date && ps -elf`.run({
       branch: b,
       container: "CONTAINER",
       required_by: [sweep_action],
-  }))
+    }),
+  );
 }
 ```
 
@@ -260,4 +270,3 @@ single branch with `wait` between commands.
 See `references/advanced-debugger.md` for the full mental model, including
 how `wait`/`wait_until` advance branches and the rules around terminated
 branches.
-

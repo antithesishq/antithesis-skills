@@ -9,5 +9,3 @@ snouty runs --json show "$RUN_ID"
 ```
 
 The snouty command returns a json block with metadata about the run.
-
-

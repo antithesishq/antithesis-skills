@@ -33,7 +33,7 @@ Use this when:
 - the user makes a request to inspect container filesystem, runtime state, or events inside Antithesis
 - the triage skill has launched an MVD session when investigating the results of a run
 
-For auth and report navigation, use the `antithesis-visit-web-page` skill. It
+For auth and report navigation, use the `antithesis-agent-browser` skill. It
 owns the `agent-browser` session and authentication flow. This skill handles
 the debugger itself.
 
@@ -246,8 +246,8 @@ agent-browser --session "$SESSION" eval \
 - **Start in simplified mode.** The simplified debugger handles most debugging
   tasks. Only switch to advanced mode when you specifically need the notebook
   API.
-- **Defer to antithesis-visit-web-page for auth.** If the debugger URL
-  requires authentication, use the `antithesis-visit-web-page` skill's
+- **Defer to antithesis-agent-browser for auth.** If the debugger URL
+  requires authentication, use the `antithesis-agent-browser` skill's
   `references/setup-auth.md` for the interactive login flow. Use the same
   `--session-name antithesis` so auth state is shared.
 - **Use disposable sessions.** Generate a unique `SESSION` for each debugging

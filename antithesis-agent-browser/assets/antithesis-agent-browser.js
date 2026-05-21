@@ -1305,12 +1305,12 @@
 
       // Clear any previous marker, then tag this link for agent-browser.
       wrappers.forEach(function (w) {
-        var prev = w.querySelector("[data-triage-dl]");
-        if (prev) prev.removeAttribute("data-triage-dl");
+        var prev = w.querySelector("[data-ab-dl]");
+        if (prev) prev.removeAttribute("data-ab-dl");
       });
-      link.setAttribute("data-triage-dl", "active");
+      link.setAttribute("data-ab-dl", "active");
 
-      var selector = "a.sequence_printer_menu_button[data-triage-dl]";
+      var selector = "a.sequence_printer_menu_button[data-ab-dl]";
       return { format: fmt, filename: filename, selector: selector };
     },
   };
@@ -1477,7 +1477,7 @@
     info: function () {
       return {
         version: VERSION,
-        description: "Antithesis triage runtime",
+        description: "Antithesis agent-browser runtime",
         namespaces: {
           report: Object.keys(reportApi).sort(),
           logs: Object.keys(logsApi).sort(),
@@ -1487,6 +1487,6 @@
     },
   };
 
-  window.__antithesisTriage = api;
+  window.__antithesisAgentBrowser = api;
   return api.info();
 })();

@@ -10,7 +10,7 @@
 # the log URL, and downloads the log file in the requested format. The output
 # is written verbatim — no post-processing. If the caller wants vtime/fault
 # annotation on a JSON download, pipe the result through
-# antithesis-triage/assets/process-logs.py separately.
+# antithesis-triage/assets/process-logs.py (or antithesis-debug/assets/process-logs.py) separately.
 #
 # Exit codes:
 #   0  success
@@ -21,7 +21,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-RUNTIME_JS="${SCRIPT_DIR}/antithesis-triage.js"
+RUNTIME_JS="${SCRIPT_DIR}/antithesis-agent-browser.js"
 
 URL=""
 OUTPUT=""
@@ -81,14 +81,14 @@ fi
 # Step 3: Inject runtime.
 echo "Injecting runtime..." >&2
 if ! cat "$RUNTIME_JS" | agent-browser --session "$SESSION" eval --stdin >/dev/null 2>&1; then
-  echo "Error: failed to inject triage runtime" >&2
+  echo "Error: failed to inject agent-browser runtime" >&2
   exit 3
 fi
 
 # Step 4: Wait for log viewer to be ready.
 echo "Waiting for logs to load..." >&2
 if ! agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.waitForReady()" >/dev/null 2>&1; then
+  "window.__antithesisAgentBrowser.logs.waitForReady()" >/dev/null 2>&1; then
   echo "Error: log viewer did not become ready" >&2
   exit 2
 fi
@@ -96,7 +96,7 @@ fi
 # Step 5: Prepare the download link.
 echo "Preparing download ($FORMAT)..." >&2
 if ! agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.logs.prepareDownload('${FORMAT}', 0)" >/dev/null 2>&1; then
+  "window.__antithesisAgentBrowser.logs.prepareDownload('${FORMAT}', 0)" >/dev/null 2>&1; then
   echo "Error: prepareDownload failed" >&2
   exit 3
 fi
@@ -104,7 +104,7 @@ fi
 # Step 6: Download to a temp file to avoid partial/corrupt output.
 echo "Downloading..." >&2
 if ! agent-browser --session "$SESSION" download \
-  'a.sequence_printer_menu_button[data-triage-dl]' "$TMPFILE" >/dev/null 2>&1; then
+  'a.sequence_printer_menu_button[data-ab-dl]' "$TMPFILE" >/dev/null 2>&1; then
   echo "Error: download failed" >&2
   exit 3
 fi

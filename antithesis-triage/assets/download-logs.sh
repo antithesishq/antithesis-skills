@@ -20,13 +20,6 @@
 # specific earlier moment instead of the beginning of the run. They are not
 # needed for pagination — snouty stitches pages internally.
 #
-# Long-history fallback: if the one-shot `snouty runs logs` fetch times out
-# (stderr contains "operation timed out"), this script falls back to
-# `download-logs-chunked.py` next to it, which walks backward in adaptive
-# vtime windows and stitches the chunks together. The fallback is
-# transparent — the same -o path receives the assembled NDJSON. If the
-# caller passed --begin-vtime, the chunked walk uses it as the floor.
-#
 # Exit codes:
 #   0  success
 #   3  download or processing error

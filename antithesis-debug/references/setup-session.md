@@ -94,7 +94,7 @@ agent-browser --session "$SESSION" get url
 If the URL still starts with `https://$TENANT.antithesis.com/...` you are
 authenticated and can proceed. If it redirected to `accounts.google.com`
 (or any other login domain), authentication is needed — defer to the
-`antithesis-visit-web-page` skill's `references/setup-auth.md` for the
+`antithesis-agent-browser` skill's `references/setup-auth.md` for the
 interactive login flow. Use the same `--session-name antithesis` so auth
 state is shared.
 
@@ -104,7 +104,7 @@ state is shared.
 > won't bypass the SSO redirect on first contact. Plan to run the
 > interactive login flow once per `--session-name`.
 
-> **Auth domain note:** the `antithesis-visit-web-page` `setup-auth.md`
+> **Auth domain note:** the `antithesis-agent-browser` `setup-auth.md`
 > directs the user to `https://antithesis.com/login/?redirect=home`. That
 > establishes auth at the central domain; for tenant subdomains
 > (`$TENANT.antithesis.com`) the cookies propagate in the same browser

@@ -34,10 +34,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 RUNTIME_JS="${SCRIPT_DIR}/antithesis-debug.js"
-# process-logs.py is owned by the antithesis-triage skill; we delegate to its
-# copy rather than ship a duplicate. Skills live as siblings under the skills
-# root in both the monorepo and the installed layout.
-PROCESS_LOGS="${SCRIPT_DIR}/../../antithesis-triage/assets/process-logs.py"
+PROCESS_LOGS="${SCRIPT_DIR}/process-logs.py"
 
 usage() {
   sed -n '3,/^$/p' "${BASH_SOURCE[0]}" | sed 's/^#\s\?//' >&2
@@ -95,7 +92,7 @@ agent-browser --session "$SESSION" wait --load networkidle >/dev/null 2>&1 || tr
 CURRENT_URL=$(agent-browser --session "$SESSION" get url 2>/dev/null || echo "unknown")
 if [[ "$CURRENT_URL" != *"/debugging-session/"* ]]; then
   echo "Error: did not land on a debugging-session page (at: $CURRENT_URL)" >&2
-  echo "If redirected to a login page, authenticate first using the antithesis-triage skill's setup-auth flow." >&2
+  echo "If redirected to a login page, authenticate first using the antithesis-agent-browser skill's setup-auth flow." >&2
   exit 2
 fi
 

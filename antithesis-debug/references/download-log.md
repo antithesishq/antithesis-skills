@@ -5,10 +5,8 @@ local analysis (jq filtering, fault-window inspection, cross-referencing
 with code), download it via the `assets/download-mvd-log.sh` script. It
 drives `agent-browser`, captures the page's "Download as JSON" / "Download
 as TXT" / "Download as CSV" output, and (for JSON) post-processes the
-result through the triage skill's `process-logs.py` to add `vtime_seconds`
-and `active_faults` annotations. (The script invokes
-`../../antithesis-triage/assets/process-logs.py` directly — there's no
-debug-skill-local copy.)
+result through `assets/process-logs.py` to add `vtime_seconds` and
+`active_faults` annotations.
 
 ## When to use
 
@@ -27,7 +25,7 @@ download.
 
 - `agent-browser` installed and authenticated to the tenant. If you are
   not authenticated, run the interactive login flow first (see the
-  web-page-visiting skill's auth setup reference).
+  `antithesis-agent-browser` skill's auth setup reference).
 - A debugging-session URL (`https://TENANT.antithesis.com/debugging-session/...`).
 
 ## Usage
@@ -42,10 +40,10 @@ Optional flags:
 
 - `--format json|txt|csv` (default `json`). Use `txt` for quick eyeballing
   in a pager; `json` for any analysis.
-- `--raw` — write the unmodified JSON array; skip the triage skill's
-  `process-logs.py` annotation. Use this if you want the file in its
-  on-the-wire form (no `vtime_seconds`, no `active_faults`). Only
-  meaningful with `--format json`.
+- `--raw` — write the unmodified JSON array; skip the `process-logs.py`
+  annotation. Use this if you want the file in its on-the-wire form
+  (no `vtime_seconds`, no `active_faults`). Only meaningful with
+  `--format json`.
 
 Always write to a unique path. Other agents may be running concurrently.
 
@@ -64,9 +62,8 @@ Always write to a unique path. Other agents may be running concurrently.
 5. Calls `simplified.prepareLogDownload(format)` to force the
    `<a-menu>`'s shadow-root menu visible and tag the link.
 6. Captures the click via `agent-browser download`.
-7. For `json` (and not `--raw`): pipes through the triage skill's
-   `process-logs.py` → JSON array annotated with `vtime_seconds` and
-   `active_faults`.
+7. For `json` (and not `--raw`): pipes through `assets/process-logs.py`
+   → JSON array annotated with `vtime_seconds` and `active_faults`.
 8. For `txt` / `csv` / `--raw`: writes the captured file verbatim.
 
 ## Output format
@@ -91,8 +88,8 @@ second). `process-logs.py` accepts both this and the newer
 carries `vtime_seconds` (rounded float, for human-readable jq filters)
 and `active_faults` (snapshot of currently-open fault windows).
 
-For jq query examples, see the triage skill's logs reference (the same
-event shape applies).
+For jq query examples, see the `antithesis-triage` skill's logs reference
+(the same event shape applies).
 
 ## Known limitations
 

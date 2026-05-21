@@ -1,6 +1,6 @@
 # Run Discovery
 
-If the user did not provide an explicit triage report id or, you can search for recent runs at `https://$TENANT.antithesis.com/runs`.
+When `snouty runs list` is unavailable, you can search for recent runs at `https://$TENANT.antithesis.com/runs`.
 
 To filter runs by text, append the `primary-filter` query parameter when navigating to the runs page. Make sure to URL escape the filter value.
 
@@ -21,7 +21,7 @@ You can load the entire runs table using `getRecentRuns`:
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.runs.getRecentRuns()"
+  "window.__antithesisAgentBrowser.runs.getRecentRuns()"
 ```
 
 To filter by status, pass a `status` option. Valid values: `Starting`,
@@ -29,7 +29,7 @@ To filter by status, pass a `status` option. Valid values: `Starting`,
 
 ```bash
 agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.runs.getRecentRuns({status: 'Incomplete'})"
+  "window.__antithesisAgentBrowser.runs.getRecentRuns({status: 'Incomplete'})"
 ```
 
 The filter is applied before scrolling and automatically cleared afterward,

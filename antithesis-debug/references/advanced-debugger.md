@@ -153,17 +153,23 @@ To group multiple effects under one authorize click, use `action()` to make
 a parent and link children with `required_by`:
 
 ```javascript
-parent = new action({ description: "sweep", tethered_authorization: true })
+parent = new action({ description: "sweep", tethered_authorization: true });
 
-print(bash`date`.run({
-    branch: my_branch, container: "CONTAINER",
+print(
+  bash`date`.run({
+    branch: my_branch,
+    container: "CONTAINER",
     required_by: [parent],
-}))
+  }),
+);
 
-print(bash`ls -la /`.run({
-    branch: my_branch, container: "CONTAINER",
+print(
+  bash`ls -la /`.run({
+    branch: my_branch,
+    container: "CONTAINER",
     required_by: [parent],
-}))
+  }),
+);
 ```
 
 Action props you'll use:
@@ -176,7 +182,6 @@ Action props you'll use:
 If you ever want to see the full list, pass a garbage opts
 object — the notebook prints a `⚠ action(...) expects: ...` warning
 listing every prop (see "schema-discovery" below).
-
 
 ### The schema-discovery trick ("expect" pattern)
 
@@ -191,23 +196,23 @@ and read the warning.
 
 ```javascript
 // Make a new moment at an absolute vtime (rewinds backward from `moment`)
-m = moment.rewind_to(15.0)
+m = moment.rewind_to(15.0);
 
 // Relative rewind (n seconds earlier than the current moment)
-m2 = moment.rewind(Time.seconds(3))
+m2 = moment.rewind(Time.seconds(3));
 
 // Create a mutable branch rooted at a moment
-b = m.branch()
-b.end                   // the moment at the current branch tip
+b = m.branch();
+b.end; // the moment at the current branch tip
 
 // Advance time on the branch without running a command
-b.wait({duration: Time.seconds(5), required_by: [parent]})
+b.wait({ duration: Time.seconds(5), required_by: [parent] });
 
 // Advance until a matching event occurs (or until 1800s elapse — default cap)
 b.wait_until({
-    until: environment.session.output.contains({source: "fault_injector"}),
-    required_by: [parent],
-})
+  until: environment.session.output.contains({ source: "fault_injector" }),
+  required_by: [parent],
+});
 ```
 
 A few things to internalize:
@@ -225,14 +230,14 @@ A few things to internalize:
 - **A nonzero exit code terminates the branch.** Any subsequent command on
   the same branch produces
   `CAMPAIGN SAW TERMINAL EVENT: 'RUN BASH COMMAND: ...' EXITED WITH
-  NONZERO EXIT CODE N'`. You cannot "undo" the termination — make a fresh
+NONZERO EXIT CODE N'`. You cannot "undo" the termination — make a fresh
   branch from the same (or an earlier) moment.
 
   **`grep` is the most common landmine.** `grep PATTERN file` returns exit
   1 on no match, which terminates the branch even though the probe
   "worked." Wrap any terminal `grep` (or `find`, or anything else that
   may legitimately return nonzero) with `|| true` or `|| echo
-  not-found` so the script always exits 0:
+not-found` so the script always exits 0:
 
   ```bash
   grep 'sm_repeater_fanout' /tmp/sm24.txt | head -1 || echo NO_FANOUT
@@ -241,13 +246,19 @@ A few things to internalize:
 ### Time travel — sweeping multiple moments
 
 ```javascript
-sweep_action = new action({description: "sweep", tethered_authorization: true})
+sweep_action = new action({
+  description: "sweep",
+  tethered_authorization: true,
+});
 for (vt of [15, 18, 21, 24, 27, 30]) {
-  b = moment.rewind_to(vt).branch()
-  print(bash`date && ps -elf`.run({
-      branch: b, container: "CONTAINER",
+  b = moment.rewind_to(vt).branch();
+  print(
+    bash`date && ps -elf`.run({
+      branch: b,
+      container: "CONTAINER",
       required_by: [sweep_action],
-  }))
+    }),
+  );
 }
 ```
 
@@ -263,23 +274,25 @@ doing the sweep on a single branch with `wait` in between.
 what the simplified debugger labels `(host)` in the dropdown.
 
 ```javascript
-print(bash`ls -laf /opt`.run({
+print(
+  bash`ls /opt`.run({
     branch: my_branch,
     container: environment.host,
     required_by: [parent],
-}))
+  }),
+);
 ```
 
 ## Exploring alternate histories with `send_input`
 
 From the same moment, a `wait()` always produces the same history (the
-simulator is deterministic). To explore *different* random histories from
+simulator is deterministic). To explore _different_ random histories from
 the same moment — e.g. to try to recreate a specific event after making a
 change, or to compare what could have happened — use `send_input` on the
 branch instead of (or before) `wait`.
 
 ```js
-branch.send_input({input_bytes: [1, 2, 3, 4], required_by: [parent]})
+branch.send_input({ input_bytes: [1, 2, 3, 4], required_by: [parent] });
 ```
 
 Each value in `input_bytes` is a byte that represents approximately one
@@ -292,15 +305,17 @@ history.
 ## Background processes and process events
 
 ```javascript
-print(p = bash`sleep 3 && echo done`.run_in_background({
+print(
+  (p = bash`sleep 3 && echo done`.run_in_background({
     branch: b,
     container: "CONTAINER",
     required_by: [parent],
-}))
+  })),
+);
 
 // Without doing anything, `p` sits frozen — the SUT does not advance.
 // Use a wait or wait_until to let it run.
-b.wait_until({until: p.exits, required_by: [parent]})
+b.wait_until({ until: p.exits, required_by: [parent] });
 ```
 
 The process object `p` exposes event sets like `p.exits` (a `FlatMapEventSet`
@@ -315,7 +330,9 @@ evaluate by calling `up_to(moment_or_branch)`:
 
 ```javascript
 // All output events where source is "fault_injector", up to the branch tip
-print(environment.session.output.contains({source: "fault_injector"}).up_to(b))
+print(
+  environment.session.output.contains({ source: "fault_injector" }).up_to(b),
+);
 ```
 
 Two useful refinements:
@@ -334,14 +351,18 @@ Two useful refinements:
 `environment.fault_injector` provides:
 
 ```javascript
-environment.fault_injector.pause({branch: b, required_by: [parent]})
-environment.fault_injector.unpause({branch: b, required_by: [parent]})
+environment.fault_injector.pause({ branch: b, required_by: [parent] });
+environment.fault_injector.unpause({ branch: b, required_by: [parent] });
 environment.fault_injector.update_settings({
-    parameters: { /* ... */ },
-    branch: b,
-    settings: { /* ... */ },     // optional
-    required_by: [parent],
-})
+  parameters: {
+    /* ... */
+  },
+  branch: b,
+  settings: {
+    /* ... */
+  }, // optional
+  required_by: [parent],
+});
 ```
 
 Under the hood, `pause` and `unpause` schedule a backgrounded
@@ -426,10 +447,10 @@ Don't rely on this — always be prepared to re-inject any custom cells.
 
 ## Common error messages
 
-| Status / message | What it means | What to do |
-|---|---|---|
-| `CAMPAIGN SAW TERMINAL EVENT: '... EXITED WITH NONZERO EXIT CODE N'` | A command on this branch failed | Make a new branch; the old one is terminated |
-| `CAMPAIGN SAW TERMINAL EVENT: 'FUZZER REJECTED CAMPAIGN ADD WITH CODE: DUPLICATE_ID, STATUS: 400'` | Too many sibling branches off the same moment | Vary the moments (different `rewind_to` values) or fold into one branch |
-| `UNKNOWN START MOMENT` | An action references a moment/branch/event set that hasn't been materialized (e.g., `wait_until(p.exits)` when `p` was never run) | Authorize the upstream action first, or fix the dependency |
-| `⚠ FOO(...) expects: ...` | You passed FOO a wrong-shaped argument | Read the listed props and supply them. Use this same trick deliberately to discover unknown APIs. |
-| `Get events up to undefined` | The branch passed to `up_to` has no end yet (no commands have run on it) | Authorize at least one effect on the branch, or use a concrete moment |
+| Status / message                                                                                   | What it means                                                                                                                     | What to do                                                                                        |
+| -------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------- |
+| `CAMPAIGN SAW TERMINAL EVENT: '... EXITED WITH NONZERO EXIT CODE N'`                               | A command on this branch failed                                                                                                   | Make a new branch; the old one is terminated                                                      |
+| `CAMPAIGN SAW TERMINAL EVENT: 'FUZZER REJECTED CAMPAIGN ADD WITH CODE: DUPLICATE_ID, STATUS: 400'` | Too many sibling branches off the same moment                                                                                     | Vary the moments (different `rewind_to` values) or fold into one branch                           |
+| `UNKNOWN START MOMENT`                                                                             | An action references a moment/branch/event set that hasn't been materialized (e.g., `wait_until(p.exits)` when `p` was never run) | Authorize the upstream action first, or fix the dependency                                        |
+| `⚠ FOO(...) expects: ...`                                                                          | You passed FOO a wrong-shaped argument                                                                                            | Read the listed props and supply them. Use this same trick deliberately to discover unknown APIs. |
+| `Get events up to undefined`                                                                       | The branch passed to `up_to` has no end yet (no commands have run on it)                                                          | Authorize at least one effect on the branch, or use a concrete moment                             |

@@ -1,5 +1,21 @@
 # Logs
 
+## Download a log
+
+Use the `assets/download-logs.sh` script:
+
+```bash
+assets/download-logs.sh \
+  -o /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.json \
+  "$RUN_ID" "$INPUT_HASH" "$VTIME"
+```
+
+The script wraps `snouty runs --json logs RUN_ID INPUT_HASH VTIME` and pipes the NDJSON stream through `process-logs.py`, which strips ANSI escape codes, adds `vtime_seconds`, and annotates each event with `active_faults`. The output is a JSON array.
+
+`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array — pass them as strings, do not round or reformat. Pass `--raw` to skip annotation and write the unmodified NDJSON.
+
+Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
+
 ## JSON Log format
 
 This document focuses on understanding the JSON log format from Antithesis. You may use this to interpret other formats, but the result will be much more lossy.
@@ -36,19 +52,17 @@ Events are globally ordered by `moment.vtime`, a string-encoded number represent
 
 The `process-logs.py` script adds a `vtime_seconds` field (the rounded float) to every event so jq filters can compare numerically. For API calls (e.g. `snouty runs logs`), pass the unmodified `moment.vtime` string verbatim.
 
-Older logs downloaded via the agent-browser logs page may carry the legacy `moment._vtime_ticks` field (integer ticks, 2³² per second). `process-logs.py` accepts either format.
-
 ### Event types at a glance
 
-| Identifying field(s)             | Source name                | What it is                                  |
-| -------------------------------- | -------------------------- | ------------------------------------------- |
-| `output_text`                    | container name             | Application log line (stdout/stderr)        |
-| `fault`                          | `fault_injector`           | Fault injection event                       |
-| `info`                           | `fault_injector`           | Fault injector status message               |
-| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die) |
-| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                   |
-| `command`, `started_task`        | `antithesis_test_composer` | Test command started                        |
-| `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                       |
+| Identifying field(s)             | Source name                | What it is                                                       |
+| -------------------------------- | -------------------------- | ---------------------------------------------------------------- |
+| `output_text`                    | container name             | Application log line (stdout/stderr)                             |
+| `fault`                          | `fault_injector`           | Fault injection event                                            |
+| `info`                           | `fault_injector`           | Fault injector status message                                    |
+| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die)                      |
+| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                                        |
+| `command`, `started_task`        | `antithesis_test_composer` | Test command started                                             |
+| `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                                            |
 | `probability`                    | `bug_probability`          | Bug probability snapshot (causal-analysis runs only — see below) |
 
 ### Fault events
@@ -275,11 +289,11 @@ field is a dictionary tracking currently active fault windows. The schema:
 ```json
 {
   "active_faults": {
-    "network_partition": {"vtime": 5.0},
-    "network_clog": {"vtime": 10.0},
-    "node_pause": {"container_a": 12.0, "container_b": 13.0},
-    "node_throttle": {"container_c": 14.0},
-    "clock_skip": {"cumulative_offset": 30.0, "vtime": 12.0}
+    "network_partition": { "vtime": 5.0 },
+    "network_clog": { "vtime": 10.0 },
+    "node_pause": { "container_a": 12.0, "container_b": 13.0 },
+    "node_throttle": { "container_c": 14.0 },
+    "clock_skip": { "cumulative_offset": 30.0, "vtime": 12.0 }
   }
 }
 ```

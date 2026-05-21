@@ -40,7 +40,7 @@ require_cmd jq
 TENANT="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TRIAGE_RUNTIME_JS="$REPO_ROOT/antithesis-triage/assets/antithesis-triage.js"
+TRIAGE_RUNTIME_JS="$REPO_ROOT/antithesis-agent-browser/assets/antithesis-agent-browser.js"
 QUERY_RUNTIME_JS="$REPO_ROOT/antithesis-query-logs/assets/antithesis-query-logs.js"
 AUDIT_JS="$SCRIPT_DIR/audit.js"
 OUT_DIR="$SCRIPT_DIR/out"
@@ -123,7 +123,7 @@ run_audit_phase() {
 wait_ready_triage() {
   local namespace="$1"
   browser eval \
-    "window.__antithesisTriage.${namespace}.waitForReady({ timeoutMs: 15000, intervalMs: 500 })" \
+    "window.__antithesisAgentBrowser.${namespace}.waitForReady({ timeoutMs: 15000, intervalMs: 500 })" \
     >/dev/null
 }
 
@@ -166,7 +166,7 @@ else
   inject_triage_runtime
   wait_ready_triage runs
 
-  RUNS_RESULT="$(browser eval "window.__antithesisTriage.runs.getRecentRuns()")"
+  RUNS_RESULT="$(browser eval "window.__antithesisAgentBrowser.runs.getRecentRuns()")"
 
   mapfile -t COMPLETED_REPORT_URLS < <(
     printf '%s\n' "$RUNS_RESULT" \
