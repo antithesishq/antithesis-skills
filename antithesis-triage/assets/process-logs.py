@@ -3,7 +3,8 @@
 
 Transformations applied to each event:
   1. Strip ANSI escape codes from output_text fields.
-  2. Add vtime_seconds (moment._vtime_ticks / 2^32, rounded to 5 decimal places).
+  2. Add vtime_seconds (parsed from moment.vtime, or moment._vtime_ticks / 2^32
+     for legacy agent-browser-extracted logs; rounded to 5 decimal places).
   3. Add active_faults dict tracking currently open fault windows:
      - network_partition / network_clog: outer boundary of overlapping network faults
      - node_pause / node_throttle: per-container node fault windows
@@ -27,7 +28,7 @@ ANSI_RE = re.compile(
     r"|\x1b[\x20-\x7e]"  # two-byte: ESC + single printable
 )
 
-VTIME_DIVISOR = 4294967296  # 2^32
+VTIME_DIVISOR = 4294967296  # 2^32, for legacy moment._vtime_ticks logs
 
 NETWORK_FAULTS = {"partition", "clog"}
 TRACKED_NODE_FAULTS = {"pause", "throttle"}
@@ -90,12 +91,23 @@ def process_events(events):
         if isinstance(output_text, str) and "\x1b" in output_text:
             processed["output_text"] = strip_ansi(output_text)
 
-        # Compute vtime_seconds
+        # Compute vtime_seconds. Prefer moment.vtime (string seconds, API format);
+        # fall back to moment._vtime_ticks (integer ticks, legacy agent-browser format).
         moment = processed.get("moment")
         vtime = None
-        if isinstance(moment, dict) and "_vtime_ticks" in moment:
-            vtime = round(moment["_vtime_ticks"] / VTIME_DIVISOR, 5)
-            processed["vtime_seconds"] = vtime
+        if isinstance(moment, dict):
+            if "vtime" in moment:
+                try:
+                    vtime = round(float(moment["vtime"]), 5)
+                except (TypeError, ValueError):
+                    vtime = None
+            elif "_vtime_ticks" in moment:
+                try:
+                    vtime = round(moment["_vtime_ticks"] / VTIME_DIVISOR, 5)
+                except (TypeError, ZeroDivisionError):
+                    vtime = None
+            if vtime is not None:
+                processed["vtime_seconds"] = vtime
 
         ev_vtime = vtime if vtime is not None else 0.0
 
@@ -252,7 +264,7 @@ def _evt(vtime_sec, **kwargs):
     Automatically adds source.name = "fault_injector" when fault or info keys
     are present, since process_events only processes those from that source.
     """
-    event = {"moment": {"_vtime_ticks": int(vtime_sec * VTIME_DIVISOR)}, **kwargs}
+    event = {"moment": {"vtime": format(vtime_sec, ".10f")}, **kwargs}
     if "fault" in event or "info" in event:
         event.setdefault("source", {"name": "fault_injector"})
     return event
@@ -355,26 +367,42 @@ def run_tests():
     # -- vtime_seconds computation --
     print()
     print("vtime_seconds tests:")
-    evt_with_moment = {"moment": {"_vtime_ticks": 4294967296}}  # exactly 2^32 => 1.0
+    evt_with_moment = {"moment": {"vtime": "1.0"}}
     results = process_events([evt_with_moment])
-    assert_eq("vtime_seconds = 1.0 for 2^32 ticks", results[0]["vtime_seconds"], 1.0)
+    assert_eq("vtime_seconds = 1.0 from \"1.0\"", results[0]["vtime_seconds"], 1.0)
 
-    evt_half = {"moment": {"_vtime_ticks": 2147483648}}  # 2^31 => 0.5
+    evt_half = {"moment": {"vtime": "0.5"}}
     results = process_events([evt_half])
-    assert_eq("vtime_seconds = 0.5 for 2^31 ticks", results[0]["vtime_seconds"], 0.5)
+    assert_eq("vtime_seconds = 0.5 from \"0.5\"", results[0]["vtime_seconds"], 0.5)
 
-    evt_precise = {"moment": {"_vtime_ticks": 12345678901}}
+    evt_precise = {"moment": {"vtime": "2.87432918734"}}
     results = process_events([evt_precise])
-    expected_vtime = round(12345678901 / 4294967296, 5)
-    assert_eq("vtime_seconds 5 decimal places", results[0]["vtime_seconds"], expected_vtime)
-    # Verify it's actually rounded to 5 places
+    assert_eq("vtime_seconds rounded to 5 places", results[0]["vtime_seconds"], 2.87433)
     vtime_str = str(results[0]["vtime_seconds"])
     parts = vtime_str.split(".")
     assert_eq("vtime_seconds decimal precision <= 5", len(parts[1]) <= 5, True)
 
-    evt_zero = {"moment": {"_vtime_ticks": 0}}
+    evt_zero = {"moment": {"vtime": "0"}}
     results = process_events([evt_zero])
-    assert_eq("vtime_seconds = 0.0 for 0 ticks", results[0]["vtime_seconds"], 0.0)
+    assert_eq("vtime_seconds = 0.0 from \"0\"", results[0]["vtime_seconds"], 0.0)
+
+    evt_bad = {"moment": {"vtime": "not-a-number"}}
+    results = process_events([evt_bad])
+    assert_eq("no vtime_seconds when vtime unparseable", "vtime_seconds" not in results[0], True)
+
+    # Legacy agent-browser format: moment._vtime_ticks (integer ticks, 2^32 per second)
+    evt_legacy = {"moment": {"_vtime_ticks": 4294967296}}  # 2^32 ticks => 1.0s
+    results = process_events([evt_legacy])
+    assert_eq("legacy _vtime_ticks: 2^32 => 1.0s", results[0]["vtime_seconds"], 1.0)
+
+    evt_legacy_half = {"moment": {"_vtime_ticks": 2147483648}}  # 2^31 ticks => 0.5s
+    results = process_events([evt_legacy_half])
+    assert_eq("legacy _vtime_ticks: 2^31 => 0.5s", results[0]["vtime_seconds"], 0.5)
+
+    # If both fields are present, vtime wins (API format takes precedence)
+    evt_both = {"moment": {"vtime": "2.0", "_vtime_ticks": 4294967296}}
+    results = process_events([evt_both])
+    assert_eq("vtime takes precedence over _vtime_ticks", results[0]["vtime_seconds"], 2.0)
 
     # Event without moment field should not get vtime_seconds
     evt_no_moment = {"output_text": "hello"}
