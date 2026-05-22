@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-22
+
+- BREAKING CHANGE: Triage skill using snouty API ([PR #152](https://github.com/antithesishq/antithesis-skills/pull/152))
+
 ## 2026-05-21
 
 - antithesis-setup: require full Go instrumentation and CGO ([PR #151](https://github.com/antithesishq/antithesis-skills/pull/151))
