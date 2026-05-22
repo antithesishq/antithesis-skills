@@ -11,7 +11,8 @@ description: >
 # Test: Antithesis Triage Skill
 
 End-to-end test harness for the `antithesis-triage` skill. Spawn sub-agents
-that perform real triage operations, then review their work for issues.
+that perform real triage operations against the live Antithesis API via
+`snouty`, then review their work for issues.
 
 **The top-level agent MUST NOT use the antithesis-triage skill directly.**
 All triage operations happen inside sub-agents. The top-level agent only
@@ -22,16 +23,18 @@ orchestrates and reviews.
 Before starting, verify the same prerequisites the triage skill requires:
 
 ```bash
-which snouty && which agent-browser && which jq
+which snouty && which jq && snouty --version
 ```
 
-Also confirm `ANTITHESIS_TENANT` is set:
+`snouty` must be at least version 0.5.0. Also confirm `ANTITHESIS_TENANT` is
+set:
 
 ```bash
 echo "$ANTITHESIS_TENANT"
 ```
 
-If any prerequisite is missing, stop and report which ones are unavailable.
+If any prerequisite is missing or out of date, stop and report which ones
+are unavailable.
 
 ## Phase 1: Discover Runs
 
@@ -45,39 +48,50 @@ Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to list
 recent runs for the tenant "{{TENANT}}". Follow the "Summarize recent runs"
 workflow.
 
-Fetch recent complete and incomplete runs separately by using the status filter:
+Return the COMPLETE raw NDJSON of `snouty runs --json list -n 200` along
+with a per-run summary that includes, for each run:
+  - run_id
+  - status
+  - launcher
+  - created_at / completed_at
+  - antithesis.test_name and antithesis.description (from parameters)
+  - whether links.triage_report is present (triageable yes/no)
 
-  `window.__antithesisTriage.runs.getRecentRuns({status: 'Completed'})`
-  `window.__antithesisTriage.runs.getRecentRuns({status: 'Incomplete'})`
-
-Return the COMPLETE results from both calls in JSON, including for each run:
-  - name
-  - status (completed/in-progress/error)
-  - findings counts by category (new, ongoing, resolved, rare)
-  - triage URL (or null if unavailable)
-  - utilization info
+Do NOT filter by status — return the full list so the orchestrator can
+select targets across statuses.
 ```
 
 Wait for this sub-agent to finish before proceeding.
 
-If the sub-agent did not return triage URLs abort.
+If the sub-agent did not return the NDJSON list, abort.
 
 ## Phase 2: Select Test Targets
 
-Read the sub-agent output. From the run listing, select two runs:
+Read the sub-agent output. From the run listing, select two targets:
 
-1. **Completed run with findings** — Status is completed, has at least one
-   finding in any category (new, ongoing, resolved, rare), and has a non-null
-   `triageUrl`. Prefer runs with `new` or `ongoing` findings.
+1. **Completed run with failing properties that have moments.**
+   - `status == "completed"`
+   - `links.triage_report` is present
+   - At least one failing property with `counterexamples[0].moment.input_hash`
+     present (i.e., addressable to a moment, not a telemetry/meta property)
 
-2. **Incomplete or no-findings run** — Either a run still in progress (null
-   `triageUrl`) OR a completed run with zero findings across all categories. Pick an incomplete run that finished in less than 15 minutes to maximize the chance that it's a setup incomplete run.
+   Confirm by calling `snouty runs --json properties --failing $RUN_ID` and
+   verifying at least one entry has a counterexample with a `moment` field.
+
+2. **Incomplete run with a failure_moment.**
+   - `status == "incomplete"`
+   - `links.triage_report` is present
+   - `failure_moment` is present in `snouty runs --json show $RUN_ID`
+   - Prefer runs whose duration (completed_at − created_at) is under 30
+     minutes — these are usually setup/early-execution failures, which
+     exercise the diagnose-incomplete path most directly
 
 Rules for missing targets:
 
-- If no completed-with-findings run exists, skip Phase 3a and note this in
-  the final report.
-- If no incomplete/no-findings run exists, skip Phase 3b and note this.
+- If no completed run with failing-property moments exists, skip Phase 3a
+  and note this in the final report.
+- If no incomplete run with a `failure_moment` exists, skip Phase 3b and
+  note this.
 - If no runs exist at all, report that and stop.
 
 ## Phase 3: Triage Selected Runs
@@ -87,29 +101,30 @@ sub-agents to report verbosely or tell them they are being tested — this
 changes their behavior. The orchestrator will read their raw session traces
 directly in Phase 4.
 
-### Phase 3a: Completed run with findings
+### Phase 3a: Completed run with failing properties
 
 Spawn a general-purpose sub-agent with these instructions (substitute the
-actual triage URL and `{{TRIAGE_SKILL}}` with the absolute path to
+actual run id and `{{TRIAGE_SKILL}}` with the absolute path to
 `antithesis-triage/SKILL.md` in this repository):
 
 ```
-Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to triage
-the Antithesis report at {{TRIAGE_URL}}. Investigate the logs of failing
-property most likely to be a SUT bug. Pick any failing property if you aren't
-sure. Do NOT explore or analyze any local source code repositories — only use
-the report and downloaded logs to perform your triage.
+Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to
+triage the Antithesis run with run_id {{RUN_ID}}. Investigate the logs of
+the failing property most likely to be a SUT bug. Pick any failing property
+if you aren't sure. Do NOT explore or analyze any local source code
+repositories — only use the snouty API and downloaded logs to perform your
+triage.
 ```
 
-### Phase 3b: Incomplete or no-findings run
+### Phase 3b: Incomplete run
 
 Spawn a general-purpose sub-agent with these instructions (substitute the
-actual URL and `{{TRIAGE_SKILL}}` with the absolute path to
+actual run id and `{{TRIAGE_SKILL}}` with the absolute path to
 `antithesis-triage/SKILL.md` in this repository):
 
 ```
-Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to triage
-the Antithesis run at {{TARGET_URL}}.
+Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to
+triage the Antithesis run with run_id {{RUN_ID}}.
 ```
 
 Wait for both sub-agents to complete.
@@ -118,18 +133,22 @@ Wait for both sub-agents to complete.
 
 ### Understanding the skill protocol
 
-Before auditing the sub-agent traces, read the triage skill and its references
-so you can distinguish correct behavior from violations:
+Before auditing the sub-agent traces, read the triage skill and its
+references so you can distinguish correct behavior from violations:
 
 1. Read `antithesis-triage/SKILL.md` — the main skill protocol
-2. Read `antithesis-triage/references/error-reports.md` — the error-report
-   workflow (setup errors, runtime errors, how to download inline logs)
-3. Read `antithesis-triage/references/logs.md` — log analysis guidance
-4. Read `antithesis-triage/references/properties.md` — property triage workflow
+2. Read `antithesis-triage/references/run-discovery.md` — how runs are
+   listed and selected
+3. Read `antithesis-triage/references/run-info.md` — single-run metadata
+4. Read `antithesis-triage/references/properties.md` — property triage
+   workflow, including how counterexamples and moments map to log
+   downloads
+5. Read `antithesis-triage/references/logs.md` — log format and jq
+   analysis patterns
 
-Use these as the ground truth when evaluating compliance. If a sub-agent does
-something that looks unusual, check whether the skill documents it before
-flagging it as an issue.
+Use these as the ground truth when evaluating compliance. If a sub-agent
+does something that looks unusual, check whether the skill documents it
+before flagging it as an issue.
 
 ### Reading sub-agent session traces
 
@@ -141,14 +160,8 @@ to read the raw JSONL session traces:
 ~/.claude/projects/<project-dir>/<session-id>/subagents/agent-<agentId>.jsonl
 ```
 
-To find the current session directory:
-
-```bash
-ls -td ~/.claude/projects/*/$(basename $(ls -t ~/.claude/projects/*/*.jsonl | head -1 | xargs dirname))/ 2>/dev/null | head -1
-```
-
-Or more reliably, look for the most recently modified session directory that
-contains a `subagents/` folder.
+To find the current session directory, look for the most recently modified
+directory under `~/.claude/projects/` that contains a `subagents/` folder.
 
 Extract all Bash tool calls from each sub-agent trace to see every command
 and its output:
@@ -168,7 +181,7 @@ jq -c 'select(.type == "user") | .message.content[]?
 ```
 
 This gives you the complete record of what each sub-agent did — every
-navigation, every runtime injection, every eval call, every error — without
+snouty invocation, every jq query, every script run, every error — without
 relying on their summaries.
 
 ### What to look for
@@ -177,27 +190,46 @@ Scan the raw traces for issues in these categories:
 
 **Bugs** — things that are broken:
 
-- Runtime method failures (unexpected errors from `window.__antithesisTriage.*`)
-- Navigation breakage (wrong page, redirect loops, auth failures)
-- JavaScript errors or missing methods
-- Data extraction failures (empty results when data exists, malformed JSON)
-- Script failures (`download-logs.sh`, `process-logs.py`)
+- `snouty runs` invocations that fail with non-timeout errors (404, schema
+  mismatch, unexpected exit codes)
+- `download-logs.sh` or `process-logs.py` failures
+- `jq` queries that error out or return null where data should exist
+- The chunked-download fallback (`download-logs-chunked.py`) triggering
+  and then itself failing
+- Skill-documented commands that do not behave as the skill claims
 
-**Compliance violations** — the sub-agent did not follow the skill protocol:
+**Compliance violations** — the sub-agent did not follow the skill
+protocol:
 
-- Missing runtime injection after navigation
-- Missing `--session-name antithesis` for cookie persistence
-- Missing `networkidle` wait before injecting the runtime
-- Missing `waitForReady()` before querying page data
-- Forgot to close browser session when done
-- Ran `agent-browser` calls in parallel
+- Reaching for the web UI / agent-browser / `curl` against the report URL
+  when `snouty runs` exposes the data
+- Skipping the `snouty runs --json show` step before triaging
+- Triaging a run with no `links.triage_report` without first reporting
+  that the run is not triageable
+- Rounding or reformatting `input_hash` / `vtime` before passing them to
+  `snouty runs logs` or `download-logs.sh` (the skill requires verbatim
+  values)
+- Concluding root cause for a property failure without downloading and
+  inspecting the corresponding log when a moment is available
+- Treating a telemetry/meta property counterexample (non-`moment`
+  payload, e.g. a scalar or session-id object) as if it had a moment and
+  trying to download logs for it
 
 **Inefficiencies** — things that work but waste time or tokens:
 
-- Steps that required multiple retries (especially >2 retries for the same operation)
-- Unnecessary repeated navigations or runtime re-injections
-- Excessive screenshot-based debugging when eval methods exist
-- Commands that consistently fail before succeeding (indicates unclear instructions)
+- Downloading the same log file repeatedly to the same path
+- Fetching all properties without `--failing`/`--passing` filters when
+  only one side is needed
+- Reading large logs into the context window instead of running jq
+  filters against them
+- Steps that required multiple retries (especially >2 retries for the
+  same operation), which usually indicates unclear instructions in the
+  skill
+
+Do **not** flag repeated `snouty runs` invocations against the same run/endpoint
+as an inefficiency. `snouty` handles caching for repeated calls, so re-issuing
+the same `snouty runs` call (e.g. `properties`, `show`, `build-logs`) at
+different jq depths or filters is fine and is not a sign of a skill problem.
 
 ## Output Format
 
@@ -208,7 +240,7 @@ recommendations. The goal is clear signal on breakage and inefficiency.
 ### Test Summary
 
 - Tenant tested
-- Runs selected (names, status, findings counts)
+- Runs selected (run_id, status, failing-property counts where applicable)
 - Sub-agents spawned (include agentIds)
 - Any skipped phases and why
 
@@ -219,7 +251,8 @@ For each issue found, include:
 - **Severity**: Bug / Compliance / Inefficiency
 - **Phase**: Which phase the issue occurred in
 - **Description**: What happened
-- **Evidence**: Exact commands and outputs from the session trace (quote directly)
+- **Evidence**: Exact commands and outputs from the session trace (quote
+  directly)
 - **Fix**: Concrete change to make (file + what to change)
 
 Sort by severity (bugs first, then compliance, then inefficiency).

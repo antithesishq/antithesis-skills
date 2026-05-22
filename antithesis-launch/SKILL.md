@@ -42,7 +42,8 @@ Launch an Antithesis run in this order only:
 
 ## Run Arguments
 
-- Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test`.
+- Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
+
 - `snouty launch --config` requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
 - Always set all of these explicitly:
   - `--duration`: the user-provided duration

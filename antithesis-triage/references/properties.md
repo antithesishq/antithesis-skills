@@ -1,69 +1,98 @@
 # Property queries
 
-`report` refers to `window.__antithesisTriage.report` in this file.
+Use `snouty runs --json properties` to retrieve properties and `assets/download-logs.sh` to download a log of a specific history. The `properties` return data will give you what you need to get the logs.
 
 ## Getting all properties
 
-`report.getAllProperties()` returns every property in a single JSON object.
-All properties are already expanded by `waitForReady()`, so this is a
-synchronous read of the current DOM state — no tab switching or expansion
-occurs.
+Use `snouty runs --json properties "${OPTION}" "${RUN_ID}"` to download all the properties for a run.
+OPTION can be `--passing` or `--failing` to retrieve just passing or just failing properties.
+
+Example return:
 
 ```json
 {
-  "expectedCount": 42,
-  "counts": { "failed": 3, "passed": 37, "unfound": 2 },
-  "properties": [ ... ]
+  "counterexample_count": 11,
+  "counterexamples": [
+    {
+      "moment": {
+        "input_hash": "1953917995480797787",
+        "vtime": "182.42924608523026"
+      }
+    },
+    {
+      "moment": {
+        "input_hash": "4038006772091147322",
+        "vtime": "181.52766803186387"
+      }
+    },
+    {
+      "moment": {
+        "input_hash": "7249623954355301396",
+        "vtime": "181.67649806430563"
+      }
+    }
+  ],
+  "description": "Property description goes here.",
+  "example_count": 1731,
+  "examples": [
+    {
+      "moment": {
+        "input_hash": "6247583012788407497",
+        "vtime": "231.3688659959007"
+      }
+    }
+  ],
+  "is_event": true,
+  "is_group": true,
+  "name": "Invariant: expected record exists in FDB",
+  "status": "Failing"
 }
 ```
 
-Each entry in the `properties` array:
+A "counterexample" is a case where a property FAILED to hold.
+An "example" is a case where a property DID hold.
 
-```json
-{
-  "group": ["SDK: Go"],
-  "name": "example property",
-  "status": "failed",
-  "passingCount": "3,529",
-  "failingCount": "10,409"
-}
-```
+- `example_count` gives the number of times the property PASSED
+- `counterexample_count` gives the number of times the property FAILED.
 
-`passingCount` and `failingCount` are comma-formatted count strings representing the total across all execution histories in the run (not just the 3-4 example rows shown in the UI).
+These are from across all the histories in the run (not just the 3-4 example rows returned for the property in the property list).
 
-### Filtering properties with jq
+- `name` is the name of the property as it appears in the triage report and as it is known to the user.
 
-Use `jq` to filter the output of `getAllProperties()` rather than calling
-separate status-specific methods:
+- `counterexamples`: This field contains an array of a _select_ number of counterexamples from the run.
 
-```bash
-# Failed properties only
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
-  | jq '.properties | map(select(.status == "failed"))'
+- `examples`: This field contains array of a _select_ number of passing examples of the property from the run.
 
-# Passed properties only
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
-  | jq '.properties | map(select(.status == "passed"))'
+- `moment` (in the `example` and `counterexample` items): This information allows you to retrieve the logs from the history
+  leading up to the property pass or failure.
 
-# Unfound properties only
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
-  | jq '.properties | map(select(.status == "unfound"))'
+> **Note:** Not every property has moments. Telemetry / meta properties — e.g. `Hypervisor utilization`, `Customer output volume`, `Fault injector total packets`, `Symbols were uploaded`, `Assertions are present in customer code`, `Fuzzing has branches`, `Unique Edges`, `The Test Composer was used` — report counterexamples as scalars (numbers, booleans, strings) or summary objects (e.g. `{session_id, total_output_mb, ...}`) instead of `{moment: {...}}`. There is no per-history log to download for these; the counterexample value itself is the evidence. Skip the log-download step for these properties and report the value directly.
 
-# Properties in a specific group
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getAllProperties()" \
-  | jq '.properties | map(select(.group | any(test("SDK: Go"))))'
-```
+Each property may expose multiple example rows (typically 3-4), mixing failing
+and passing examples. When triaging, start with the **first failing example**
+(usually index 0) by default. Cross-referencing a passing example can help
+narrow down root cause by showing what's different in a healthy execution. If you want more
+examples you may obtain more log files for failures that match the property. You will need to
+retrieve the log file to get the details of the failure in order to perform the search,
+first using `snouty runs events` and then using the `antithesis-query-logs` skill
+if more examples are needed.
+
+### Filtering properties
+
+If you want to filter the properties based on passing or failing, this is supported
+directly by `snouty runs --json properties` with an option.
+
+Otherwise use `jq` to filter the output of `snouty runs --json properties`.
 
 ### Using pass/fail ratios for triage prioritization
 
+For a given property, you can examine the pass/fail counts to help investigate the property. (Remember these are communicated in the `example_count` and `counterexample_count` fields in the property information.)
+
 - **All failing (0 passing)** — Likely a setup or workload bug. The property is being violated in every execution history.
-- **Mostly failing with rare passes** — Could be a workload issue that only succeeds under specific conditions, or a real bug that's hard to avoid.
+- **Mostly failing with rare passes** — Most likely a setup or workload bug, or for some reason the system under test is not set up for
+  Antithesis. Don't forget to read the Antithesis documentation when analyzing this.
 - **Mostly passing with rare failures** — Strong candidate for a real SUT bug. Pay attention to rare event orderings or fault patterns in the logs.
-- **Roughly even split** — The property may be sensitive to configuration or timing. Check whether passing vs failing correlates with fault intensity.
+- **Roughly even split** — The property may be sensitive to configuration or timing. Check whether passing vs failing correlates with fault intensity or a choice made at the beginning of the history (such as what test to run or parameters to use for a given history).
 
 ## Assertion types and what they mean for triage
 
@@ -79,53 +108,8 @@ Each property is backed by an assertion of a specific type. The type determines 
 
 Numeric/boolean variants (e.g., `AlwaysGreaterThan`, `SometimesAll`) follow the same pass/fail semantics as their base type but attach the compared operands to assertion details automatically.
 
-## Property examples
+## Download a log
 
-`report.getPropertyExamples()` returns all properties that have example tables,
-along with their example rows. All example tables are already expanded by
-`waitForReady()`, so this is a synchronous read of the DOM. Use jq to filter
-by status.
+To further analyze a property failure, download the log leading up to the failure (or to a passing example, for comparison) and examine it.
 
-Returns each property with `group`, `name`, `status`, and `examples` array
-containing `{ index: 0, status: "failing", time: "85.75s" }` entries.
-
-```bash
-# Failed property examples only
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisTriage.report.getPropertyExamples()" \
-  | jq '.properties | map(select(.status == "failed"))'
-```
-
-Each property may expose multiple example rows (typically 3-4), mixing failing
-and passing examples. When triaging, start with the **first failing example**
-(usually index 0) by default. Cross-referencing a passing example can help
-narrow down root cause by showing what's different in a healthy execution.
-
-## Example log URLs
-
-Eval `report.getExampleLogsUrl(propertyName, exampleIndex)` to retrieve the log URL for a specific example. Returns `{ propertyName, exampleIndex, logsUrl }`. Throws if the property is not found or the example index is out of range.
-
-> **Treat log URLs as opaque.** Never attempt to decode, parse, or extract data
-> from URL query parameters.
-
-## Download logs from a log URL
-
-Use `download-logs.sh` to fetch the log URL for a given example. The script
-handles navigation, waiting, download, and post-processing automatically:
-
-```bash
-bash assets/download-logs.sh \
-  --url "$LOGS_URL" \
-  --output /tmp/triage/property-name.json
-```
-
-Always download logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
-
-If you do not have access to `bash` on this machine, read the download-logs script and perform the steps manually.
-
-The script creates its own browser session using shared `antithesis` auth,
-navigates to the URL, waits for the page to load, downloads the file, and
-post-processes the JSON automatically. The default format is JSON. Use
-`--format txt` or `--format csv` when asked, but prefer JSON whenever possible.
-
-To learn how to understand logs, refer to `references/logs.md`.
+To learn how to download and understand logs, refer to `references/logs.md`.

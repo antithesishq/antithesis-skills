@@ -1,5 +1,21 @@
 # Logs
 
+## Download a log
+
+Use the `assets/download-logs.sh` script:
+
+```bash
+assets/download-logs.sh \
+  -o /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.json \
+  "$RUN_ID" "$INPUT_HASH" "$VTIME"
+```
+
+The script wraps `snouty runs --json logs RUN_ID INPUT_HASH VTIME` and pipes the NDJSON stream through `process-logs.py`, which strips ANSI escape codes, adds `vtime_seconds`, and annotates each event with `active_faults`. The output is a JSON array.
+
+`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array — pass them as strings, do not round or reformat. Pass `--raw` to skip annotation and write the unmodified NDJSON.
+
+Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
+
 ## JSON Log format
 
 This document focuses on understanding the JSON log format from Antithesis. You may use this to interpret other formats, but the result will be much more lossy.
@@ -17,9 +33,8 @@ The JSON log format is an array of event objects. Every event has `source` and
     "container"?: string // Docker container name, present on app events
   },
   "moment": {
-    "_vtime_ticks": number, // virtual time as integer ticks (see below)
-    "input_hash": string,
-    "session_id": string
+    "vtime": string,        // virtual time in seconds, string-encoded for full precision
+    "input_hash": string
   },
   "output_text"?: string,           // application stdout/stderr line
   "fault"?: { ... },                // fault injection event
@@ -33,27 +48,22 @@ The JSON log format is an array of event objects. Every event has `source` and
 
 ### Virtual time
 
-Events are globally ordered by `moment._vtime_ticks`, an integer representing
-deterministic virtual time. The `process-logs.py` script adds a `vtime_seconds`
-field to every event automatically, so manual conversion is usually unnecessary.
+Events are globally ordered by `moment.vtime`, a string-encoded number representing deterministic virtual time in seconds. It is encoded as a string (not a float) to preserve full precision when round-tripping back to the API.
 
-For reference, the formula to convert ticks to seconds is:
-
-```
-vtime_seconds = _vtime_ticks / 4294967296
-```
+The `process-logs.py` script adds a `vtime_seconds` field (the rounded float) to every event so jq filters can compare numerically. For API calls (e.g. `snouty runs logs`), pass the unmodified `moment.vtime` string verbatim.
 
 ### Event types at a glance
 
-| Identifying field(s)             | Source name                | What it is                                  |
-| -------------------------------- | -------------------------- | ------------------------------------------- |
-| `output_text`                    | container name             | Application log line (stdout/stderr)        |
-| `fault`                          | `fault_injector`           | Fault injection event                       |
-| `info`                           | `fault_injector`           | Fault injector status message               |
-| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die) |
-| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                   |
-| `command`, `started_task`        | `antithesis_test_composer` | Test command started                        |
-| `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                       |
+| Identifying field(s)             | Source name                | What it is                                                       |
+| -------------------------------- | -------------------------- | ---------------------------------------------------------------- |
+| `output_text`                    | container name             | Application log line (stdout/stderr)                             |
+| `fault`                          | `fault_injector`           | Fault injection event                                            |
+| `info`                           | `fault_injector`           | Fault injector status message                                    |
+| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die)                      |
+| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                                        |
+| `command`, `started_task`        | `antithesis_test_composer` | Test command started                                             |
+| `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                                            |
+| `probability`                    | `bug_probability`          | Bug probability snapshot (causal-analysis runs only — see below) |
 
 ### Fault events
 
@@ -78,6 +88,36 @@ payloads directly into their log messages. These lines can be very long
 (1-4 KB). When presenting logs to the user, consider truncating long
 `output_text` values. When searching, be aware that keyword matches may hit
 these serialized dumps rather than meaningful log messages.
+
+### Bug probability events (causal-analysis runs only)
+
+Some logs contain events from `source.name == "bug_probability"`, each
+carrying a string-encoded `probability` field (e.g. `"94.44"` meaning 94.44%).
+**These events are only present when the log comes from a causal-analysis
+experiment, not a normal run.** Causal analysis takes a history that
+exhibited a property failure, time-travels to a series of points along that
+history, and re-runs forward from each point under different randomness,
+recording how often the bug still occurs. The `probability` is essentially
+"given the system state at this vtime, what fraction of forward replays
+still hit the property failure?"
+
+Use these events when they exist; do not expect them. Most logs you triage
+will not contain them.
+
+When present, the vtime where the probability ramps from low to high marks
+the **moment of no return** for the bug: before that window the system
+could have avoided the failure, after it the failure is essentially locked
+in. This is a more precise pointer to root-cause timing than the assertion
+firing itself, which often happens long after the damaging events.
+
+Extract the trajectory with jq:
+
+```bash
+jq '[.[] | select(.source.name == "bug_probability") | {vt: .vtime_seconds, p: .probability}] | sort_by(.vt)' "$LOG"
+```
+
+If the array is empty, the log is from a normal run and there is no
+bug-probability signal to use.
 
 ## Analyzing logs with jq
 
@@ -249,11 +289,11 @@ field is a dictionary tracking currently active fault windows. The schema:
 ```json
 {
   "active_faults": {
-    "network_partition": {"vtime": 5.0},
-    "network_clog": {"vtime": 10.0},
-    "node_pause": {"container_a": 12.0, "container_b": 13.0},
-    "node_throttle": {"container_c": 14.0},
-    "clock_skip": {"cumulative_offset": 30.0, "vtime": 12.0}
+    "network_partition": { "vtime": 5.0 },
+    "network_clog": { "vtime": 10.0 },
+    "node_pause": { "container_a": 12.0, "container_b": 13.0 },
+    "node_throttle": { "container_c": 14.0 },
+    "clock_skip": { "cumulative_offset": 30.0, "vtime": 12.0 }
   }
 }
 ```
@@ -330,5 +370,9 @@ Antithesis tags each event with its virtual time, which represents an unambiguou
 
 Use virtual time as the source of truth for ordering logs rather than timestamps embedded in application logs. Timestamps printed by the application can be out of order due to faults like clock skew and thread pausing.
 
-Use `vtime_seconds` for all time-based analysis. The raw `_vtime_ticks` value is
-only needed when tiebreaking events that fall within the same second.
+Use `vtime_seconds` for all time-based analysis. For events that fall within the same rounded second, tiebreak by `moment.vtime`.
+
+> **Note:** `vtime_seconds` is rounded to 5 decimal places (10 µs resolution) and
+> is intended for human-readable filters and ordering only. To address a moment
+> when calling the Antithesis API or `snouty runs logs`, always pass the
+> unmodified `moment.vtime` string verbatim — the rounded value will not match.

@@ -2,13 +2,13 @@
 name: antithesis-debug
 description: >
   Use this skill to interactively debug Antithesis test runs using the
-  multiverse debugger. Open a debugging-session URL, inspect container
+  multiverse debugger (MVD session). Open a debugging-session URL, inspect container
   filesystems and runtime state, run shell commands, and extract evidence
   from inside the Antithesis environment. Supports both the simplified
   debugger (default) and the advanced notebook mode.
-compatibility: Requires agent-browser (https://github.com/vercel-labs/agent-browser).
+compatibility: Requires agent-browser v0.23.4+ (https://github.com/vercel-labs/agent-browser).
 metadata:
-  version: "2026-05-21 517ea4b"
+  version: "2026-05-18 r135-mvd-update"
 ---
 
 # Antithesis Multiverse Debugger
@@ -27,22 +27,22 @@ session when debugging is complete.
 
 ## When to use this skill
 
-Use this when the user gives:
+Use this when:
 
-- an Antithesis debugging-session URL
-- a bug report URL that should be debugged interactively
-- a request to inspect container filesystem, runtime state, or events inside Antithesis
+- the user gives an Antithesis debugging-session URL
+- the user makes a request to inspect container filesystem, runtime state, or events inside Antithesis
+- the triage skill has launched an MVD session when investigating the results of a run
 
-For auth and report navigation, use the `antithesis-triage` skill. It already
-encodes the right `agent-browser` session model. This skill handles the
-debugger itself.
+For auth and report navigation, use the `antithesis-agent-browser` skill. It
+owns the `agent-browser` session and authentication flow. This skill handles
+the debugger itself.
 
 ## Gathering user input
 
 Before starting, collect the following from the user:
 
 1. **Debugger URL** (required) — A debugging-session URL like `https://TENANT.antithesis.com/debugging-session/...`.
-2. **What to investigate** — Are they checking filesystem contents? Runtime state? Specific artifacts?
+2. **What to investigate** — Are we checking filesystem contents? Runtime state? Specific artifacts?
 3. **Container name** (if known) — The name of the container to target. If not provided, the log view or container dropdown will show available containers.
 
 ## Simplified vs. advanced mode
@@ -77,15 +77,25 @@ agent-browser --session "$SESSION" eval \
 
 Switch to advanced mode only when you need:
 
-- Branching (`moment.branch()`) and advancing time
-- Event set queries (`environment.events.up_to(moment)`)
-- Fault injector state inspection
-- Complex multi-cell notebook workflows
+- **A target container that had crashed (or otherwise wasn't running) at the MVD recreate moment.** The simplified container dropdown only lists containers running at that point. To inspect a container while it was alive, you must time-travel back via `moment.rewind_to(...)` and target it by name via `bash...run({container: "<name>"})`. This is the one container-targeting case where advanced is strictly required.
+- Branching (`moment.branch()`) and advancing time (`branch.wait`, `branch.wait_until`)
+- Exploring multiple random histories from the same moment (`branch.send_input`)
+- Event set queries (`environment.events.up_to(moment)`, `.contains({source})`)
+- Fault injector state inspection or control (`environment.fault_injector.pause/unpause`)
+- Background processes and process-exit awaiting (`run_in_background`, `p.exits`)
+- Complex multi-cell notebook workflows with grouped authorization
 - The full JavaScript notebook API
+- As an escape hatch when something in simplified mode isn't working
 
-To switch modes, use the three-dot menu (vertical dots icon) in the top-right
-corner of the debug timeline header. See `references/simplified-debugger.md`
-for details.
+To switch programmatically, call `window.__antithesisDebug.switchMode("advanced")`.
+This is what `getMode()` reports. **Note:** there is a separate "Simple
+mode" / "Advanced mode" tab strip in the right pane (`.display_area__tabs`)
+that `switchMode()` does NOT click; the two can disagree. The right-pane
+tab strip controls the help / pop-out panel content. To read the on-page
+advanced-mode help (a canonical ~5KB reference for the notebook API), click
+the "Advanced mode" tab in that strip and read
+`document.querySelector(".display_area__layout").innerText`. See
+`references/advanced-debugger.md`.
 
 ## Reference files
 
@@ -99,14 +109,15 @@ relevant file before performing that task.
 | `references/setup-session.md`       | Always — read first to set up the browser session                   |
 | `references/simplified-debugger.md` | Running commands, extracting files, reading logs in simplified mode |
 
-### Advanced mode (notebook)
+### Advanced mode (using a notebook)
 
-| Page                               | When to read                                        |
-| ---------------------------------- | --------------------------------------------------- |
-| `references/setup-session.md`      | Always — read first to set up the browser session   |
-| `references/notebook.md`           | Reading or writing notebook source, injecting cells |
-| `references/actions.md`            | Authorizing shell actions, reading action output    |
-| `references/common-inspections.md` | Ready-to-use debug cell snippets for common tasks   |
+| Page                                | When to read                                                                              |
+| ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| `references/setup-session.md`       | Always — read first to set up the browser session                                          |
+| `references/advanced-debugger.md`   | **Read this BEFORE other advanced refs** — mental model, mode-switching, authorization, branches, time advancement, fault injector, host commands, common errors |
+| `references/notebook.md`            | Reading or writing notebook source, injecting cells                                       |
+| `references/actions.md`             | Authorizing shell actions, reading action output                                          |
+| `references/common-inspections.md`  | Ready-to-use debug cell snippets for common tasks                                         |
 
 ## Recommended workflows
 
@@ -127,11 +138,24 @@ relevant file before performing that task.
 ### Advanced: Programmatic investigation
 
 1. Read `references/setup-session.md` — open the debugger URL and inject runtime
-2. Switch to advanced mode: `window.__antithesisDebug.switchMode("advanced")`
-3. Read `references/notebook.md` — understand the seeded notebook
-4. Read `references/common-inspections.md` — pick inspection cells
-5. Read `references/actions.md` — authorize actions and read results
-6. Report findings with evidence chain
+2. Switch to advanced mode: `window.__antithesisDebug.switchMode("advanced")`,
+   then `notebook.waitForReady()`
+3. Read `references/advanced-debugger.md` — internalize moments, branches,
+   reactive-vs-effectful, action grouping, and common errors
+4. Read `references/notebook.md` — mechanics of writing cells
+5. Read `references/common-inspections.md` — ready-to-use snippets
+6. Read `references/actions.md` — authorizing and reading action results
+7. Report findings with evidence chain
+
+### Download the events log for offline analysis
+
+1. Read `references/setup-session.md` — launch / open the debugger URL
+2. Read `references/download-log.md` — run `assets/download-mvd-log.sh`
+   to capture and (for JSON) annotate the events log. The annotation step
+   delegates to the triage skill's `process-logs.py`; no debug-skill-local
+   copy.
+3. Analyze the local file with `jq` (event shape matches the triage
+   skill's logs reference)
 
 ## Runtime injection
 
@@ -222,8 +246,8 @@ agent-browser --session "$SESSION" eval \
 - **Start in simplified mode.** The simplified debugger handles most debugging
   tasks. Only switch to advanced mode when you specifically need the notebook
   API.
-- **Defer to antithesis-triage for auth.** If the debugger URL requires
-  authentication, use the `antithesis-triage` skill's
+- **Defer to antithesis-agent-browser for auth.** If the debugger URL
+  requires authentication, use the `antithesis-agent-browser` skill's
   `references/setup-auth.md` for the interactive login flow. Use the same
   `--session-name antithesis` so auth state is shared.
 - **Use disposable sessions.** Generate a unique `SESSION` for each debugging
@@ -246,8 +270,18 @@ agent-browser --session "$SESSION" eval \
 - **Retry missing-runtime errors by reinjecting.** If a command fails because
   `window.__antithesisDebug` is undefined or missing, inject the runtime and
   rerun the same method.
-- **Authorize actions one at a time.** Each `bash\`...\`` cell needs explicit
-  authorization. Read the result before injecting the next cell.
+- **Group effects with `action()` + `required_by`.** Don't authorize cells
+  one at a time when a single click can fire a chain — see
+  `references/advanced-debugger.md` for the `tethered_authorization`
+  pattern.
+- **Don't edit a command that has already been authorized.** Make a new
+  branch (and new action) for the new attempt. Editing an authorized cell
+  re-runs it without re-authorization (a known bug).
+- **A nonzero exit code terminates the branch.** Subsequent commands on
+  the same branch will fail with `CAMPAIGN SAW TERMINAL EVENT`. Fork a
+  fresh branch from the same or an earlier moment.
+- **Trust `cell.text`/`innerText` over `actionCompleted`.** The runtime's
+  completion-detection misses real DONE states; read the cell text directly.
 
 ## Self-Review
 

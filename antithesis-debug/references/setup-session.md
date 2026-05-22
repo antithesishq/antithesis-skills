@@ -15,6 +15,53 @@ You should also make sure the `agent-browser` skill is available. If it is not a
 npx skills add vercel-labs/agent-browser
 ```
 
+## Launching an MVD session
+
+Before opening a debugger URL, you may need to launch the session first.
+`snouty debug` is the launch command. The interface is in flux: feature-detect
+by inspecting `snouty debug --help` before deciding which flow to run.
+
+### Step 1: detect the supported parameter
+
+```bash
+snouty debug --help
+```
+
+Look for `run_id` or `session_id` in the parameter list.
+
+### Step 2a — if `run_id` is supported (preferred path)
+
+Launch the session directly given the run + moment:
+
+```bash
+snouty debug \
+  --antithesis.debugging.run_id "$RUN_ID" \
+  --antithesis.debugging.input_hash "$INPUT_HASH" \
+  --antithesis.debugging.vtime "$VTIME" \
+  --antithesis.debugging.description "$DESCRIPTION" \
+  --antithesis.report.recipients "$EMAIL"
+```
+
+Always pass a `description`, and make it **unique and findable later**
+(e.g., include the property name, a date stamp, or a ticket id). You'll
+use this string to locate the session in the list of debugging sessions
+when you (or a teammate) want to come back to it.
+
+Snouty returns the debugging-session URL on success; proceed to "Opening a
+debugger URL" below.
+
+### Step 2b — if only `session_id` is supported (current state)
+
+`session_id` and `run_id` are not interchangeable. Until `snouty debug` gains
+`run_id` support, ask the user to:
+
+1. Start the MVD session manually from the triage report (or however they
+   normally launch).
+2. Paste the resulting debugging-session URL back to you.
+
+Then proceed with "Opening a debugger URL" using that URL. This is a temporary
+fallback; once snouty supports `run_id`, this step goes away.
+
 ## Session naming
 
 Use a fresh, unique browser session for each debugging run so concurrent agents
@@ -38,16 +85,30 @@ agent-browser --session "$SESSION" --session-name antithesis open "$URL"
 agent-browser --session "$SESSION" wait --load networkidle
 ```
 
-Then verify the page loaded:
+Then verify auth deterministically by checking the URL the browser landed on:
 
 ```bash
-agent-browser --session "$SESSION" eval 'document.title'
+agent-browser --session "$SESSION" get url
 ```
 
-If the page title indicates a login page or error, authentication is needed.
-Defer to the `antithesis-triage` skill's `references/setup-auth.md` for the
-interactive login flow. Use the same `--session-name antithesis` so auth state
-is shared.
+If the URL still starts with `https://$TENANT.antithesis.com/...` you are
+authenticated and can proceed. If it redirected to `accounts.google.com`
+(or any other login domain), authentication is needed — defer to the
+`antithesis-agent-browser` skill's `references/setup-auth.md` for the
+interactive login flow. Use the same `--session-name antithesis` so auth
+state is shared.
+
+> **The `?auth=v2.public...` token in a debugger URL is NOT a session
+> token.** It scopes access to a specific report; a session cookie from a
+> full login is still required. Even a fresh PASETO token in the URL
+> won't bypass the SSO redirect on first contact. Plan to run the
+> interactive login flow once per `--session-name`.
+
+> **Auth domain note:** the `antithesis-agent-browser` `setup-auth.md`
+> directs the user to `https://antithesis.com/login/?redirect=home`. That
+> establishes auth at the central domain; for tenant subdomains
+> (`$TENANT.antithesis.com`) the cookies propagate in the same browser
+> session-name, so after login you can re-open the tenant URL headless.
 
 ## Injecting the runtime
 

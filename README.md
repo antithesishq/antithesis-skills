@@ -29,6 +29,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
 
+`antithesis-agent-browser` is a helper skill that handles interactive browser authentication to your Antithesis tenant and reads Antithesis web pages. Other skills (e.g. `antithesis-debug`, `antithesis-query-logs`) delegate to it when they need authenticated web access; you usually won't invoke it directly.
+
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
 
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
@@ -143,9 +145,10 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
 | `antithesis-workload`                  | `snouty`                        |
 | `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
-| `antithesis-triage`                    | `snouty`, `agent-browser`, `jq` |
-| `antithesis-debug`                     | `agent-browser`                 |
-| `antithesis-query-logs`                | `snouty`, `agent-browser`       |
+| `antithesis-triage`                    | `snouty`, `jq`                  |
+| `antithesis-debug`                     | `agent-browser`, `jq`           |
+| `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
+| `antithesis-agent-browser`            | `agent-browser`, `jq`           |
 | `antithesis-documentation`             | `snouty docs`                   |
 
 ## Install
@@ -169,6 +172,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-workload`
    - `antithesis-debug`
    - `antithesis-query-logs`
+   - `antithesis-agent-browser`
    - `antithesis-launch`
    - `antithesis-skills-feedback`
 2. **Install scope** — choose **global**, not project.

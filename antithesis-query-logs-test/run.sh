@@ -40,8 +40,9 @@ require_cmd jq
 TENANT="$1"
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
-TRIAGE_RUNTIME_JS="$REPO_ROOT/antithesis-triage/assets/antithesis-triage.js"
+TRIAGE_RUNTIME_JS="$REPO_ROOT/antithesis-agent-browser/assets/antithesis-agent-browser.js"
 QUERY_RUNTIME_JS="$REPO_ROOT/antithesis-query-logs/assets/antithesis-query-logs.js"
+BUILD_URL_PY="$REPO_ROOT/antithesis-query-logs/assets/build-url.py"
 AUDIT_JS="$SCRIPT_DIR/audit.js"
 OUT_DIR="$SCRIPT_DIR/out"
 TMP_DIR="$SCRIPT_DIR/tmp"
@@ -123,7 +124,7 @@ run_audit_phase() {
 wait_ready_triage() {
   local namespace="$1"
   browser eval \
-    "window.__antithesisTriage.${namespace}.waitForReady({ timeoutMs: 15000, intervalMs: 500 })" \
+    "window.__antithesisAgentBrowser.${namespace}.waitForReady({ timeoutMs: 15000, intervalMs: 500 })" \
     >/dev/null
 }
 
@@ -166,7 +167,7 @@ else
   inject_triage_runtime
   wait_ready_triage runs
 
-  RUNS_RESULT="$(browser eval "window.__antithesisTriage.runs.getRecentRuns()")"
+  RUNS_RESULT="$(browser eval "window.__antithesisAgentBrowser.runs.getRecentRuns()")"
 
   mapfile -t COMPLETED_REPORT_URLS < <(
     printf '%s\n' "$RUNS_RESULT" \
@@ -223,11 +224,10 @@ echo "exploreLogsUrl: ${EXPLORE_LOGS_URL:0:80}..." >&2
 
 echo "testing simple query URL..." >&2
 
-SIMPLE_URL="$(browser eval \
-  "window.__antithesisQueryBuilder.buildFailureQueryUrl('${SESSION_ID}', '${PROPERTY_NAME}', '${TENANT}.antithesis.com')")"
-
-# Strip quotes if present
-SIMPLE_URL="${SIMPLE_URL//\"/}"
+SIMPLE_URL="$(python3 "$BUILD_URL_PY" failure \
+  --session-id "$SESSION_ID" \
+  --property "$PROPERTY_NAME" \
+  --tenant "${TENANT}.antithesis.com")"
 
 echo "simple URL: ${SIMPLE_URL:0:100}..." >&2
 
@@ -244,10 +244,12 @@ echo "simple-url: $(jq -r 'if .ok then "PASS" else "FAIL" end' "$SIMPLE_URL_FILE
 
 echo "testing temporal query URL..." >&2
 
-TEMPORAL_URL="$(browser eval \
-  "window.__antithesisQueryBuilder.buildNotPrecededByUrl('${SESSION_ID}', '${PROPERTY_NAME}', 'assertion.message', '${TEMPORAL_PROPERTY_NAME}', '${TENANT}.antithesis.com')")"
-
-TEMPORAL_URL="${TEMPORAL_URL//\"/}"
+TEMPORAL_URL="$(python3 "$BUILD_URL_PY" not-preceded-by \
+  --session-id "$SESSION_ID" \
+  --property "$PROPERTY_NAME" \
+  --pre-field "assertion.message" \
+  --pre-value "$TEMPORAL_PROPERTY_NAME" \
+  --tenant "${TENANT}.antithesis.com")"
 
 echo "temporal URL: ${TEMPORAL_URL:0:100}..." >&2
 
@@ -305,13 +307,9 @@ JSON_MATCH="$(jq -r '.discovered.jsonMatch // false' "$DIAGNOSTIC_FILE")"
 if [[ "$JSON_MATCH" == "false" && "$UI_TEMPORAL_DECODED" != "null" ]]; then
   echo "attempting temporal URL retry with UI-captured JSON..." >&2
 
-  # Encode the UI-captured JSON as a URL
-  CORRECTED_URL="$(browser eval "
-    var query = ${UI_TEMPORAL_DECODED};
-    var encoded = btoa(JSON.stringify(query)).replace(/=+$/, '');
-    'https://${TENANT}.antithesis.com/search?search=v5v' + encoded;
-  ")"
-  CORRECTED_URL="${CORRECTED_URL//\"/}"
+  # Encode the UI-captured JSON as a URL via the standalone Python builder
+  CORRECTED_URL="$(printf '%s' "$UI_TEMPORAL_DECODED" \
+    | python3 "$BUILD_URL_PY" encode --tenant "${TENANT}.antithesis.com")"
 
   echo "corrected URL: ${CORRECTED_URL:0:100}..." >&2
 
