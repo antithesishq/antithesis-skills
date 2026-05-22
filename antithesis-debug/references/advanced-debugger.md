@@ -295,8 +295,10 @@ branch instead of (or before) `wait`.
 branch.send_input({ input_bytes: [1, 2, 3, 4], required_by: [parent] });
 ```
 
-Each value in `input_bytes` is a byte that represents approximately one
-second of run time and tweaks the random number seed as it is consumed.
+Each value in `input_bytes` is a byte that roughly corresponds to one
+second of history (not a hard-and-fast rule) and tweaks the random number
+seed as it is consumed.
+
 Choose the bytes at random. A typical recipe to enter a fresh history is:
 `send_input` a few bytes, then `wait` for the duration you actually want
 to observe. Each different combination of bytes produces a unique

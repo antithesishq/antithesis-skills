@@ -119,6 +119,19 @@ If the "status" of a specific run is "incomplete", there may be an error log to 
 - **For property failures, consider the "details" section if provided.** These are curated fields supplied by the property author designed to illuminate the state of the system at the time of failure.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
 
+## Suggesting follow-up skills
+
+End your triage summary with a short "next steps" section that names follow-up skills or additional triage workflows when they would help. Treat these as suggestions for the user, not actions to take automatically — let the user (or their orchestration) decide when to invoke them. If the user has explicitly asked to chain skills (e.g. "run triage and then debug any failing property"), follow their instructions and proceed with the chain.
+
+Skills worth suggesting based on what triage uncovers:
+
+- **`antithesis-research`** — map the codebase to surface better testable properties. Useful when failures point to systemic gaps in coverage rather than a discrete bug.
+- **`antithesis-workload`** — extend or refine assertions, test commands, and logs. Should be suggested whenever all properties are passing to incrementally improve the workload, or when properties are not reachable due to the workload being underpowered. This skill can also be used to add more logging or fix properties to assist with root cause analysis.
+- **`antithesis-debug`** — open the multiverse debugger on a specific failure to inspect container state at the failing moment or explore alternate histories. Useful when log analysis alone hasn't explained the failure. Requires agent-browser and may require interactive login in a browser.
+- **`antithesis-query-logs`** — search across all timelines for ordering and causality questions ("did event A always precede failure B?", "do failures still occur without the preceding fault?"). Useful when a failure looks correlated with another event or fault, or when you've only inspected one history out of many. Requires agent-browser and may require interactive login in a browser.
+
+Include the data the next skill will need (run_id, property name, moment, etc.) so the user can invoke it without re-discovering context.
+
 ## Self-Review
 
 Before declaring this skill complete, review your work against the criteria below. This skill's output is conversational (summaries, tables, analysis), so the review should happen in your current context. Re-read the guidance in this file, then systematically check each item below against the answers and analysis you produced.
