@@ -54,213 +54,80 @@ event.
 
 Field names are **singular**, not plural:
 
-| Field                  | Description                              | Operator    |
-| ---------------------- | ---------------------------------------- | ----------- |
-| `assertion.message`    | Property/assertion name                  | `contains`  |
-| `assertion.status`     | `passing` or `failing`                   | `matches`   |
-| `assertion.type`       | Assertion type                           | `contains`  |
-| `assertion.function`   | Function name                            | `contains`  |
-| `assertion.file`       | Source file                              | `contains`  |
-| `general.output_text`  | Log output text                          | `contains`  |
-| `general.source`       | Process that emitted the event           | `contains`  |
-| `general.vtime`        | Virtual time                             | varies      |
-| `general.moment`       | Moment                                   | varies      |
-| `general.custom`       | Custom field                             | varies      |
+| Field                 | Description                    | Operator   |
+| --------------------- | ------------------------------ | ---------- |
+| `assertion.message`   | Property/assertion name        | `contains` |
+| `assertion.status`    | `passing` or `failing`         | `matches`  |
+| `assertion.type`      | Assertion type                 | `contains` |
+| `assertion.function`  | Function name                  | `contains` |
+| `assertion.file`      | Source file                    | `contains` |
+| `general.output_text` | Log output text                | `contains` |
+| `general.source`      | Process that emitted the event | `contains` |
+| `general.vtime`       | Virtual time                   | varies     |
+| `general.moment`      | Moment                         | varies     |
+| `general.custom`      | Custom field                   | varies     |
 
 **Critical**: `assertion.status` requires the `matches` operator, NOT
 `contains`. Using `contains` for status will return no results.
 
 ## Two Approaches: URL Construction vs UI Interaction
 
-### URL Construction (Preferred)
+### URL Construction (Preferred): build-url.py
 
-The most reliable way to execute queries programmatically is to construct
-the search URL directly. This avoids the fragility of targeting dropdowns
-and textarea rows in the dynamic query builder DOM.
-
-> **Warning**: The query JSON format below was reverse-engineered from
-> Antithesis platform version 50-6 by inspecting live URLs. It is not
-> documented by Antithesis and may change in future platform updates. If
-> URL construction stops working (queries return no results or the page
-> fails to parse the URL), fall back to the UI interaction method below.
-
-#### Query JSON Format
-
-```json
-{
-  "q": {
-    "n": {
-      "r": {
-        "h": [
-          {
-            "h": [
-              {
-                "c": false,
-                "f": "assertion.message",
-                "o": "contains",
-                "v": "data-integrity-after-restart"
-              }
-            ],
-            "o": "or"
-          },
-          {
-            "h": [
-              {
-                "c": false,
-                "f": "assertion.status",
-                "o": "matches",
-                "v": "failing"
-              }
-            ],
-            "o": "or"
-          }
-        ],
-        "o": "and"
-      },
-      "t": {
-        "g": false,
-        "m": ""
-      },
-      "y": "none"
-    }
-  },
-  "s": "{session_id}"
-}
-```
-
-#### Field Reference
-
-| JSON key | Meaning                                    |
-| -------- | ------------------------------------------ |
-| `q`      | Top-level query object                     |
-| `q.n`    | Main (WHERE) query block                   |
-| `q.n.r`  | Row group container                        |
-| `q.n.r.h`| Array of condition groups                  |
-| `q.n.r.o`| How groups are joined: `"and"` or `"or"`  |
-| `h[].h`  | Array of conditions within a group         |
-| `h[].o`  | How conditions within a group are joined   |
-| `f`      | Field name (e.g., `assertion.message`)     |
-| `o`      | Operator (`contains`, `matches`, `excludes`, `regex`) |
-| `v`      | Value string                               |
-| `c`      | Case-sensitive boolean (`false` = insensitive) |
-| `t`      | Temporal window config (`g`: false, `m`: "") |
-| `y`      | Temporal type (`"none"` for simple queries) |
-| `s`      | Session ID (scopes query to a specific run) |
-
-#### URL Encoding
-
-1. Serialize the query JSON with compact separators (no spaces)
-2. Base64-encode the JSON string
-3. Strip trailing `=` padding characters
-4. Prepend the `v5v` version prefix
-5. Set as the `search` query parameter
-
-Example (Python):
-```python
-import json, base64
-
-encoded = base64.b64encode(
-    json.dumps(query, separators=(',', ':')).encode()
-).decode().rstrip('=')
-url = f'https://{tenant}.antithesis.com/search?search=v5v{encoded}'
-```
-
-Example (JavaScript, in browser):
-```javascript
-var encoded = btoa(JSON.stringify(query))
-  .replace(/=+$/, '');
-var url = 'https://' + tenant + '.antithesis.com/search?search=v5v' + encoded;
-```
-
-#### Extracting the Session ID
-
-The session ID is required for all queries. Extract it from an existing
-Logs Explorer URL (e.g., the "Explore logs" link on a triage report):
-
-```javascript
-// Given a search URL from the triage report
-var searchParam = new URL(url).searchParams.get('search');
-var b64 = searchParam.slice(3); // strip 'v5v' prefix
-// Pad to valid base64
-while (b64.length % 4) b64 += '=';
-var decoded = JSON.parse(atob(b64));
-var sessionId = decoded.s;
-```
-
-Or use the runtime helper after injection:
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisQueryLogs.extractSessionId()"
-```
-
-### Runtime URL Builder Methods
-
-After injecting `assets/antithesis-query-logs.js`, URL builder methods are
-available on two objects:
-
-- **`window.__antithesisQueryBuilder`** — standalone builder, available on
-  any page after injection. Use this when constructing a URL before
-  navigating to the Logs Explorer (e.g., from a triage report page).
-- **`window.__antithesisQueryLogs`** — full runtime, also has the same
-  builder methods plus UI interaction and result-reading methods.
-
-If you get `TypeError: Cannot read properties of undefined`, the runtime
-has not been injected. Inject it first:
+Prefer constructing the search URL with `assets/build-url.py` and handing
+it to `agent-browser open`. URLs are deterministic and never depend on the
+DOM, so this avoids the fragility of clicking dropdowns and targeting rows
+in the dynamic query builder.
 
 ```bash
-cat assets/antithesis-query-logs.js \
-  | agent-browser --session "$SESSION" eval --stdin
+# Simple failure query
+python3 assets/build-url.py failure \
+  --session-id "$SESSION_ID" \
+  --property "my-property-name" \
+  --tenant "{tenant}.antithesis.com"
+
+# Cascade-elimination (X failures NOT preceded by Y)
+python3 assets/build-url.py not-preceded-by \
+  --session-id "$SESSION_ID" \
+  --property "downstream-check" \
+  --pre-field assertion.message \
+  --pre-value "upstream-fault" \
+  --tenant "{tenant}.antithesis.com"
+
+# Independence check (X failures NOT followed by Y) — same shape
+python3 assets/build-url.py not-followed-by \
+  --session-id "$SESSION_ID" \
+  --property "X" \
+  --post-field assertion.message --post-value "Y" \
+  --tenant "{tenant}.antithesis.com"
+
+# Arbitrary query — see `custom --help` for the JSON spec
+echo '{"sessionId":"...","conditions":[{"field":"general.output_text","op":"contains","value":"oops"}]}' \
+  | python3 assets/build-url.py custom --tenant "{tenant}.antithesis.com"
+
+# Decode an existing URL (e.g. extract the sessionId from a report's
+# "Explore logs" link)
+python3 assets/build-url.py decode --url 'https://.../search?search=v5v...'
+python3 assets/build-url.py decode --url "$EXPLORE_LOGS_URL" | jq -r '.s'
 ```
 
-#### buildFailureQueryUrl(sessionId, assertionMessage [, tenant])
+`build-url.py --help` lists every subcommand and flag. The CLI exits
+non-zero with a clear message on missing fields, unknown temporal types,
+or malformed input.
 
-Build a URL for a simple assertion failure query.
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisQueryBuilder.buildFailureQueryUrl('SESSION_ID', 'my-property-name')"
-```
-
-#### buildNotPrecededByUrl(sessionId, assertionMessage, precededByField, precededByValue [, tenant])
-
-Build a temporal query URL filtering for failures NOT preceded by a condition.
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisQueryBuilder.buildNotPrecededByUrl('SESSION_ID', 'my-property', 'assertion.message', 'upstream-failure')"
-```
-
-#### buildNotFollowedByUrl(sessionId, assertionMessage, followedByField, followedByValue [, tenant])
-
-Build a temporal query URL filtering for failures NOT followed by a condition.
-
-#### buildSearchUrl(options [, tenant])
-
-Build a URL from a full options object. Accepts either a raw query JSON
-(from `buildQuery`) or an options object with `sessionId`, `conditions`,
-and optional `temporalType`/`temporalConditions`.
-
-```bash
-agent-browser --session "$SESSION" eval \
-  "window.__antithesisQueryBuilder.buildSearchUrl({ \
-    sessionId: 'SESSION_ID', \
-    conditions: [ \
-      { field: 'assertion.message', op: 'contains', value: 'my-property' }, \
-      { field: 'assertion.status', op: 'matches', value: 'failing' } \
-    ] \
-  })"
-```
-
-All builder methods accept an optional `tenant` parameter (the hostname,
-e.g. `"my-tenant.antithesis.com"`) as the last argument. If omitted, the
-current page hostname is used. Pass `tenant` explicitly when building URLs
-from a page that is not on the Antithesis domain.
+> **Format stability note**: The encoded URL format (`?search=v5v<base64>`)
+> was reverse-engineered from the Antithesis platform by inspecting live
+> URLs. It is not documented by Antithesis and may change. If URLs built
+> by `build-url.py` stop working after a platform update, fall back to
+> the UI interaction method below and update `build-url.py` to match.
 
 ### UI Interaction (Fallback)
 
-Use UI interaction only when URL construction is not possible (e.g.,
-exploring the query builder interactively or when the query JSON format
-changes).
+If URL construction stops working — or you genuinely need to drive the
+page (e.g. to capture exactly what the platform produces for a given UI
+sequence) — interact with the DOM via the injected runtime
+(`assets/antithesis-query-logs.js`, methods on
+`window.__antithesisQueryLogs`).
 
 #### Query Builder Elements
 
@@ -333,6 +200,11 @@ agent-browser --session "$SESSION" eval \
 
 ## Results
 
-After searching, results appear in the `.event_search_results` area.
-The count is shown as "Search results: N matching events".
+After searching, result rows render inside `.event_search_results`. The
+match count is shown in a separate `<span class="event_heading_count">`
+above the rows (e.g. "54,924 matching events"); when there are zero
+matches, "No matching events" appears inside `.event_search_results`
+instead. `window.__antithesisQueryLogs.getResultCount()` and `.search()`
+read both locations.
+
 Results can be viewed as `List` or `Map` (tabs near the results header).

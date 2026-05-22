@@ -41,6 +41,7 @@ results on a multiverse map.
 - DO NOT PROCEED if `agent-browser` is not installed. See `https://raw.githubusercontent.com/vercel-labs/agent-browser/refs/heads/main/README.md` for installation options.
 - DO NOT PROCEED if `agent-browser` is older than version `v0.23.4`. You can upgrade with `agent-browser upgrade`.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
+- `python3` (>= 3.10, stdlib only) for `assets/build-url.py`.
 - A completed Antithesis run. If you don't have a specific run URL, use the
   `antithesis-triage` skill's run discovery workflow to find one first.
 - `agent-browser` installed and authenticated to the Antithesis tenant
@@ -137,44 +138,67 @@ no results. The selected run is shown in the dropdown at the top of the page.
 | `references/results.md`          | Reading search results and clicking into details |
 | `references/map.md`              | Using the multiverse map for cluster analysis    |
 
-## Runtime Injection
+## URL Construction (preferred) and Runtime Injection
 
-Inject `assets/antithesis-query-logs.js` into the Logs Explorer page:
+This skill ships two assets. Pick the one that fits the step you're on:
 
-```bash
-cat assets/antithesis-query-logs.js \
-  | agent-browser --session "$SESSION" eval --stdin
-```
+- **`assets/build-url.py`** — standalone Python CLI. Builds and decodes
+  Logs Explorer URLs without any browser. Use this any time you just need
+  a URL (e.g. to hand to `agent-browser open` or to paste into a browser).
+  No injection, no DOM, no session needed.
 
-The runtime registers two objects:
+  ```bash
+  python3 assets/build-url.py failure \
+    --session-id "$SESSION_ID" \
+    --property "my-failing-property" \
+    --tenant "{tenant}.antithesis.com"
+  ```
 
-- **`window.__antithesisQueryBuilder`** — standalone URL construction helpers.
-  Available on any page after injection. Use this when building a search URL
-  before navigating to the Logs Explorer.
-- **`window.__antithesisQueryLogs`** — full runtime with URL builders, UI
-  interaction methods, and result-reading methods.
+  See `references/query-builder.md` for all subcommands (`failure`,
+  `not-preceded-by`, `not-followed-by`, `custom`, `decode`).
 
-**URL construction is the preferred approach** for executing queries
-programmatically, because UI interaction (clicking dropdowns, targeting rows)
-is fragile with the query builder's dynamic DOM.
+- **`assets/antithesis-query-logs.js`** — in-page runtime. Inject this on
+  the Logs Explorer page only when you need to *interact with* the page:
+  click Search, wait for results, read counts/result rows, switch to the
+  Map view, etc. Pure URL construction does not need the runtime.
 
-**Important**: You must inject the runtime before calling any
-`window.__antithesisQueryBuilder` or `window.__antithesisQueryLogs` method.
-If you get `TypeError: Cannot read properties of undefined`, inject first.
+  ```bash
+  cat assets/antithesis-query-logs.js \
+    | agent-browser --session "$SESSION" eval --stdin
+  ```
+
+  The runtime registers `window.__antithesisQueryLogs`. If you get
+  `TypeError: Cannot read properties of undefined` from a call against it,
+  the runtime has not been injected on the current page — inject first.
+
+Prefer `build-url.py` whenever you just need a URL. Drop to the in-page
+runtime only for steps that genuinely have to touch the DOM.
 
 ## Recommended Workflows
 
 ### Cascade elimination
 
-1. Navigate to the triage report for the run
-2. Inject `assets/antithesis-query-logs.js` (required before using any builder methods)
-3. Extract the session ID from the "Explore logs" link (see query-builder.md)
-4. Build a simple query URL using `window.__antithesisQueryBuilder.buildFailureQueryUrl(sessionId, "my-failing-property")`
-5. Navigate to the URL and note the result count
-6. Build a temporal query URL using `window.__antithesisQueryBuilder.buildNotPrecededByUrl(sessionId, "my-failing-property", "assertion.message", "suspected-upstream-failure")`
-7. Navigate to the temporal URL and note the new count
-8. If the count drops, the difference is cascade failures
-9. If the count stays the same, the failures are independent
+1. Get the session ID — either by extracting it from the triage report's
+   "Explore logs" link (`python3 assets/build-url.py decode --url "$EXPLORE_LOGS_URL" | jq -r .s`)
+   or from any existing Logs Explorer URL.
+2. Build a simple failure URL with the Python CLI:
+   ```bash
+   python3 assets/build-url.py failure \
+     --session-id "$SESSION_ID" --property "my-failing-property" \
+     --tenant "{tenant}.antithesis.com"
+   ```
+3. `agent-browser open` the URL, inject the runtime, run search, read the
+   count via `window.__antithesisQueryLogs.search()`.
+4. Build a temporal URL:
+   ```bash
+   python3 assets/build-url.py not-preceded-by \
+     --session-id "$SESSION_ID" --property "my-failing-property" \
+     --pre-field assertion.message --pre-value "suspected-upstream-failure" \
+     --tenant "{tenant}.antithesis.com"
+   ```
+5. Navigate to it, run search, note the new count.
+6. If the count drops, the difference is cascade failures. If it stays the
+   same, the failures are independent.
 
 ### Failure correlation with event details
 

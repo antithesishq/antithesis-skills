@@ -8,6 +8,8 @@ validate-changelog:
 
 test:
 	uv run python antithesis-triage/assets/process-logs.py --test
+	uv run python antithesis-debug/assets/process-logs.py --test
+	uv run python antithesis-query-logs/assets/build-url.py --test
 
 validate-links:
 	lychee --config lychee.toml .

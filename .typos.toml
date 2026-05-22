@@ -1,0 +1,4 @@
+[default]
+# Ignore typos inside long base64-like quoted strings (e.g. encoded URL
+# fragments in test fixtures).
+extend-ignore-re = ['"[A-Za-z0-9+/=]{20,}"']

@@ -147,7 +147,25 @@
   };
 
   function buildQuery(options) {
+    if (!options || typeof options !== "object") {
+      throw new Error("buildQuery: options object is required");
+    }
+    if (!options.sessionId) {
+      throw new Error("buildQuery: options.sessionId is required");
+    }
+    if (!Array.isArray(options.conditions) || options.conditions.length === 0) {
+      throw new Error(
+        "buildQuery: options.conditions must be a non-empty array of " +
+        "{field, op, value} objects (did you pass 'rows' instead?)"
+      );
+    }
     var mainGroups = options.conditions.map(function (c) {
+      if (!c || typeof c !== "object" || !("field" in c) || !("op" in c) || !("value" in c)) {
+        throw new Error(
+          "buildQuery: each condition requires field, op, and value keys; got " +
+          JSON.stringify(c)
+        );
+      }
       return condGroup([cond(c.field, c.op, c.value)]);
     });
 
@@ -161,15 +179,22 @@
       s: options.sessionId,
     };
 
-    if (
-      options.temporalType &&
-      options.temporalType !== "none" &&
-      options.temporalConditions
-    ) {
+    if (options.temporalType && options.temporalType !== "none") {
+      if (
+        !Array.isArray(options.temporalConditions) ||
+        options.temporalConditions.length === 0
+      ) {
+        throw new Error(
+          "buildQuery: temporalType=" + JSON.stringify(options.temporalType) +
+          " requires a non-empty temporalConditions array"
+        );
+      }
       var mapping = TEMPORAL_MAP[options.temporalType];
       if (!mapping) {
-        // Unknown temporal type — fall back to legacy encoding
-        mapping = { y: options.temporalType, negate: false };
+        throw new Error(
+          "buildQuery: unknown temporalType " + JSON.stringify(options.temporalType) +
+          "; expected one of " + Object.keys(TEMPORAL_MAP).join(", ")
+        );
       }
 
       var temporalGroups = options.temporalConditions.map(function (c) {
@@ -246,10 +271,14 @@
       return encodeQuery(query);
     },
     buildSearchUrl: function (queryOrOptions, tenant) {
-      var query = queryOrOptions;
-      if (queryOrOptions && queryOrOptions.sessionId) {
-        query = buildQuery(queryOrOptions);
+      if (!queryOrOptions || typeof queryOrOptions !== "object") {
+        throw new Error("buildSearchUrl: query or options object is required");
       }
+      var looksLikeOptions =
+        "sessionId" in queryOrOptions ||
+        "conditions" in queryOrOptions ||
+        "temporalType" in queryOrOptions;
+      var query = looksLikeOptions ? buildQuery(queryOrOptions) : queryOrOptions;
       return buildSearchUrl(query, tenant);
     },
     buildFailureQueryUrl: function (sessionId, assertionMessage, tenant) {
@@ -344,23 +373,9 @@
   async function waitForResults(timeoutMs) {
     var deadline = Date.now() + (timeoutMs || 60000);
     while (Date.now() < deadline) {
-      var resultsArea = document.querySelector(".event_search_results");
-      if (!resultsArea) {
-        await wait(1000);
-        continue;
-      }
-      var text = clean(resultsArea.textContent);
-      // Check if loading is done
-      if (text.includes("matching events") || text.includes("No matching events")) {
-        // Extract count
-        var match = text.match(/(\d[\d,]*)\s*matching\s*events/);
-        var count = match ? parseInt(match[1].replace(/,/g, ""), 10) : 0;
-        return {
-          ok: true,
-          count: count,
-          noResults: text.includes("No matching events"),
-          text: text.substring(0, 200),
-        };
+      var count = getResultCount();
+      if (count !== null) {
+        return { ok: true, count: count, noResults: count === 0 };
       }
       await wait(1000);
     }
@@ -413,12 +428,20 @@
   }
 
   function getResultCount() {
+    // The positive count lives in a sibling `<span class="event_heading_count">`
+    // (e.g. "54,924 matching events"). The .event_search_results container
+    // shows the actual result rows or "No matching events" when empty.
+    var countEl = document.querySelector(".event_heading_count");
+    if (countEl) {
+      var countText = clean(countEl.textContent);
+      var match = countText.match(/(\d[\d,]*)\s*matching\s*events/);
+      if (match) return parseInt(match[1].replace(/,/g, ""), 10);
+      if (countText.includes("No matching events")) return 0;
+    }
     var resultsArea = document.querySelector(".event_search_results");
-    if (!resultsArea) return null;
-    var text = clean(resultsArea.textContent);
-    var match = text.match(/(\d[\d,]*)\s*matching\s*events/);
-    if (match) return parseInt(match[1].replace(/,/g, ""), 10);
-    if (text.includes("No matching events")) return 0;
+    if (resultsArea && clean(resultsArea.textContent).includes("No matching events")) {
+      return 0;
+    }
     return null;
   }
 
