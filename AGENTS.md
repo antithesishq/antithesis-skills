@@ -11,8 +11,16 @@ https://agentskills.io/specification.md
 
 ## Build, Test, and Development Commands
 
-- `make validate`: validates all SKILLS align with the specification.
-- `make validate-changelog`: validates CHANGELOG.md format.
+- `make validate`: checks each `*/SKILL.md` for YAML frontmatter, a `name`
+  that matches its directory, a non-`TODO` `description`, and at least one
+  top-level `# ` heading. This is the canonical structural check.
+- `make validate-changelog`: validates `CHANGELOG.md` format.
+- `make validate-links`: runs the `lychee` link checker (config in
+  `lychee.toml`).
+- `make test`: runs unit tests for skill helper scripts (`process-logs.py`
+  in triage and debug; `build-url.py` in query-logs).
+- `make install-dev`: bootstraps the dev environment via
+  `scripts/install.sh`.
 
 ## Coding Style & Naming Conventions
 
@@ -32,6 +40,13 @@ Testing is validation-driven:
 - Scope: verifies presence and correctness of frontmatter, heading requirements, and skill discovery via `*/SKILL.md`.
 - For validator updates, test both pass and fail paths (for example, a missing `description` should fail).
 
+Some skills also ship a live integration harness as a sibling directory
+(`<skill>-test/`, e.g. `antithesis-debug-test/`, `antithesis-query-logs-test/`).
+These exercise the skill end-to-end against a real Antithesis tenant via
+`agent-browser` and are invoked manually with `<skill>-test/run.sh ...`. They
+are not wired into `make validate` or `make test` — see each harness's
+`README.md` for prerequisites.
+
 ## Commit & Pull Request Guidelines
 
 Use clear, conventional commit messages such as:
@@ -43,10 +58,18 @@ PRs should include:
 
 - What changed and why.
 - Validation evidence (`make validate` output).
-- Any follow-up work or limitations.
+- Any follow-up work for future PRs or limitations. Omit if irrelevant.
 
-For notable changes (new skills, breaking changes, significant fixes), add a
-`changelog - breaking` or `changelog - non-breaking` label to the PR. A bot
-updates `CHANGELOG.md` automatically on merge using the PR title — breaking
-entries are prefixed with `BREAKING CHANGE:`. Do not edit `CHANGELOG.md`
-directly.
+## Automation: do not bump versions or edit the changelog by hand
+
+Scripts in `.ci-scripts/` run on merge and handle these chores for you. Do not
+propose or perform them as part of a PR.
+
+- `update_skill_versions.py` manages `metadata.version` in every `SKILL.md`.
+- `changelog.py` appends an entry to `CHANGELOG.md` from the PR title (and the
+  `changelog - breaking` / `changelog - non-breaking` label, if present). For
+  notable changes (new skills, breaking changes, significant fixes), add the
+  appropriate label; breaking entries are prefixed with `BREAKING CHANGE:`.
+
+Edit `SKILL.md` content freely, but leave the `metadata.version` field alone,
+and do not edit `CHANGELOG.md` directly unless directly requested by the user.
