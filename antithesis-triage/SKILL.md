@@ -23,25 +23,23 @@ Use this skill to analyze Antithesis test runs.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 - **Note:** `snouty runs` may be hidden from `snouty --help` but is still supported. If you need to confirm availability or see subcommand syntax, `snouty runs --help` still works.
 
-### API access (rollout in progress)
+### Preflight: confirm triage can work
 
-This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). The API is currently being rolled out to all tenants; however, you may encounter a tenant that isn't updated yet. You should detect access before continuing unless you already know (from context or memory) that the tenant in question has the API enabled.
+This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Several things can prevent that from working. Walk down the checklist below in order — it is ordered from the most-likely cause (auth not exported) to the least-likely (tenant missing API access). Stop at the first failing check and surface **only that cause** to the user; do not list the others. Do not attempt real triage work until every check passes.
 
-**Detect missing API access** before doing real work:
+You can skip preflight if you already know (from context or memory) that the user's setup is working.
 
-1. Check that `$ANTITHESIS_API_KEY` is set. `snouty doctor` reports this too.
-2. If unset, ask the user whether their tenant has API access. If they don't
-   know or say no, treat the API as unavailable.
-3. Optionally probe: `snouty runs list -n 1` — if it fails with an error, the tenant is not yet enrolled.
+1. **Is `$ANTITHESIS_API_KEY` set?** This is the most common cause of failure. If unset, tell the user to export it (e.g., `export ANTITHESIS_API_KEY=<their key>`) and stop. Do not speculate about other causes.
 
-**If API access is unavailable**, do NOT attempt to run this skill. Instead, tell the user to either:
+2. **Does `snouty doctor` pass?** Run `snouty doctor`. If it reports any failure, relay that failure to the user and stop. Today this mostly re-confirms environment variables, but it is the canonical place where key validity, network reachability, and API-access checks will be surfaced as they are added — so always run it here.
 
-- **Contact Antithesis support** to request API access for their tenant.
-- **Or downgrade this skill** to the previous browser-based version on the
-  `agent-browser-triage` branch:
-  `https://github.com/antithesishq/antithesis-skills/tree/agent-browser-triage`
+3. **Can the API actually be reached?** Probe with `snouty runs list -n 1`. If this errors, the most likely remaining cause is that the tenant is not yet enrolled in the snouty API rollout. Tell the user to either:
+   - **Contact Antithesis support** to request API access for their tenant, or
+   - **Downgrade this skill** to the previous browser-based version on the
+     `agent-browser-triage` branch:
+     `https://github.com/antithesishq/antithesis-skills/tree/agent-browser-triage`
 
-This fallback is temporary and will be removed once the API rollout completes.
+   This fallback is temporary and will be removed once the rollout completes.
 
 ## Gathering user input
 
