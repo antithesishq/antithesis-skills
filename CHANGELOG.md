@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-23
+
+- docs: clarify triage preflight checks and repo guidelines ([PR #153](https://github.com/antithesishq/antithesis-skills/pull/153))
+
 ## 2026-05-22
 
 - BREAKING CHANGE: Triage skill using snouty API ([PR #152](https://github.com/antithesishq/antithesis-skills/pull/152))
