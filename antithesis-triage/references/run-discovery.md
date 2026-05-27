@@ -26,18 +26,31 @@ Apply these rules, in order.
    run the user is asking for. Take into account the webhooks and sources you
    have been using with this user. See the notes below.
 
-3. If the user provides a triage report URL, obtain a list of runs on the tenant
-   as described above. Match the report URL provided by the user to the
-   `links.triage_report` field in the json output and use the "run_id" field in
-   the same json object.
+3. If the user provides a triage report URL, look up the run_id by matching
+   the URL against `links.triage_report` in the runs list.
 
-Here is an example report URL
+   A report URL looks like:
 
-```
-https://<TENANT_ID>.antithesis.com/report/***/***.html?auth=<AUTH_KEY>
-```
+   ```
+   https://<TENANT_ID>.antithesis.com/report/***/***.html?auth=<AUTH_TOKEN>
+   ```
 
-If you are unable to match the report URL, ask the user to supply the run_id directly, or use a web-page-visiting skill to extract it from the report page. The run_id is in the bottom section of the Triage Report. The web-page approach is slower and more error-prone, so prefer asking the user for the run_id when possible.
+   You should verify the `TENANT_ID` matches the `$ANTITHESIS_TENANT` environment variable before proceeding. If it does not match, then `snouty` will not be able to find the run.
+
+   Everything before the `?auth=` query string is stable per run. Thus, use this pattern to find the run id for a provided URL:
+
+   ```bash
+   URL='<paste full URL from user>'
+   snouty runs --json list -n 200 \
+     | jq -r --arg url "$URL" \
+         'select(.links.triage_report // "" | startswith($url | split("?")[0])) | .run_id'
+   ```
+
+   The output is the `run_id`. If the command prints nothing, the run is
+   older than the last 200 runs — retry with `-n 500` or `-n 1000`. If it
+   still does not match, the report URL is for a different tenant or the
+   run is no longer listed; ask the user to supply the run_id directly (the
+   run_id is in the bottom section of the Triage Report).
 
 4. If the user did not provide an explicit triage report or run id, use the oldest non-triaged run, if you know whether runs were triaged or not. If you do not know which runs have been triaged, use the most recently completed run.
 
