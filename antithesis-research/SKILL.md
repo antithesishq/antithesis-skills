@@ -5,7 +5,7 @@ description: >
   map the system, identify failure-prone areas and testable properties, and
   produce the research artifacts needed for workload and environment planning.
 metadata:
-  version: "2026-05-28 fcd88f4"
+  version: "2026-05-28 d758c5d"
 ---
 
 # Antithesis Research
