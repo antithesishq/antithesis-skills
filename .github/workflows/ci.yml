@@ -51,3 +51,34 @@ jobs:
           args: --config lychee.toml .
           jobSummary: true
           token: ${{ secrets.GITHUB_TOKEN }}
+
+  python-compat:
+    name: Asset scripts on Python ${{ matrix.python-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # Customer-facing scripts in */assets/ must support Python 3.9+
+        # (macOS system Python). Add newer versions here as we want to widen
+        # coverage; 3.11 is already exercised by the `checks` job above.
+        python-version: ["3.9"]
+    steps:
+      - name: Check out code
+        uses: actions/checkout@v4
+
+      - name: Set up Python ${{ matrix.python-version }}
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Run asset unit tests
+        run: |
+          python antithesis-triage/assets/process-logs.py --test
+          python antithesis-debug/assets/process-logs.py --test
+          python antithesis-query-logs/assets/build-url.py --test
+
+      - name: Import-smoke remaining asset scripts
+        run: |
+          python -c "import importlib.util, sys; \
+            spec = importlib.util.spec_from_file_location('m', 'antithesis-triage/assets/download-logs-chunked.py'); \
+            m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)"

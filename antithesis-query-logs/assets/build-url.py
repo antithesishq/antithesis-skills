@@ -34,6 +34,8 @@ Examples:
   build-url.py decode --url 'https://...antithesis.com/search?search=v5v...'
 """
 
+from __future__ import annotations
+
 import argparse
 import base64
 import json
