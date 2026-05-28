@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-05-28
+
+- improve triage url handling ([PR #154](https://github.com/antithesishq/antithesis-skills/pull/154))
+
 ## 2026-05-23
 
 - docs: clarify triage preflight checks and repo guidelines ([PR #153](https://github.com/antithesishq/antithesis-skills/pull/153))
