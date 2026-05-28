@@ -32,6 +32,25 @@ https://agentskills.io/specification.md
   - `description`: non-empty, not `TODO`.
 - Every `SKILL.md` must include a top-level Markdown heading (`# ...`).
 
+### Python in skill assets must support Python 3.9+
+
+Scripts under `*/assets/` ship to customers and run against whatever `python3`
+is on their machine (often macOS system Python 3.9). Keep them compatible
+with Python 3.9.
+
+- Add `from __future__ import annotations` at the top so PEP 604 unions
+  (`X | None`, `list[int] | None`) and other annotation-only syntax don't
+  evaluate at import time.
+- Do **not** use Python 3.10+ runtime features: `match`/`case`, `tomllib`,
+  `typing.Self`, `ExceptionGroup` / `except*`, parenthesized `with` groups.
+- Stick to the standard library — asset scripts must not require `pip
+  install` on a customer's machine.
+
+The `python-compat` CI job (in `.github/workflows/ci.yml`) runs each asset
+script's `--test` mode under Python 3.9. Tooling under `.ci-scripts/` and
+`scripts/` is *not* subject to this floor — those run under the project's
+`uv`-managed interpreter (`>=3.11`, see `pyproject.toml`).
+
 ## Testing Guidelines
 
 Testing is validation-driven:

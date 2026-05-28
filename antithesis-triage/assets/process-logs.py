@@ -15,6 +15,8 @@ Usage: python3 process-logs.py < events.json > processed.json
        python3 process-logs.py --test       # run unit tests
 """
 
+from __future__ import annotations
+
 import argparse
 import json
 import re
