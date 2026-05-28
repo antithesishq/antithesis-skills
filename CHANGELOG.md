@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-05-28
 
+- python 3.9 compat ([PR #155](https://github.com/antithesishq/antithesis-skills/pull/155))
 - improve triage url handling ([PR #154](https://github.com/antithesishq/antithesis-skills/pull/154))
 
 ## 2026-05-23
