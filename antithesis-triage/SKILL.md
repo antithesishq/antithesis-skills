@@ -25,15 +25,13 @@ Use this skill to analyze Antithesis test runs.
 
 ### Preflight: confirm triage can work
 
-This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Several things can prevent that from working. Walk down the checklist below in order — it is ordered from the most-likely cause (auth not exported) to the least-likely (tenant missing API access). Stop at the first failing check and surface **only that cause** to the user; do not list the others. Do not attempt real triage work until every check passes.
+This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Several things can prevent that from working. Walk down the checklist below in order. Stop at the first failing check and surface **only that cause** to the user; do not list the others. Do not attempt real triage work until every check passes.
 
 You can skip preflight if you already know (from context or memory) that the user's setup is working.
 
-1. **Is `$ANTITHESIS_API_KEY` set?** This is the most common cause of failure. If unset, tell the user to export it (e.g., `export ANTITHESIS_API_KEY=<their key>`) and stop. Do not speculate about other causes.
+1. **Does `snouty doctor` pass?** Run `snouty doctor`. If it reports any failure, relay that failure to the user and stop. This is the canonical check for credentials, key validity, network reachability, and API access.
 
-2. **Does `snouty doctor` pass?** Run `snouty doctor`. If it reports any failure, relay that failure to the user and stop. Today this mostly re-confirms environment variables, but it is the canonical place where key validity, network reachability, and API-access checks will be surfaced as they are added — so always run it here.
-
-3. **Can the API actually be reached?** Probe with `snouty runs list -n 1`. If this errors, the most likely remaining cause is that the tenant is not yet enrolled in the snouty API rollout. Tell the user to either:
+2. **Can the API actually be reached?** Probe with `snouty runs list -n 1`. If this errors, the most likely remaining cause is that the tenant is not yet enrolled in the snouty API rollout. Tell the user to either:
    - **Contact Antithesis support** to request API access for their tenant, or
    - **Downgrade this skill** to the previous browser-based version on the
      `agent-browser-triage` branch:
@@ -70,7 +68,7 @@ To look up a specific run (report), read `references/run-info.md`. Then continue
 If the run has a status of "incomplete", refer to the `Diagnose incomplete run` section below.
 
 1. Read `references/run-info.md` to load information on a run
-2. If `links.triage_report` is null/absent in the run-info output, no triage report was generated for this run (typical for `cancelled` runs and some `unknown`/`starting` states). Report that the run is not triageable — the properties and logs endpoints will return 404 for these runs.
+2. If `links.triage_report` is null/absent in the run-info output, no triage report was generated for this run (typical for `cancelled` runs and some `unknown`/`starting` states). Report that the run is not triageable — the properties and logs endpoints will return 404 for these runs. If instead `links.triage_report` **is present** but `properties`/`logs` return 404, the run is most likely too old and its data has aged out — see "Old runs: 404s on a run that has a report" under General guidance, and report that rather than silently failing.
 3. Read `references/properties.md` to load properties
 4. Review passed/failed counts
 5. Build a detailed summary of the run including a review of all failures as well as flagging any new failures.
@@ -109,13 +107,22 @@ If the "status" of a specific run is "incomplete", there may be an error log to 
 2. Look at the `failure_moment` structure in the returned JSON. If present, use the input_hash and vtime from `failure_moment` to download a log in accordance with the instructions in `references/logs.md`.
 3. Try and obtain the build logs, especially if there is no failure moment, using `snouty runs --json build-logs ${RUN_ID}` and look for errors in the build.
 
-> **Note on `links.triage_report`:** For incomplete runs, the per-property `properties` and `logs` endpoints typically return 404, but `links.triage_report` and `failure_moment` may still be populated in `show`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. The triage workflow for incomplete runs is `failure_moment` + `build-logs`, regardless of whether a report URL exists.
+> **Note on `links.triage_report`:** For incomplete runs, the per-property `properties` and `logs` endpoints typically return 404, but `links.triage_report` and `failure_moment` may still be populated in `show`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. The triage workflow for incomplete runs is `failure_moment` + `build-logs`, regardless of whether a report URL exists. (A 404 on these endpoints for a *completed* run that has a report link means something different — the run is likely too old; see "Old runs: 404s on a run that has a report" under General guidance.)
 
 ## General guidance
 
 - **Review logs before concluding on failures.** When a failed property has examples with a moment supplied, download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - **For property failures, consider the "details" section if provided.** These are curated fields supplied by the property author designed to illuminate the state of the system at the time of failure.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
+
+### Old runs: 404s on a run that has a report
+
+There are two different reasons `properties` / `logs` / `build-logs` can return 404 — do not confuse them:
+
+- **Run was never triaged.** `links.triage_report` is null/absent (`cancelled`, `starting`, `unknown`). The run is genuinely not triageable; report that. (See "Triage a run".)
+- **Run is too old.** `links.triage_report` *is* present (the run completed and a report was generated), but the structured endpoints now 404. This is consistent with short retention of the structured triage/property data: only recent runs reliably return assertion pass/fail counts, counterexamples, moments, and build logs through the API. Older runs keep only the static HTML report asset behind the `links.triage_report` URL — and that URL 302-redirects to interactive browser login, so it is **not** retrievable through the API/skill.
+
+When you hit the second case, do **not** report the run as "not triageable" or claim the report link is absent. Explain that the run is **too old** — its structured triage data has aged out of retention — and that to triage it in full the user needs to **re-run** so a fresh run produces retrievable property and log data.
 
 ## Suggesting follow-up skills
 

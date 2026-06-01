@@ -7,6 +7,8 @@ Use `snouty runs --json properties` to retrieve properties and `assets/download-
 Use `snouty runs --json properties "${OPTION}" "${RUN_ID}"` to download all the properties for a run.
 OPTION can be `--passing` or `--failing` to retrieve just passing or just failing properties.
 
+> **404 on a run that has a report?** If this command 404s for a run whose `links.triage_report` is present (i.e. the run completed and was triaged), the run is most likely too old and its structured property data has aged out of retention — only recent runs reliably return property data through the API. Don't report the run as "not triageable"; tell the user it is too old and must be re-run to triage in full. See the "Old runs: 404s on a run that has a report" callout in `SKILL.md`.
+
 Example return:
 
 ```json
