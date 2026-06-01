@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-01
+
+- update rust instrumentation guidance ([PR #157](https://github.com/antithesishq/antithesis-skills/pull/157))
+
 ## 2026-05-28
 
 - python 3.9 compat ([PR #155](https://github.com/antithesishq/antithesis-skills/pull/155))
