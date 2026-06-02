@@ -46,16 +46,6 @@ If the source is auto-memory, check what's saved and prune. Important constraint
 
 ---
 
-## The patcher
-
-Agents love to patch. A bug shows up in function X; the agent adds a special case to X. Another bug appears; another special case. A few rounds of this and you have a Jenga tower of special-cased fixes that nobody will be able to safely modify in six months.
-
-The agent will not, left to itself, suggest a refactor. You have to ask. "This is the third patch in this area; should we refactor?" Or, more directly: "Look at this code and tell me if there's a better structure." The agent is usually quite good at the refactor — it just won't propose it unprompted.
-
-This is one of the most important habits to develop. Without it, agent-assisted code accumulates fragility.
-
----
-
 ## Context degrading
 
 Long sessions get worse. The agent forgets things you established. Repeats mistakes you corrected. Takes longer to converge on simple answers. This is a property of the technology, not something you can prompt around.
