@@ -34,9 +34,33 @@ If the source is auto-memory, check what's saved and prune. Important constraint
 
 ## Context degrading
 
-Long sessions get worse. The agent forgets things you established. Repeats mistakes you corrected. Takes longer to converge on simple answers. This is a property of the technology, not something you can prompt around.
+Long sessions get worse. The agent forgets things you established. Repeats mistakes you corrected. Takes longer to converge on simple answers. This is a property of the technology, not something you can prompt around — context windows fill up, and at some point the work the agent is doing starts to suffer for it.
 
-The fix is mechanical: start a fresh session. Load only the context you actually need. Most users hold onto sessions longer than they should because starting over feels like losing work — it isn't, because the work is in your files, not the chat.
+But context is also valuable. The files you've loaded, the decisions you've made together, the agent's working model of your problem — those are real. Walking away costs something. So the right move isn't always "just start over." It depends on how much you have in the session, and how much of it is worth preserving.
+
+Starting over isn't really losing work — the work is in your files. With a little effort, the context can live in your files too.
+
+A few approaches, in increasing order of effort:
+
+### Just restart
+
+If the session is short or the context isn't carrying much beyond what's in your files, start fresh and load what you need. The cheapest move; often the right one.
+
+### Hand off to a new session
+
+Ask the agent to write a handoff document — what you've decided, what's done, what's still open, what assumptions are in play — to a file. Then start a new session and feed it that file. You keep the decisions and lose the bloat. This is the most generally useful technique because it works with any harness.
+
+> I want to continue this work in a new context. Write me a handoff document at HANDOFF.md. Include anything you think would be important to a new agent starting fresh including what we've decided, what we've finished, what's still open, and any assumptions. I'll start a new session and load it in.
+
+### Ask the agent whether to switch
+
+The agent often has a sense of when its own context is getting muddy. Asking is cheap.
+
+> Is this session still serving us? Would the next round of work go better in a fresh context?
+
+### Use your tool's context controls
+
+Some agentic tools let you hint at what to keep when context gets compacted (auto-summarization, manual pinning, and so on). The specifics are harness-dependent — check what your tool offers. Most tools give you less control than you might want; that's why the handoff-document technique exists.
 
 ---
 
