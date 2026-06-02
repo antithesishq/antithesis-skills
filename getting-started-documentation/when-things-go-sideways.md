@@ -18,9 +18,13 @@ The cheapest move is often to ask the agent why it thinks it's failing — not "
 
 ## "Dumb agent" today
 
-Same prompt, similar files, worse results than you'd usually get. The agent isn't broken; this session just isn't on.
+Some sessions feel dumb. Users say it literally — "Claude feels dumb today" — about an agent that was sharp yesterday and will be sharp tomorrow.
 
-Rewind to before the bad turn and try again. Start fresh if rewinding doesn't help. Sometimes more context fixes it. Sometimes you just got an off run and a new session is the cure. No checklist — just calibration.
+There's no specific thing you can point at. That's the recognition. The interactions just don't feel as sharp as they usually do. You can't articulate what's wrong, exactly. You just feel it.
+
+This is different from being stuck. Stuck is the agent circling a hard problem and not converging. Dumb-agent doesn't have a "what's wrong" — it just is.
+
+Rewind to before the session went off and try again. Start fresh if rewinding doesn't help. Sometimes more context fixes it. Sometimes you just got an off run and a new session is the cure.
 
 ---
 
