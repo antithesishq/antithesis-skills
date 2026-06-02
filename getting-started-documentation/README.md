@@ -27,7 +27,7 @@ The mindset for working with LLM agents. Collaborator not oracle; you're the pil
 
 ### 3. [Working with Your Agent](working-with-your-agent.md)
 
-The mechanics of day-to-day work. Talking to the agent like a partner, pushback as a primary mode, iterating in small loops, stepping in directly when needed, second opinions via sub-agents and fresh sessions, ensemble methods, asking the agent about itself, and asking for refactors when patches accumulate.
+The mechanics of day-to-day work. Talking to the agent like a partner, asking the agent about itself, iterating in small loops, asking for refactors when patches accumulate, pushback as a primary mode, stepping in directly when needed, second opinions via sub-agents and fresh sessions, and ensemble methods.
 
 ### 4. [Context and Memory](context-and-memory.md)
 

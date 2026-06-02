@@ -8,17 +8,31 @@ You can have a conversation. New users tend to issue commands and then wait — 
 
 This feels strange at first because the interface invites a transactional style. Resist that. The more the agent understands what you're actually after — not just the task, but the why — the better the work it does.
 
-## Pushback as a primary mode
+## Ask the agent about the agent
 
-There's a middle ground between "accept what the agent gave you" and "throw it out and start over." Pushback. When something looks off, say so. "Why did you choose X over Y?" "I don't think that's right because Z." "This works but feels overcomplicated; can you do it simpler?" "Look at this again with [constraint] in mind."
+Claude is an expert on Claude. Codex is reasonably good at talking about Codex. If you don't know how to do something with the tool itself — write a skill, tune a hook, structure your project instructions — ask. Stuck in a loop? Ask what could have made the session go better. Getting tired of repeating yourself? Ask how to bake it into your harness.
 
-A lot of the best work happens in this middle. New users tend to either rubber-stamp the first answer or restart the whole session. Pushback is the move in between, and it's the one you'll use most.
+The agent has a lot of meta-knowledge about how to work with itself. Most users never tap it.
 
 ## Iterate small
 
 Don't try to one-shot. Tell the agent the first step. Look at what it did. Tell it the next step. Yes, you can ask it to do more in one shot — sometimes that works. But the further it gets without a check-in, the harder course correction becomes.
 
 Three small loops are almost always cheaper than one long loop that drifted. The bias toward small loops feels slower in the moment; it's almost always faster overall.
+
+## The patcher
+
+Agents love to patch. A bug shows up in function X; the agent adds a special case to X. Another bug appears; another special case. A few rounds of this and you have a Jenga tower of special-cased fixes that nobody will be able to safely modify in six months.
+
+The agent will not, left to itself, suggest a refactor. You have to ask. "This is the third patch in this area; should we refactor?" Or, more directly: "Look at this code and tell me if there's a better structure." The agent is usually quite good at the refactor — it just won't propose it unprompted.
+
+This is one of the most important habits to develop. Without it, agent-assisted code accumulates fragility.
+
+## Pushback as a primary mode
+
+There's a middle ground between "accept what the agent gave you" and "throw it out and start over." Pushback. When something looks off, say so. "Why did you choose X over Y?" "I don't think that's right because Z." "This works but feels overcomplicated; can you do it simpler?" "Look at this again with [constraint] in mind."
+
+A lot of the best work happens in this middle. New users tend to either rubber-stamp the first answer or restart the whole session. Pushback is the move in between, and it's the one you'll use most.
 
 ## You can step in
 
@@ -37,17 +51,3 @@ Cheap, fast, surprisingly effective. The most-skipped move in the toolkit.
 A more structured version of the same idea. For work where being right matters more than being fast, have multiple agents do the same task independently and compare results. Disagreements are where the interesting stuff is — they flag the parts that aren't well-grounded.
 
 Our own skills use ensemble patterns internally for high-stakes outputs. For high-stakes work in your own usage, the same idea applies. Slower; more reliable.
-
-## Ask the agent about the agent
-
-Claude is an expert on Claude. Codex is reasonably good at talking about Codex. If you don't know how to do something with the tool itself — write a skill, tune a hook, structure your project instructions — ask. Stuck in a loop? Ask what could have made the session go better. Getting tired of repeating yourself? Ask how to bake it into your harness.
-
-The agent has a lot of meta-knowledge about how to work with itself. Most users never tap it.
-
-## The patcher
-
-Agents love to patch. A bug shows up in function X; the agent adds a special case to X. Another bug appears; another special case. A few rounds of this and you have a Jenga tower of special-cased fixes that nobody will be able to safely modify in six months.
-
-The agent will not, left to itself, suggest a refactor. You have to ask. "This is the third patch in this area; should we refactor?" Or, more directly: "Look at this code and tell me if there's a better structure." The agent is usually quite good at the refactor — it just won't propose it unprompted.
-
-This is one of the most important habits to develop. Without it, agent-assisted code accumulates fragility.
