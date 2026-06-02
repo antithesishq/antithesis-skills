@@ -30,9 +30,19 @@ Rewind to before the session went off and try again. Start fresh if rewinding do
 
 ## Results getting weird
 
-The agent acts on facts that aren't true anymore. References files that have moved. Applies conventions you stopped using. Argues with you about something you settled last week. The output isn't wrong-looking on its surface — it just doesn't match your current reality.
+The agent acts on facts that aren't true anymore. References files that have moved. Applies conventions you stopped using. Argues with you about something you thought you settled last week. The output isn't wrong-looking on its surface — it just doesn't match your current reality.
 
-Suspect auto-memory. Check what the memory system has saved; remove or update stale entries. Important constraints belong in your harness (see [Building Your Harness](building-your-harness.md)), not memory, exactly because of this failure mode.
+This is different from "dumb agent." Dumb-agent is gestalt — nothing's specifically wrong, the work just isn't sharp. Results-getting-weird has a concrete shape: the agent is operating on specific information that isn't true.
+
+The cause is almost always something in the agent's context. It could be auto-memory if your tool has it (Claude Code does; not every tool does). It could be a stale file you loaded earlier. It could be a line in your AGENTS.md or CLAUDE.md that hasn't been updated. The common factor: what the agent is operating on has drifted from what's actually true.
+
+Don't just correct the wrong claim and move on. Ask the agent why it thinks that — surface the source:
+
+> That's not true. Why do you think it is?
+
+The answer often points right at the stale source: an old memory, an outdated file, a line in your harness that doesn't reflect current reality. Once you've found it, fix the source instead of correcting downstream every time.
+
+If the source is auto-memory, check what's saved and prune. Important constraints belong in your harness, not memory — the harness is version-controlled and doesn't rot silently. (See [Building Your Harness](building-your-harness.md).)
 
 ---
 
