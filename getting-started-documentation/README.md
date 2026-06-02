@@ -27,7 +27,7 @@ The mindset for working with LLM agents. Collaborator not oracle; you're the pil
 
 ### 3. [Working with Your Agent](working-with-your-agent.md)
 
-The mechanics of day-to-day work. Talking to the agent like a partner, pushback as a primary mode, iterating in small loops, stepping in directly when needed, second opinions via sub-agents and fresh sessions, ensemble methods, asking the agent about itself.
+The mechanics of day-to-day work. Talking to the agent like a partner, pushback as a primary mode, iterating in small loops, stepping in directly when needed, second opinions via sub-agents and fresh sessions, ensemble methods, asking the agent about itself, and asking for refactors when patches accumulate.
 
 ### 4. [Context and Memory](context-and-memory.md)
 
@@ -39,7 +39,7 @@ The structure you build around the agent: AGENTS.md / CLAUDE.md, your own projec
 
 ### 6. [When Things Go Sideways](when-things-go-sideways.md)
 
-Recognizing failure modes early. Getting unstuck, spotting a dumb-agent session, results that feel weird, the tendency to patch instead of refactor, context degradation, and knowing when to just start over.
+Recognizing failure modes early. Getting unstuck, results that feel weird, context degradation, spotting a dumb-agent session. The bar for restarting is lower than you think.
 
 ### 7. [The Outputs Are Yours](outputs-are-yours.md)
 

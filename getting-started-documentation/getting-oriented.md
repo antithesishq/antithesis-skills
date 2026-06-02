@@ -33,6 +33,6 @@ For looking something up later, or refreshing a definition you've forgotten by t
 
 Read it linearly the first time. The chapters build on each other — [The Right Mental Model](mental-model.md) sets the mindset that [Working with Your Agent](working-with-your-agent.md) makes operational; [Building Your Harness](building-your-harness.md) fleshes out concepts that earlier chapters touch on briefly.
 
-After that, treat it as a reference. When you hit a problem — the agent acting strangely, output that feels off, a session that won't converge — come back to the chapter that names what you're seeing. Each page is meant to stand on its own well enough that you don't have to reread everything before to make sense of it.
+After that, treat it as a reference. When you hit a problem — the agent acting strangely, output that feels off, a session that won't converge — come back to the chapter that names what you're seeing. Each section is meant to stand on its own well enough that you don't have to reread everything before to make sense of it.
 
 We're not trying to be the only thing you read about working with LLM agents. We're trying to be the thing that gets you working productively with Antithesis skills specifically, with enough mental model that you can keep growing from here.
