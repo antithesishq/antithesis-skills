@@ -2,11 +2,15 @@
 
 Mental model is the foundation. This chapter is the mechanics — the moves you'll make over and over as you actually do work with an agent. Some of these will feel unnatural at first because the interface looks transactional. It isn't. The earlier you internalize that, the more leverage you get.
 
-## Talk to it like a partner
+## Talk to it like a teammate
 
-You can have a conversation. New users tend to issue commands and then wait — the prompt looks like a search box, so they treat it like one. Better: talk through what you're trying to do. Share what you're worried about. Ask its opinion on the approach before it starts writing code. Tell it when something feels off.
+Picture the failure mode: you hand the agent three documents and say "make me a report." What you get back isn't what you wanted. Surprising? Not really. You didn't tell it what you wanted.
 
-This feels strange at first because the interface invites a transactional style. Resist that. The more the agent understands what you're actually after — not just the task, but the why — the better the work it does.
+This isn't an LLM-specific problem. A human teammate handed the same three documents with the same one-line instruction is equally unlikely to produce what you want. They don't know what you're going to use it for, who the audience is, what's already been decided, or which parts you care about. They'd guess, pick a safe path, and deliver something that technically meets the brief.
+
+The fix is the same with the agent as it is with the teammate: tell it the things they need to know. What you're trying to accomplish. Who's going to read it. What you're worried about. What you've already considered and ruled out. What good would look like.
+
+The frame: treat the agent as a teammate, not a servant. A servant takes commands and runs with them; a teammate shares context and pushes back. The agent does its best work as the second one.
 
 ## Ask the agent about the agent
 
