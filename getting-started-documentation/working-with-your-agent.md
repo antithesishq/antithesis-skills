@@ -28,9 +28,11 @@ The agent has a lot of meta-knowledge about how to work with itself. Most users 
 
 ## Iterate small
 
-Don't try to one-shot. Tell the agent the first step. Look at what it did. Tell it the next step. Yes, you can ask it to do more in one shot — sometimes that works. But the further it gets without a check-in, the harder course correction becomes.
+Don't try to one-shot. Tell the agent the first step. Look at what it did. Tell it the next step. Yes, you can ask it to do more in one shot — sometimes that works. But one-shot has an asymmetry: the longer the agent runs, the more depends on what it did early. A wrong call near the end is cheap to fix. A wrong call near the start — the agent picks the wrong abstraction, gets the data model wrong, sets up a bad invariant — and everything built on top has to be unwound. Frequent check-ins keep you close to those foundational decisions, where the cost of correction is still small.
 
-Three small loops are almost always cheaper than one long loop that drifted. The bias toward small loops feels slower in the moment; it's almost always faster overall.
+This is the classic "go slow to go fast." Three small loops are almost always cheaper than one long loop that drifted. The bias toward small loops feels slower in the moment; it's almost always faster overall.
+
+What counts as "small" will vary. Early in your experience with these tools, "small" should be baby steps — you're still learning the agent's failure modes and your harness is bare. As you get more experience and your harness fills out, "small" can grow. The corrections you've baked into your harness live in the agent's context already, so the agent doesn't make those mistakes as often. Start conservative; let the size grow as both develop.
 
 ## The patcher
 
