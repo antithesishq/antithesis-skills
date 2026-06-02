@@ -14,7 +14,15 @@ The frame: treat the agent as a teammate, not a servant. A servant takes command
 
 ## Ask the agent about the agent
 
-Claude is an expert on Claude. Codex is reasonably good at talking about Codex. If you don't know how to do something with the tool itself — write a skill, tune a hook, structure your project instructions — ask. Stuck in a loop? Ask what could have made the session go better. Getting tired of repeating yourself? Ask how to bake it into your harness.
+Claude is an expert on Claude. Codex is an expert on Codex. The agent knows a lot about how its tool works — features, quirks, harness mechanisms — and that knowledge is sitting there waiting for you to use it.
+
+If you don't know how to do something with the tool itself — write a skill, tune a hook, structure your project instructions — ask. The reflexive move is to go to the docs; often it's faster to ask the agent first.
+
+When a session goes badly, ask the agent for a retrospective. It often has a sharper sense of what tripped you up than you do.
+
+> Looking back at this session, what got in the way? What would have made it go more smoothly?
+
+Same trick for the long game: when you find yourself correcting the agent on the same thing repeatedly, ask how to bake the correction into your harness. CLAUDE.md? A skill? A hook? The agent knows your tool's mechanisms better than most users do.
 
 The agent has a lot of meta-knowledge about how to work with itself. Most users never tap it.
 
