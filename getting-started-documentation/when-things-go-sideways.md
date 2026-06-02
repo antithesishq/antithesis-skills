@@ -2,8 +2,6 @@
 
 Not every session goes well. The most useful skill at this stage is recognizing failure modes early and responding to them, rather than grinding harder. Most of the moves in this chapter boil down to: stop, change something, try again. The bar for restarting is lower than you think.
 
----
-
 ## Stuck and not making progress
 
 You asked. The agent tried. It didn't work. You pointed at what was wrong; the next version has a different problem. New round, new problem. Ten minutes in, the code's no better than when you started — maybe worse, because there are more moving parts. Each round trades one problem for another, or restates the old problem in different words.
@@ -13,8 +11,6 @@ Don't keep going. Change something — your prompt, your context, the files in v
 The cheapest move is often to ask the agent why it thinks it's failing — not "how do we fix this" but "what's your model of what's happening?" Sometimes the answer is the bug: the agent has been operating on a wrong assumption since turn one, and naming it makes the fix obvious. Sometimes it surfaces the wrong assumption *you've* been carrying. Either way, the loop breaks. An example of how that ask might sound:
 
 > We don't seem to be making progress. Let's stop what we are doing and figure out why we are stuck. What's your model of how this is supposed to work, and where do you think we're getting it wrong?
-
----
 
 ## Results getting weird
 
@@ -29,8 +25,6 @@ Don't just correct the wrong claim and move on. Ask the agent why it thinks that
 The answer often points right at the stale source: an old memory, an outdated file, a line in your harness that doesn't reflect current reality. Once you've found it, fix the source instead of correcting downstream every time.
 
 If the source is auto-memory, check what's saved and prune. Important constraints belong in your harness, not memory — the harness is version-controlled and doesn't rot silently. (See [Building Your Harness](building-your-harness.md).)
-
----
 
 ## Context degrading
 
@@ -62,8 +56,6 @@ The agent often has a sense of when its own context is getting muddy. Asking is 
 
 Some agentic tools let you hint at what to keep when context gets compacted (auto-summarization, manual pinning, and so on). The specifics are harness-dependent — check what your tool offers. Most tools give you less control than you might want; that's why the handoff-document technique exists.
 
----
-
 ## "Dumb agent" today
 
 Some sessions feel dumb. Users say it literally — "Claude feels dumb today" — about an agent that was sharp yesterday and will be sharp tomorrow.
@@ -73,8 +65,6 @@ There's no specific thing you can point at. That's the recognition. The interact
 This is different from being stuck (the agent circling a hard problem) and from results-getting-weird (the agent operating on a specific wrong claim). Dumb-agent doesn't have a "what's wrong" you can point at — it just is.
 
 Rewind to before the session went off and try again. Start fresh if rewinding doesn't help. Sometimes more context fixes it. Sometimes you just got an off run and a new session is the cure.
-
----
 
 ## When to just start over
 

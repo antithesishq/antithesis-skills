@@ -2,8 +2,6 @@
 
 Most of the trouble people hit with LLM agents traces back to bringing the wrong mental model to the work. Get this part right and a lot of the rest is easier. Get it wrong and you'll spend most of your energy fighting symptoms.
 
----
-
 ## Collaborator, not oracle
 
 The most common mistake new users make is treating an agent like a search engine that talks back. Ask, get answer, accept answer. That mental model gives you the worst version of what these tools can do.
@@ -11,8 +9,6 @@ The most common mistake new users make is treating an agent like a search engine
 The frame that works better: you are working *with* a fast, broadly-knowledgeable collaborator who is sometimes wrong, sounds confident either way, and benefits from your judgment far more than from your obedience. When you bring that mindset, you ask follow-up questions. You push back. You redirect. You treat the first output as a starting point, not an answer.
 
 Oracles return answers. Collaborators get worked with. You want the second one.
-
----
 
 ## You're the pilot
 
@@ -22,15 +18,11 @@ You are responsible for the outcome. The agent is a tool you wield. That's not a
 
 Steer often. Check in early. Don't let it run unattended for long stretches without looking at what it's doing.
 
----
-
 ## They sound authoritative
 
 Agents almost always sound confident. They don't hedge unless you ask them to, and even then the hedging tends to get wallpapered over with more confident prose. "Here's the fix" reads the same whether the fix is right or a confident wrong guess.
 
 This is a tone problem you have to compensate for. Assume the confidence is decorative, not informative. Correct answers and incorrect ones arrive with the same delivery; the difference between them lives in whether you check.
-
----
 
 ## Fallibility is a feature and a weakness
 
@@ -39,8 +31,6 @@ LLM agents are non-deterministic. Two runs over the same prompt can produce diff
 That's frustrating. It also turns out to be useful. Determinism is a property you want for a build system. For something that's helping you think, variation is leverage — a fresh session can see what a stale one missed; one agent can review another's work and find what neither would have alone.
 
 You can't replay an LLM the way you replay a unit test. You can vary, though. Get used to varying.
-
----
 
 ## Smart agent, dumb agent
 

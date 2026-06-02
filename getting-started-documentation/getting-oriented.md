@@ -4,8 +4,6 @@ This guide is a companion to our Antithesis skills. It isn't an introduction to 
 
 Read it through the first time; come back to chapters as you need them after that.
 
----
-
 ## Who this is for
 
 We wrote this for engineers who:
@@ -25,15 +23,11 @@ If you're not at the floor on Antithesis or agentic tools yet, here's where to s
 - **New to Antithesis?** Start at *[pointer to Antithesis intro]*. We'll touch on Antithesis concepts where we have to, but the real introduction lives elsewhere.
 - **Never used an agentic coding tool at all?** Start at your tool's own getting-started guide — *[Claude Code pointer]*, *[Codex pointer]*. Get the tool installed, try a small task or two, then come back here. Much of this guide lands harder without that first hands-on experience.
 
----
-
 ## Vocabulary
 
 We define terms as we use them. The first time a term comes up — LLM-tool vocabulary or Antithesis-specific — we explain it then and there.
 
 For looking something up later, or refreshing a definition you've forgotten by the time you're deep in a chapter, the [Glossary](glossary.md) collects every term we use in one place.
-
----
 
 ## How to use this guide
 
