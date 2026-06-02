@@ -6,9 +6,13 @@ Not every session goes well. The most useful skill at this stage is recognizing 
 
 ## Stuck and not making progress
 
-You asked. The agent tried. It didn't work. You re-asked. It tried again. Still not right. Don't keep going down the same path.
+You asked. The agent tried. It didn't work. You pointed at what was wrong; the next version has a different problem. New round, new problem. Ten minutes in, the code's no better than when you started — maybe worse, because there are more moving parts. Each round trades one problem for another, or restates the old problem in different words.
 
-Change something — your prompt, your context, the files in view, the model, the session. Three failed attempts at the same approach is a strong signal to switch approaches, not to try harder. Often the cheapest move is to ask the agent why it thinks it's failing, then act on that. Sometimes it can tell you. Sometimes that itself surfaces the wrong assumption you've both been making.
+Don't keep going. Change something — your prompt, your context, the files in view, the model, the session. Three failed attempts at the same approach is a signal to switch approaches, not to try harder.
+
+The cheapest move is often to ask the agent why it thinks it's failing — not "how do we fix this" but "what's your model of what's happening?" Sometimes the answer is the bug: the agent has been operating on a wrong assumption since turn one, and naming it makes the fix obvious. Sometimes it surfaces the wrong assumption *you've* been carrying. Either way, the loop breaks. An example of how that ask might sound:
+
+> We don't seem to be making progress. Let's stop what we are doing and figure out why we are stuck. What's your model of how this is supposed to work, and where do you think we're getting it wrong?
 
 ---
 
