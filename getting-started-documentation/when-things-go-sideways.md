@@ -16,23 +16,9 @@ The cheapest move is often to ask the agent why it thinks it's failing — not "
 
 ---
 
-## "Dumb agent" today
-
-Some sessions feel dumb. Users say it literally — "Claude feels dumb today" — about an agent that was sharp yesterday and will be sharp tomorrow.
-
-There's no specific thing you can point at. That's the recognition. The interactions just don't feel as sharp as they usually do. You can't articulate what's wrong, exactly. You just feel it.
-
-This is different from being stuck. Stuck is the agent circling a hard problem and not converging. Dumb-agent doesn't have a "what's wrong" — it just is.
-
-Rewind to before the session went off and try again. Start fresh if rewinding doesn't help. Sometimes more context fixes it. Sometimes you just got an off run and a new session is the cure.
-
----
-
 ## Results getting weird
 
 The agent acts on facts that aren't true anymore. References files that have moved. Applies conventions you stopped using. Argues with you about something you thought you settled last week. The output isn't wrong-looking on its surface — it just doesn't match your current reality.
-
-This is different from "dumb agent." Dumb-agent is gestalt — nothing's specifically wrong, the work just isn't sharp. Results-getting-weird has a concrete shape: the agent is operating on specific information that isn't true.
 
 The cause is almost always something in the agent's context. It could be auto-memory if your tool has it (Claude Code does; not every tool does). It could be a stale file you loaded earlier. It could be a line in your AGENTS.md or CLAUDE.md that hasn't been updated. The common factor: what the agent is operating on has drifted from what's actually true.
 
@@ -51,6 +37,18 @@ If the source is auto-memory, check what's saved and prune. Important constraint
 Long sessions get worse. The agent forgets things you established. Repeats mistakes you corrected. Takes longer to converge on simple answers. This is a property of the technology, not something you can prompt around.
 
 The fix is mechanical: start a fresh session. Load only the context you actually need. Most users hold onto sessions longer than they should because starting over feels like losing work — it isn't, because the work is in your files, not the chat.
+
+---
+
+## "Dumb agent" today
+
+Some sessions feel dumb. Users say it literally — "Claude feels dumb today" — about an agent that was sharp yesterday and will be sharp tomorrow.
+
+There's no specific thing you can point at. That's the recognition. The interactions just don't feel as sharp as they usually do. You can't articulate what's wrong, exactly. You just feel it.
+
+This is different from being stuck (the agent circling a hard problem) and from results-getting-weird (the agent operating on a specific wrong claim). Dumb-agent doesn't have a "what's wrong" you can point at — it just is.
+
+Rewind to before the session went off and try again. Start fresh if rewinding doesn't help. Sometimes more context fixes it. Sometimes you just got an off run and a new session is the cure.
 
 ---
 
