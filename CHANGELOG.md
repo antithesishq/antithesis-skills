@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-03
+
+- workload exit/state guidance; snouty doctor as triage preflight ([PR #158](https://github.com/antithesishq/antithesis-skills/pull/158))
+
 ## 2026-06-01
 
 - update rust instrumentation guidance ([PR #157](https://github.com/antithesishq/antithesis-skills/pull/157))
