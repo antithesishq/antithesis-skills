@@ -10,6 +10,20 @@ The agent, plus our skills, plus your harness — that is the tool you're using.
 
 Treat this as something you build over time, not something you receive. The user who has spent a few months building up their harness has a meaningfully better experience than the user with the same agent and no harness around it.
 
+## What the harness is for
+
+Agents lack taste. They've absorbed an enormous amount of code — final outputs from millions of examples — but not the *whys* that led to those outputs. And the whys are what decide whether code is good. Good is partly intrinsic, mostly extrinsic: it depends on the system the code lives in, the constraints it has to satisfy, the trade-offs that were made. With the outputs but not the whys, agents produce code that looks correct without knowing whether it's appropriate. They cargo-cult patterns from elsewhere and don't probe for the constraints you're actually under — what the system needs to guarantee, what trade-offs you've already made, what failure modes you care about. Left to themselves, they build on whatever local context happens to fit, and over time that adds up to fragility.
+
+Architecture and design are still human work. The agent is a strong collaborator on implementation; it's a much weaker one on architecture. Your job is to inject the taste and domain knowledge it doesn't have. This is part of what the harness is for: the constraints, the conventions, the system's actual shape — encoded once in your harness instead of held in your head and explained each session.
+
+The research skill is specifically about exposing system constraints. Other skills you write yourself can do similar things for your own domain.
+
+Before substantial work starts on something new, naming the constraints out loud is still useful:
+
+> Before we touch the code, let's talk about the constraints. What does this need to guarantee? What trade-offs have already been made? What are we trying to avoid?
+
+If you find yourself doing that often, that's a signal: the answers belong in your harness so you don't have to do the conversation each time.
+
 ## AGENTS.md / CLAUDE.md as a starting point
 
 Most agentic tools support a project-level instruction file. Claude Code reads CLAUDE.md. Codex reads AGENTS.md. The agent loads these on every session in the project.
