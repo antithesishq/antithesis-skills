@@ -22,10 +22,28 @@ A test command is an executable file whose filename starts with a recognized pre
 
 - Be marked executable by the container's default user
 - Be a compiled binary or have a shebang line (e.g., `#!/usr/bin/env python3`)
-- Eventually exit
+- A test command _must_ eventually exit (see "Test commands must exit" below)
 - Never emit `setup_complete` — test commands only run after Antithesis receives it, so emitting it from a test command deadlocks startup
 
 Symlinks to existing scripts are supported.
+
+## Test commands must exit
+
+Antithesis runs your test commands on your behalf — you don't invoke them yourself. Each invocation is one unit of work that Antithesis schedules, observes, and replays.
+
+Because of this, **a test command that runs forever is an antipattern.** Antithesis enforces a built-in property — "every test command exits 0 at least once" — and a command that never returns can never satisfy it, so the property fails.
+
+This does **not** mean commands must run quickly. A command may legitimately take a while — driving a long sequence of operations, waiting on the system to reach some state, polling through a retry loop. That's fine. The requirement is only that it _eventually_ finishes and returns an exit code. Structure each command as one bounded chunk of work (drive N operations, run for a bounded time/iteration budget, then exit) and let Antithesis re-run it to get more — rather than looping indefinitely inside a single invocation. Antithesis already checks the exit code, so a non-zero exit should mean something is genuinely wrong.
+
+## Maintaining state between commands
+
+Because each command invocation is a separate, bounded process (see "Test commands must exit"), any state that needs to outlive a single invocation — counters of attempted operations, sequence numbers, expected-value bookkeeping, a record of what's been done so far — has to live somewhere outside the process.
+
+The easiest mechanism is a **shared volume mounted into the relevant containers** in the Docker Compose file. Every container in an Antithesis run executes on the same physical host, so a shared volume is just the same local filesystem visible from each container. Test commands across containers can read and write it as ordinary local files.
+
+For most cases, **plain files are enough**. When you need **safe concurrent access** — multiple `parallel_driver_` invocations touching the same state at once, or anything that needs transactional/atomic updates — use **SQLite** on that shared filesystem. SQLite handles the locking and gives you transactions, so reserve it for state that is complex, concurrently accessed, or must be updated atomically; reach for simple files otherwise.
+
+You do **not** need to reason about replay, branching, or timelines when persisting state. Antithesis makes all of that deterministic and transparent: the SUT and your commands only ever experience a single linear history, and you should write state-handling code under exactly that premise.
 
 ## Test Command Prefixes and Their Behavior
 
@@ -88,25 +106,25 @@ Symlinks to existing scripts are supported.
 
 These two command types are similar but serve different purposes:
 
-| Aspect | `eventually_` | `finally_` |
-|--------|---------------|------------|
-| Question answered | "Does the system recover?" | "Is the final state correct?" |
-| When it runs | After driver(s) start | After all drivers complete naturally |
-| How drivers end | Killed by Antithesis | Completed on their own |
-| Faults | Stopped | Stopped |
-| Destructive actions | Safe — branch won't resume | Safe — branch won't resume |
+| Aspect              | `eventually_`              | `finally_`                           |
+| ------------------- | -------------------------- | ------------------------------------ |
+| Question answered   | "Does the system recover?" | "Is the final state correct?"        |
+| When it runs        | After driver(s) start      | After all drivers complete naturally |
+| How drivers end     | Killed by Antithesis       | Completed on their own               |
+| Faults              | Stopped                    | Stopped                              |
+| Destructive actions | Safe — branch won't resume | Safe — branch won't resume           |
 
 ## Concurrency Summary
 
-| Command | Faults active? | Can run alongside |
-|---------|---------------|-------------------|
-| `first_` | No | Nothing |
-| `parallel_driver_` | Yes | `parallel_driver_`, `anytime_` |
-| `serial_driver_` | Yes | `anytime_` |
-| `singleton_driver_` | Yes | `anytime_` |
-| `anytime_` | Yes (during drivers) | Any except `first_`; during `eventually_`/`finally_`, running instances complete but new ones are not started |
-| `eventually_` | No | Running `anytime_` commands complete |
-| `finally_` | No | Running `anytime_` commands complete |
+| Command             | Faults active?       | Can run alongside                                                                                             |
+| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
+| `first_`            | No                   | Nothing                                                                                                       |
+| `parallel_driver_`  | Yes                  | `parallel_driver_`, `anytime_`                                                                                |
+| `serial_driver_`    | Yes                  | `anytime_`                                                                                                    |
+| `singleton_driver_` | Yes                  | `anytime_`                                                                                                    |
+| `anytime_`          | Yes (during drivers) | Any except `first_`; during `eventually_`/`finally_`, running instances complete but new ones are not started |
+| `eventually_`       | No                   | Running `anytime_` commands complete                                                                          |
+| `finally_`          | No                   | Running `anytime_` commands complete                                                                          |
 
 ## Requesting Quiet Periods from Driver Commands
 
@@ -141,11 +159,11 @@ This is especially useful during rolling operations (upgrades, config changes, m
 
 ### When to Use Which
 
-| Mechanism | Faults paused? | Test continues after? | Use case |
-|-----------|---------------|----------------------|----------|
-| `eventually_` command | Yes | No (terminal branch) | Final liveness validation |
-| `finally_` command | Yes | No (terminal branch) | Post-driver invariant checks |
-| `ANTITHESIS_STOP_FAULTS` | Yes | Yes (faults resume) | Mid-run recovery checks, rolling operations |
+| Mechanism                | Faults paused? | Test continues after? | Use case                                    |
+| ------------------------ | -------------- | --------------------- | ------------------------------------------- |
+| `eventually_` command    | Yes            | No (terminal branch)  | Final liveness validation                   |
+| `finally_` command       | Yes            | No (terminal branch)  | Post-driver invariant checks                |
+| `ANTITHESIS_STOP_FAULTS` | Yes            | Yes (faults resume)   | Mid-run recovery checks, rolling operations |
 
 ## Design Principles
 
