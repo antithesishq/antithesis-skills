@@ -25,21 +25,15 @@ Use this skill to analyze Antithesis test runs.
 
 ### Preflight: confirm triage can work
 
-This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Several things can prevent that from working. Walk down the checklist below in order — it is ordered from the most-likely cause (auth not exported) to the least-likely (tenant missing API access). Stop at the first failing check and surface **only that cause** to the user; do not list the others. Do not attempt real triage work until every check passes.
+This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Before doing any work, confirm the setup is ready with the following command:
+
+```bash
+snouty doctor
+```
+
+If this command reports any failure, relay that failure to the user and stop. Do not attempt to interact with the Antithesis API until it passes.
 
 You can skip preflight if you already know (from context or memory) that the user's setup is working.
-
-1. **Is `$ANTITHESIS_API_KEY` set?** This is the most common cause of failure. If unset, tell the user to export it (e.g., `export ANTITHESIS_API_KEY=<their key>`) and stop. Do not speculate about other causes.
-
-2. **Does `snouty doctor` pass?** Run `snouty doctor`. If it reports any failure, relay that failure to the user and stop. Today this mostly re-confirms environment variables, but it is the canonical place where key validity, network reachability, and API-access checks will be surfaced as they are added — so always run it here.
-
-3. **Can the API actually be reached?** Probe with `snouty runs list -n 1`. If this errors, the most likely remaining cause is that the tenant is not yet enrolled in the snouty API rollout. Tell the user to either:
-   - **Contact Antithesis support** to request API access for their tenant, or
-   - **Downgrade this skill** to the previous browser-based version on the
-     `agent-browser-triage` branch:
-     `https://github.com/antithesishq/antithesis-skills/tree/agent-browser-triage`
-
-   This fallback is temporary and will be removed once the rollout completes.
 
 ## Gathering user input
 

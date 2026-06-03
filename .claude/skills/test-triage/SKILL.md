@@ -26,22 +26,23 @@ Before starting, verify the same prerequisites the triage skill requires:
 which snouty && which jq && snouty --version
 ```
 
-`snouty` must be at least version 0.5.0. Also confirm `ANTITHESIS_TENANT` is
-set:
+`snouty` must be at least version 0.5.0. Then confirm credentials with the canonical check (same as the triage skill's preflight):
 
 ```bash
-echo "$ANTITHESIS_TENANT"
+snouty doctor
 ```
 
-If any prerequisite is missing or out of date, stop and report which ones
-are unavailable.
+If any prerequisite is missing, out of date, or `snouty doctor` fails, stop and
+report which ones are unavailable.
 
 ## Phase 1: Discover Runs
 
 Spawn a **general-purpose sub-agent** with the Agent tool. Provide these
 instructions, replacing `{{TENANT}}` with the actual value of the
 `$ANTITHESIS_TENANT` environment variable and `{{TRIAGE_SKILL}}` with the
-absolute path to `antithesis-triage/SKILL.md` in this repository:
+absolute path to `antithesis-triage/SKILL.md` in this repository. If
+`$ANTITHESIS_TENANT` is empty in the current shell, ask the user for the tenant
+name instead of aborting.
 
 ```
 Read the skill file at {{TRIAGE_SKILL}} and follow its instructions to list
