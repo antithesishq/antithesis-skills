@@ -38,9 +38,17 @@ What counts as "small" will vary. Early in your experience with these tools, "sm
 
 Agents love to patch. A bug shows up in function X; the agent adds a special case to X. Another bug appears; another special case. A few rounds of this and you have a Jenga tower of special-cased fixes that nobody will be able to safely modify in six months.
 
-The agent will not, left to itself, suggest a refactor. You have to ask. "This is the third patch in this area; should we refactor?" Or, more directly: "Look at this code and tell me if there's a better structure." The agent is usually quite good at the refactor — it just won't propose it unprompted.
+This happens because agents don't naturally step back. They focus on the local problem in front of them — the bug, the test, the request — and apply a local fix. The structural read has to come from you.
 
-This is one of the most important habits to develop. Without it, agent-assisted code accumulates fragility.
+The most important habit: when you notice you've patched the same area more than a few times, stop and ask for a refactor.
+
+> This is the third patch in this area. Should we refactor?
+
+Or, more directly: "Look at this code and tell me if there's a better structure." The agent is good at executing a refactor — moving code, restructuring. The design call — what to refactor and how — is yours. It won't propose the refactor unprompted, and won't notice the structural pattern from the inside.
+
+The deeper move is to set things up so the agent has the design context it needs from the start: constraints, conventions, the system's actual shape. That belongs in your harness. (See [Building Your Harness](building-your-harness.md).)
+
+This isn't optional. Without it, agent-assisted code accumulates fragility.
 
 ## Pushback as a primary mode
 
