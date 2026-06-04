@@ -76,9 +76,15 @@ New users sometimes forget they have hands. They don't have to.
 
 ## Use a second pair of eyes
 
-When you're not sure if the work is good, get another look at it. Open a fresh session and ask "here's what we did, what do you think?" — the new session has no investment in the prior path and will catch things the original won't. Or ask the agent itself to spawn a sub-agent to review its own work; many agentic tools support this directly.
+Whether or not you think your agent has done a good job, get another agent to look at the output. This is the same instinct you'd apply with a human teammate — ask a colleague to read what you wrote or eyeball your design, even when you think it's solid. Hand the work to someone who didn't help produce it, agent or human, and they see what you can't.
 
-Cheap, fast, surprisingly effective. The most-skipped move in the toolkit.
+What makes a fresh reviewer valuable — agent or human — is the lack of shared context. The original work had assumptions baked in: about the problem, the approach, the trade-offs you decided early. You and the agent that produced the work share those assumptions, including potentially flawed ones. A reviewer who doesn't have them reads the result on its own terms and notices things that became invisible to you and the original agent.
+
+> Here's a piece of work. I want a fresh read on it — strengths, weaknesses, anything that looks suspect.
+
+How you get the fresh eyes varies. Some people ask the current agent to spawn a sub-agent. Some open a new session, sometimes with a different model or harness. Whatever you do, give the reviewer the same kind of setup you'd give a human — the work itself, plus the supporting material that helps make sense of it: relevant constraints, design docs, the "we decided X because Y" notes. Skip the conversation that produced the work, though. That carries the same assumptions you want fresh eyes to escape.
+
+What this costs depends on what you ask of it. A sub-agent reviewing a small piece of work returns quickly. A fresh session asked to review a sprawling change with all the supporting documentation is expensive in both time and tokens. Either way, the technique is effective.
 
 ## Ensemble methods
 
