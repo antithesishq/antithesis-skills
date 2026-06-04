@@ -66,7 +66,13 @@ And don't be afraid to be wrong. Pushback isn't adjudication — sometimes you p
 
 When the agent is going in circles or making something worse, you don't have to ask it to fix the problem. You can read the code yourself. You can edit the file. The agent isn't a separate authority — it's a partner, and partners hand things back and forth.
 
-Sometimes the fastest move is "I'll handle this part, then we'll keep going." New users sometimes forget they have hands. They don't have to.
+What stepping in looks like varies. Sometimes it's reading the code to see what the agent isn't seeing. Sometimes it's writing a small example of what you want and saying "do it like this." Sometimes it's just doing the thing. The trigger is usually the same: the next prompt would cost more than just handling it yourself.
+
+When you do step in, tell the agent what you did. Agents don't always re-read files between turns — they often work from what's already in their context. If you change a file and don't tell the agent, the next thing it does may be based on the stale version it remembers. Worst case: it overwrites what you just changed.
+
+> I edited X to do Y. Please re-read it before continuing. Let's keep going from there.
+
+New users sometimes forget they have hands. They don't have to.
 
 ## Use a second pair of eyes
 
