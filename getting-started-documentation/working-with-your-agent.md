@@ -24,8 +24,6 @@ When a session goes badly, ask the agent for a retrospective. It often has a sha
 
 Same trick for the long game: when you find yourself correcting the agent on the same thing repeatedly, ask how to bake the correction into your harness. CLAUDE.md? A skill? A hook? The agent knows your tool's mechanisms better than most users do.
 
-The agent has a lot of meta-knowledge about how to work with itself. Most users never tap it.
-
 ## Iterate small
 
 Don't try to one-shot. Tell the agent the first step. Look at what it did. Tell it the next step. Yes, you can ask it to do more in one shot. Sometimes that works. But one-shot has an asymmetry: the longer the agent runs, the more depends on what it did early. A wrong call near the end is cheap to fix. A wrong call near the start — the agent picks the wrong abstraction, gets the data model wrong, sets up a bad invariant — and everything built on top has to be unwound. Frequent check-ins keep you close to those foundational decisions, where the cost of correction is still small.
@@ -54,7 +52,7 @@ This isn't optional. Without it, agent-assisted code accumulates fragility.
 
 There's a middle ground between "accept what the agent gave you" and "throw it out and start over." But that middle has a danger: muddling. Telling the agent "try again" or "that doesn't seem right, can you do something else" puts you in the middle without giving the agent anything new to work with. You're rejecting the answer without pointing at why or what's wrong. Three rounds of that and you're no closer than when you started.
 
-Pushback is the productive form of being in the middle. It has a shape: it points in a direction. "That doesn't account for [the constraint we just discussed]." "What happens if [X] happens?" "Why did you choose X over Y?" "I don't think that's right because Z." Each one says something specific the next answer should address. And it's the move you'll use most.
+Pushback is the productive form of being in the middle. It has a shape: it points in a direction. "That doesn't account for [the constraint we just discussed]." "What happens if [X] happens?" "Why did you choose X over Y?" "I don't think that's right because Z." Each one says something specific the next answer should address. And it's the move you should use the most.
 
 You don't have to know exactly what's wrong to push back. "Something about this feels off — I'm not sure what" is a perfectly valid move. The agent will often surface what it might be:
 
