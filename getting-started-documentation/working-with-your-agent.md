@@ -52,9 +52,15 @@ This isn't optional. Without it, agent-assisted code accumulates fragility.
 
 ## Pushback as a primary mode
 
-There's a middle ground between "accept what the agent gave you" and "throw it out and start over." Pushback. When something looks off, say so. "Why did you choose X over Y?" "I don't think that's right because Z." "This works but feels overcomplicated; can you do it simpler?" "Look at this again with [constraint] in mind."
+There's a middle ground between "accept what the agent gave you" and "throw it out and start over." But that middle has a danger: muddling. Telling the agent "try again" or "that doesn't seem right, can you do something else" puts you in the middle without giving the agent anything new to work with — you're rejecting the answer without pointing at why or what's wrong. Three rounds of that and you're no closer than when you started.
 
-A lot of the best work happens in this middle. New users tend to either rubber-stamp the first answer or restart the whole session. Pushback is the move in between, and it's the one you'll use most.
+Pushback is the productive form of being in the middle. It has a shape: it points in a direction. "That doesn't account for [the constraint we just discussed]." "What happens if [X] happens?" "Why did you choose X over Y?" "I don't think that's right because Z." Each one says something specific the next answer should address. And it's the move you'll use most.
+
+You don't have to know exactly what's wrong to push back. "Something about this feels off — I'm not sure what" is a perfectly valid move. The agent will often surface what it might be:
+
+> Something about this feels wrong but I'm not sure what. Can you walk through your reasoning and flag anywhere you weren't confident?
+
+And don't be afraid to be wrong. Pushback isn't adjudication — sometimes you push back and the agent explains why your concern doesn't apply, and you learn something. That's still a win.
 
 ## You can step in
 
