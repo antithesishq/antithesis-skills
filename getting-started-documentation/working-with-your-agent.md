@@ -88,6 +88,16 @@ What this costs depends on what you ask of it. A sub-agent reviewing a small pie
 
 ## Ensemble methods
 
-A more structured version of the same idea. For work where being right matters more than being fast, have multiple agents do the same task independently and compare results. Disagreements are where the interesting stuff is — they flag the parts that aren't well-grounded.
+Ensemble methods involve running the same task through multiple agents independently — meaning each agent works on the problem without seeing what the others produced — and then comparing the resulting answers. The independence is essential: if one agent sees what another said, the second one anchors on it and you lose the diversity of perspective that makes the technique work.
 
-Our own skills use ensemble patterns internally for high-stakes outputs. For high-stakes work in your own usage, the same idea applies. Slower; more reliable.
+What "multiple agents" looks like in practice varies. It might be several sessions of the same model run in parallel. It might be different models tackling the same task. It might be entirely different harnesses producing different framings of the question. The point is that each one approaches the problem fresh.
+
+When you compare the results, you look for two things. Where they converge — multiple independent agents arriving at the same answer — you have higher confidence the answer is well-grounded. Where they diverge, you've found places that need more attention before trusting any single answer.
+
+How you actually do the comparison varies. For a few answers, you can read them yourself and form a synthesis. For more, it's often worth handing the answers to another agent — to integrate them into a final answer, to flag where they disagree, or to pick the best of the bunch. The `antithesis-research` skill is a working example of the pattern: multiple evaluators run independently, then a synthesis stage integrates their findings. Worth a read if you want to see ensemble in action.
+
+Ensemble works best for tasks where there's genuine room for the answer to be wrong: design proposals, code reviews, bug-finding, evaluating tradeoffs. It doesn't help with mechanical tasks where the answer either is or isn't.
+
+This is the structured form of the same principle as *Use a second pair of eyes* — independent perspectives catch what shared perspectives miss. The difference: second-pair-of-eyes gets one fresh reviewer of finished work; ensemble has several agents do the work in parallel from the start, and compares where their answers agree and disagree.
+
+Ensemble costs more than a single run — more time, more tokens, more sessions to manage. What you get for that cost is catching things any single agent (yours included) would miss. Use it for work where being right matters more than being fast.
