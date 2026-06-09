@@ -68,6 +68,8 @@ Good property shape:
 
 Keep this first property extremely simple. Its purpose is integration verification, not business validation. Use a stable, human-readable message so its history remains comparable across runs.
 
+The property name must be an inline constant string literal, unique across the project — never constructed at runtime (no `"prefix" + id`) and never passed through a variable. Assertion cataloging statically analyzes the software to learn which assertions to expect before any run (at compile time for statically compiled languages like Rust, C++, and Go; via a runtime scan for dynamic languages like Java and Python), so a dynamic or duplicated name silently breaks cataloging.
+
 After setup proves the SDK path works, later workload work should extend SUT-side instrumentation at rare or dangerous internal outcomes when that will guide search better than workload-only assertions.
 
 ## Language-Specific References

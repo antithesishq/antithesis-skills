@@ -80,6 +80,7 @@ Don't write `Always(observed_delta == 100, ...)` for the same property — that 
 - Do not use `Sometimes(true, ...)` in normal workload or SUT code. If the condition is constant true, use `Reachable(...)` instead.
 - Do not use `Sometimes(cond, ...)` when the only thing you care about is that execution hit a path. Use `Reachable(...)`.
 - Do not reuse one assertion message across multiple unrelated callsites. Every assertion message should be unique in the codebase.
+- Do not construct assertion property names at runtime or pass them through variables. The name must be an inline constant string literal at the callsite — see "Naming" for why static analysis requires this.
 - Do not stack broad early `Reachable(...)` markers on a straight-line flow when a later, more specific outcome marker already proves the path was exercised.
 - Do not assert exact equality on values affected by transient errors. Use bounded assertions (see "Assert Bounds, Not Exact Values").
 
@@ -122,3 +123,13 @@ For guidance on which values to draw from — boundary values, configured-limit 
 ## Naming
 
 Give assertions clear, descriptive, unique names. These names appear in triage reports, so they should be immediately understandable and should localize one specific callsite or condition.
+
+The property name argument of every SDK assertion call (e.g. the "foobar" in `antithesis.assertAlways("foobar", ...)`) must be:
+
+- **Inline** — a string literal written directly at the callsite, not a variable, constant reference, or function result.
+- **Constant** — never constructed at runtime. No concatenation (`"foo" + id`), format strings, or interpolation.
+- **Unique** — no two assertion callsites anywhere in the project may share a property name.
+
+These are hard requirements, not style preferences. Antithesis statically analyzes all software during instrumentation to pre-catalog every assertion before any test runs. Pre-cataloging is what makes reachability and unreachability meaningful: to report that a `Reachable` was never hit or that an `Unreachable` exists, Antithesis must know the full set of assertions not just the ones it has seen fire so far. A name built at runtime is invisible to static analysis, a name passed through a variable may not resolve, and a duplicated name collapses two distinct callsites into one catalog entry, corrupting both.
+
+When the static analysis happens depends on the language: statically compiled languages (Rust, C++, Go) are cataloged during compile-time instrumentation; dynamic languages (Java, Python, etc.) are scanned at runtime.
