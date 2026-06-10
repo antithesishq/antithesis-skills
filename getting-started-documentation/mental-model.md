@@ -50,4 +50,8 @@ The agent doesn't know your codebase the way you do. It doesn't know your team's
 
 You are responsible for the outcome. The agent is a tool you wield. That's not a complaint — it's the deal. Wield it well and you can do things that would otherwise be impractical. Don't, and you'll end up with a working-ish mess you don't understand.
 
+Part of being the pilot is the work the agent can't do for itself. You set the patterns. You make the architectural calls. You decide what's worth shipping. Agents produce plausible work; you decide whether it's the right work.
+
+Specifics on what piloting looks like in practice — when to push back, when to step in, when to start over — live in [Working with Your Agent](working-with-your-agent.md). The standing structure that supports piloting (rubrics the agent follows, hooks that catch things, project instructions that shape default behavior) lives in [Building Your Harness](building-your-harness.md).
+
 Steer often. Check in early. Don't let it run unattended for long stretches without looking at what it's doing.
