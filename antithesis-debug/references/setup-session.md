@@ -1,66 +1,59 @@
 # Setup & Session
 
-## Prerequisites
-
-If `agent-browser` is not installed you can install it like so:
-
-```
-npm install -g agent-browser
-agent-browser install
-```
-
-You should also make sure the `agent-browser` skill is available. If it is not available, install it like so:
-
-```
-npx skills add vercel-labs/agent-browser
-```
-
 ## Launching an MVD session
 
-Before opening a debugger URL, you may need to launch the session first.
-`snouty debug` is the launch command. The interface is in flux: feature-detect
-by inspecting `snouty debug --help` before deciding which flow to run.
+Before opening a debugger URL, you may need to launch the session first. If the
+user already gave you a debugging-session URL, skip this section. Launching
+requires `snouty`:
 
-### Step 1: detect the supported parameter
+- DO NOT PROCEED if `snouty` is not installed. See
+  `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md`
+  for installation options.
+- DO NOT PROCEED if `snouty` is not at least version 0.5.0. Use `snouty
+--version` to find the version.
 
-```bash
-snouty debug --help
-```
-
-Look for `run_id` or `session_id` in the parameter list.
-
-### Step 2a — if `run_id` is supported (preferred path)
-
-Launch the session directly given the run + moment:
+`snouty debug` is the launch command. Identify the target run with exactly
+one of `--run-id` (preferred) or `--session-id`, and pin the moment to debug
+with `--input-hash` and `--vtime`:
 
 ```bash
 snouty debug \
-  --antithesis.debugging.run_id "$RUN_ID" \
-  --antithesis.debugging.input_hash "$INPUT_HASH" \
-  --antithesis.debugging.vtime "$VTIME" \
-  --antithesis.debugging.description "$DESCRIPTION" \
-  --antithesis.report.recipients "$EMAIL"
+  --run-id "$RUN_ID" \
+  --input-hash "$INPUT_HASH" \
+  --vtime "$VTIME" \
+  --description "$DESCRIPTION" \
+  --recipients "$EMAIL"
 ```
 
-Always pass a `description`, and make it **unique and findable later**
-(e.g., include the property name, a date stamp, or a ticket id). You'll
-use this string to locate the session in the list of debugging sessions
-when you (or a teammate) want to come back to it.
+`--description` is optional, but always pass one and make it **unique and
+findable later** (e.g., include the property name, a date stamp, or a ticket
+id) — you'll use this string to locate the session in the list of debugging
+sessions when you (or a teammate) come back to it. `--recipients` is an
+optional semicolon-delimited list of emails to notify.
+
+### Getting the input hash and vtime
+
+`--input-hash` and `--vtime` pin the single moment to debug. Extract the input hash and vtime from context and pass them as flags. (`--input-hash` is often negative; keep the leading `-`.)
+
+Infer which moment to use based on the user's prompt. The user may ask you to get a moment from a few different sources:
+
+- A `Moment.from({ ... })` blob from the report's _copy moment_ button, a
+  copied log line, or some free-form message — read the `input_hash` and `vtime`
+  out of it yourself.
+- **The API.** Moments come back from `snouty runs show $RUN_ID` (the failure
+  moment of an incomplete run), `snouty runs properties $RUN_ID --detail`
+  (example / counterexample moments per property), and the `moment` attached
+  to every entry from `snouty runs logs` and `snouty runs events`.
+- **An instruction to go find one.** If the user says something like "debug the
+  failing `Counter` property" or "start a debugging session at an event
+  containing the error message XYZ," use the API sources above to resolve the
+  concrete input hash and vtime first.
+
+If you can't pin down both an input hash and a vtime from a clear source, ask
+the user rather than guessing.
 
 Snouty returns the debugging-session URL on success; proceed to "Opening a
 debugger URL" below.
-
-### Step 2b — if only `session_id` is supported (current state)
-
-`session_id` and `run_id` are not interchangeable. Until `snouty debug` gains
-`run_id` support, ask the user to:
-
-1. Start the MVD session manually from the triage report (or however they
-   normally launch).
-2. Paste the resulting debugging-session URL back to you.
-
-Then proceed with "Opening a debugger URL" using that URL. This is a temporary
-fallback; once snouty supports `run_id`, this step goes away.
 
 ## Session naming
 

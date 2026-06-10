@@ -1,11 +1,9 @@
 ---
 name: antithesis-debug
 description: >
-  Use this skill to interactively debug Antithesis test runs using the
-  multiverse debugger (MVD session). Open a debugging-session URL, inspect container
-  filesystems and runtime state, run shell commands, and extract evidence
-  from inside the Antithesis environment. Supports both the simplified
-  debugger (default) and the advanced notebook mode.
+  Interactively debug an Antithesis test run in the multiverse debugger
+  (MVD): launch a session from a run, open a debugging-session URL, and
+  inspect container filesystem and runtime state from inside the run.
 compatibility: Requires agent-browser v0.23.4+ (https://github.com/vercel-labs/agent-browser).
 metadata:
   version: "2026-06-18 8a80ff6"
@@ -36,6 +34,11 @@ Use this when:
 For auth and report navigation, use the `antithesis-agent-browser` skill. It
 owns the `agent-browser` session and authentication flow. This skill handles
 the debugger itself.
+
+## Prerequisites
+
+- DO NOT PROCEED if `agent-browser` is not installed. See `https://raw.githubusercontent.com/vercel-labs/agent-browser/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `agent-browser` is older than version `v0.23.4`. You can upgrade with `agent-browser upgrade`.
 
 ## Gathering user input
 

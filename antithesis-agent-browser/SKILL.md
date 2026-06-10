@@ -157,6 +157,5 @@ After every report `waitForReady()` call, check `result.error`. If it is present
 2. **Discover runs from the runs page.** Read `references/run-discovery-ui.md`. Prefer `snouty runs list` whenever possible — only fall back to the UI when the API is unavailable or doesn't expose what you need.
 3. **Read properties from a triage report.** Read `references/properties-from-ui.md`. Prefer `snouty runs --json properties` whenever possible.
 4. **Look up a `run_id` from a triage-report URL** that cannot be matched against `snouty runs list`. The `run_id` is rendered at the bottom of the main report page (`report_id → run_id` is not currently exposed by the API).
-5. **Look up the `session_id` for `snouty debug`.** Load the report that matches the `run_id` (find with `snouty runs --json show $RUN_ID`) and read the `session_id` from the bottom of the report page.
-6. **Download an error log from a failed run's report page.** See `references/error-reports.md`.
-7. **Read a causality report.** Ask the user for the causality report URL. The main signal is the bug-probability trajectory in the logs leading up to the bug moment.
+5. **Download an error log from a failed run's report page.** See `references/error-reports.md`.
+6. **Read a causality report.** Ask the user for the causality report URL. The main signal is the bug-probability trajectory in the logs leading up to the bug moment.
