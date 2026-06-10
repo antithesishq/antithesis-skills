@@ -23,7 +23,7 @@ Who this guide is for, what knowledge it assumes — testing experience, basic A
 
 ### 2. [The Right Mental Model](mental-model.md)
 
-The mindset for working with LLM agents. Agents sound authoritative even when they're wrong; non-determinism is both a feature and a weakness; the difference between a "smart agent" and a "dumb agent" session; collaborator not oracle; you're the pilot.
+The mindset for working with LLM agents. Agents sound authoritative even when they're wrong; non-determinism is both a feature and a weakness; collaborator not oracle; you're the pilot.
 
 ### 3. [Working with Your Agent](working-with-your-agent.md)
 

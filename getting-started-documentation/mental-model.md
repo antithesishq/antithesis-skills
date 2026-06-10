@@ -24,14 +24,6 @@ That cuts both ways. The variation that gives you new angles also gives you inco
 
 Variation has to be managed, not relied on. A fresh session can see what a stale one missed. One agent can review another's work and find what neither would have alone. Those moves only work because the agents differ. For repeatable work where you need consistency, do the opposite: codify the process in a skill (see [Building Your Harness](building-your-harness.md)). Get used to varying.
 
-## Smart agent, dumb agent
-
-Some sessions are sharper than others. The agent that solved a problem cleanly yesterday will sometimes thrash on a similar one today. Same prompt, similar files, different result.
-
-You won't have an instinct for this on day one. Calibration takes time, and the way you develop it is by experiencing the contrast — once you've had a session that was really cracking, you start to notice when one isn't.
-
-When you suspect you're getting the dumb version, don't keep grinding. Rewind, restart, try the prompt again. Sometimes more context fixes it. Sometimes a fresh session is the cure. There's no checklist for telling the difference; there's only the feel you develop. We can't shortcut that for you, but we can tell you it's a real thing and that experienced users notice it.
-
 ## Collaborator, not oracle
 
 The most common mistake new users make is treating an agent like a search engine that talks back. Ask, get answer, accept answer. That mental model gives you the worst version of what these tools can do.
