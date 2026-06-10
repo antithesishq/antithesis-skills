@@ -24,6 +24,16 @@ That cuts both ways. The variation that gives you new angles also gives you inco
 
 Variation has to be managed, not relied on. A fresh session can see what a stale one missed. One agent can review another's work and find what neither would have alone. Those moves only work because the agents differ. For repeatable work where you need consistency, do the opposite: codify the process in a skill (see [Building Your Harness](building-your-harness.md)). Get used to varying.
 
+## Capability is uneven
+
+Working with an LLM agent isn't like working with a junior engineer who happens to know a lot. Their capability isn't a smooth gradient that maps to human experience. One moment it's debugging a complex concurrency problem; the next it's introducing simple logic bugs and changing the tests so they pass with the new incorrect logic.
+
+People new to LLMs get caught by this. The agent does something seemingly magical, and the natural inference is "this is a strong collaborator on hard problems." Then the next request — something simple — comes back wrong. Same agent. Same session. Different shape of task.
+
+You can't reliably reason about what an LLM will do well or poorly based on your intuition from working with people. The "idiot-savant junior engineer" framing helps you get started but stops being useful fast. The only reliable way to know how an agent will do on a task is to try it. This is part of why non-determinism matters: even your direct evidence from one attempt doesn't guarantee the next attempt will go the same way.
+
+As with confidence-without-correctness, the answer isn't to predict where the agent will fail. It's to compensate: get a second pair of eyes on work that matters, push back when something looks off, and use your harness to set guardrails for the failure modes you most care about. We cover those in [Working with Your Agent](working-with-your-agent.md) and [Building Your Harness](building-your-harness.md).
+
 ## Collaborator, not oracle
 
 The most common mistake new users make is treating an agent like a search engine that talks back. Ask, get answer, accept answer. That mental model gives you the worst version of what these tools can do.
