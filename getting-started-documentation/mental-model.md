@@ -16,9 +16,9 @@ This is a tone problem you have to compensate for. Assume the confidence is deco
 
 LLM agents are non-deterministic. Two runs over the same prompt can produce different results. The same task can succeed cleanly one session and stumble the next.
 
-For programmers this feels wrong. We're trained on deterministic systems — give a function the same input and you get the same output, every time. That's reliability. Non-determinism reads as "broken" to that part of the brain.
+For programmers this feels wrong. We're trained on deterministic systems: give a function the same input and you get the same output, every time. That's reliability. Non-determinism reads as "broken" to that part of the brain.
 
-But the non-determinism isn't a flaw the LLM has to overcome. It's the source of the LLM's usefulness. A deterministic LLM would be a lookup table — same prompt, same canned answer, forever. What makes LLMs valuable is exactly that they give you something different each time: a different angle, a different solution path, a different framing of the problem. The variation is the engine.
+But the non-determinism isn't a flaw the LLM has to overcome. It's the source of the LLM's usefulness. A deterministic LLM would be a lookup table: same prompt, same canned answer, forever. What makes LLMs valuable is exactly that they give you something different each time: a different angle, a different solution path, a different framing of the problem. The variation is the engine.
 
 That cuts both ways. The variation that gives you new angles also gives you inconsistency: the same task that worked smoothly yesterday can stumble today. You can't replay the work the way you replay a unit test.
 
@@ -52,6 +52,6 @@ You are responsible for the outcome. The agent is a tool you wield. That's not a
 
 Part of being the pilot is the work the agent can't do for itself. You set the patterns. You make the architectural calls. You decide what's worth shipping. Agents produce plausible work; you decide whether it's the right work.
 
-Specifics on what piloting looks like in practice — when to push back, when to step in, when to start over — live in [Working with Your Agent](working-with-your-agent.md). The standing structure that supports piloting (rubrics the agent follows, hooks that catch things, project instructions that shape default behavior) lives in [Building Your Harness](building-your-harness.md).
+Specifics on what piloting looks like in practice (when to push back, when to step in, when to start over) live in [Working with Your Agent](working-with-your-agent.md). The standing structure that supports piloting (rubrics the agent follows, hooks that catch things, project instructions that shape default behavior) lives in [Building Your Harness](building-your-harness.md).
 
 Steer often. Check in early. Don't let it run unattended for long stretches without looking at what it's doing.
