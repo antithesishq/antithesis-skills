@@ -16,9 +16,13 @@ This is a tone problem you have to compensate for. Assume the confidence is deco
 
 LLM agents are non-deterministic. Two runs over the same prompt can produce different results. The same task can succeed cleanly one session and stumble the next.
 
-That's frustrating. It also turns out to be useful. Determinism is a property you want for a build system. For something that's helping you think, variation is leverage — a fresh session can see what a stale one missed; one agent can review another's work and find what neither would have alone.
+For programmers this feels wrong. We're trained on deterministic systems — give a function the same input and you get the same output, every time. That's reliability. Non-determinism reads as "broken" to that part of the brain.
 
-You can't replay an LLM the way you replay a unit test. You can vary, though. Get used to varying.
+But the non-determinism isn't a flaw the LLM has to overcome. It's the source of the LLM's usefulness. A deterministic LLM would be a lookup table — same prompt, same canned answer, forever. What makes LLMs valuable is exactly that they give you something different each time: a different angle, a different solution path, a different framing of the problem. The variation is the engine.
+
+That cuts both ways. The variation that gives you new angles also gives you inconsistency: the same task that worked smoothly yesterday can stumble today. You can't replay the work the way you replay a unit test.
+
+Variation has to be managed, not relied on. A fresh session can see what a stale one missed. One agent can review another's work and find what neither would have alone. Those moves only work because the agents differ. For repeatable work where you need consistency, do the opposite: codify the process in a skill (see [Building Your Harness](building-your-harness.md)). Get used to varying.
 
 ## Smart agent, dumb agent
 

@@ -38,6 +38,8 @@ Beyond standing instructions, you can write your own skills — bundled sets of 
 
 Our antithesis-* skills are examples of this pattern. They aren't magic; they're just well-crafted instruction bundles that the agent loads when relevant. You can write your own for your project's specific work — your deploy process, your release flow, your incident response runbook. The agent is happy to help you write them.
 
+Skills also serve as a way to tame the agent's non-determinism. For tasks where variation hurts more than it helps — repeatable procedures, anything you need done the same way every time — codifying the process in a skill is more reliable than relying on the agent to do it consistently from scratch each session.
+
 ## Hooks
 
 Some agentic tools support hooks — scripts that fire automatically at certain points in the agent's work. A pre-commit hook can refuse a commit if tests fail. A post-edit hook can run a linter. A pre-tool hook can require confirmation for destructive commands.
