@@ -16,9 +16,15 @@ This has consequences that aren't obvious from the chat interface. If you switch
 
 ## Context windows have pros and cons
 
-The agent has a finite window of conversation it can attend to. Bigger windows let you have longer sessions, hand it more files, reason over more material. They also degrade. Long sessions tend to produce sloppier work than short ones with the same starting prompt — the agent starts forgetting things you established earlier, repeating mistakes you corrected, taking longer to converge on simple answers.
+Bigger windows let you have longer sessions, hand the agent more files, reason over more material. They also degrade. Long sessions tend to produce sloppier work than short ones with the same starting prompt: the agent starts forgetting things you established earlier, repeating mistakes you corrected, taking longer to converge on simple answers.
 
-There's no fixed point where this starts; you develop a feel for it. As a rule of thumb: if a session has been going for a long time and is starting to feel less sharp than it did, you're probably running into degradation. Start a fresh session and load just the context you need.
+This isn't a bug to prompt around. Just because something is in the context doesn't mean the agent will actually apply it. LLMs are non-deterministic. The model doesn't apply every part of its context with equal force, and which parts it leans on can vary from run to run. The more that's in the window, the less attention each individual piece gets. The agent can effectively "forget" something that's right there in the context, not because the content is gone, but because it didn't get weighted heavily enough to matter.
+
+As the window fills, this compounds. Earlier content competes with newer content for the agent's attention; instructions you gave early can be ignored later; relevant details get crowded out by less relevant ones.
+
+There's no fixed point where this starts. You develop a feel for it. As a rule of thumb: if a session has been going for a long time and is starting to feel less sharp than it did, you're probably running into degradation.
+
+When you notice it, you have a few options. Restart fresh, loading just what you actually need. Ask the agent to write a handoff document and start a new session with it loaded. Ask the agent whether it thinks the next round of work would go better in a fresh context. Or use your tool's context controls if it has them. There's a full discussion in the "[Context Degrading](when-things-go-sideways.md#context-degrading)" section of "[When Things Go Sideways](when-things-go-sideways.md)".
 
 ## Context shaping is your job
 
