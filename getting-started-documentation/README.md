@@ -31,7 +31,7 @@ The mechanics of day-to-day work. Talking to the agent like a teammate, asking t
 
 ### 4. [Context and Memory](context-and-memory.md)
 
-How agents work on what's in front of them. Context windows and their limits, shaping context deliberately, auto-memory as a double-edged tool, recognizing when memory has gone stale.
+How agents work on what's in front of them. Context windows and their limits, shaping context deliberately, auto-memory as a double-edged tool.
 
 ### 5. [Building Your Harness](building-your-harness.md)
 

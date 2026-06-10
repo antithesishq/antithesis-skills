@@ -22,8 +22,6 @@ Memories go stale. A decision changes, a file moves, a convention evolves — bu
 
 For really important things — conventions you don't want forgotten, rules you don't want broken — don't rely on auto-memory at all. Codify them in your harness (skills, hooks, AGENTS.md / CLAUDE.md) where they live as version-controlled, explicit instructions that don't rot silently.
 
-## When to suspect memory
-
 If you start getting results that feel weirdly wrong — the agent making decisions that don't match your current state, referring to things that don't exist anymore, applying a convention you stopped using, arguing with you about something you settled — check the auto-memory.
 
 It might be acting on what was true three months ago. Most tools let you inspect and edit memory directly. Do it. Outdated memory is one of the highest-confusion failure modes because nothing about the output looks wrong on its surface — the agent is "remembering" something, just the wrong thing.
