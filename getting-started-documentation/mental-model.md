@@ -6,7 +6,11 @@ Most of the trouble people hit with LLM agents traces back to bringing the wrong
 
 Agents almost always sound confident. They don't hedge unless you ask them to, and even then the hedging tends to get wallpapered over with more confident prose. "Here's the fix" reads the same whether the fix is right or a confident wrong guess.
 
-This is a tone problem you have to compensate for. Assume the confidence is decorative, not informative. Correct answers and incorrect ones arrive with the same delivery; the difference between them lives in whether you check.
+It might tell you to use a function that doesn't exist. It might assert a property of your codebase that isn't true. It might write a five-line explanation that contradicts how the system actually works. In each case the language is the same: same tone, same structure, same delivery as when the agent is correct. There's no surface signal that separates "I checked this and I'm right" from "this feels right and I'm telling you it's right."
+
+This isn't a quirk that better prompting fixes. LLMs work by predicting the next most likely token given what's come before. They produce plausible-sounding output, not verified output. Any individual answer should be treated as possibly wrong, including in ways the agent itself can't detect.
+
+This is a tone problem you have to compensate for. Assume the confidence is decorative, not informative. Correct answers and incorrect ones arrive with the same delivery; the difference between them lives in whether you check. There are ways to compensate: getting a second pair of eyes, running ensemble methods for high-stakes work, shaping your harness so the agent has the right context. We cover those in [Working with Your Agent](working-with-your-agent.md) and [Building Your Harness](building-your-harness.md).
 
 ## Fallibility is a feature and a weakness
 
