@@ -1,6 +1,18 @@
 # Context and Memory
 
-Agents work on the words in front of them — the files you've loaded, the prompts you've written, the conversation so far, the memory the tool has saved about you. What's there, what isn't, and what's been there too long all change the work. Understanding context is one of the higher-leverage things you can learn.
+Agents work on the words in front of them: the files you've loaded, the prompts you've written, the conversation so far, the memory the tool has saved about you. What's there, what isn't, and what's been there too long all change the work. Understanding how the mechanism underneath actually works is one of the higher-leverage things you can learn.
+
+## What a context window is
+
+The chat interface makes context look simple: you type, the agent responds, conversation continues. The mechanics underneath are different in ways that matter.
+
+Each prompt you send is a stateless request to the LLM. The model itself has no memory of your previous messages, no idea what you asked yesterday, no thread it's continuing. So how do conversations work?
+
+The answer is the context: with each new prompt, the agent re-sends what came before. Every previous message you wrote, every response the agent produced, every file it read, every tool it ran and the output it got back. All of it is part of the request to the LLM. Tools may compress older content as the window fills; when they do, the model sees a summary rather than the original. The model gets that bundle plus your new prompt and produces the next response. Then that response becomes part of the context for the next request. We can handwave and say the context is all the stuff that came before in the session, sent as part of each request, creating the illusion of continuity.
+
+The context window is the limit on how big that bundle can be. It's measured in tokens (the small pieces of text the model operates on). Every model has one. Modern windows are large (hundreds of thousands of tokens, sometimes millions) but they're not unlimited.
+
+This has consequences that aren't obvious from the chat interface. If you switch topics and come back, every message from the unrelated topic is still in the context for everything that follows. If you ask the agent to explore a codebase and it reads a thousand files before giving you a summary, the contents of all thousand files are in the context for the next request. Even if all you wanted was the summary.
 
 ## Context windows have pros and cons
 
