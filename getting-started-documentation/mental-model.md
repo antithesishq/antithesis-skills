@@ -36,9 +36,11 @@ As with confidence-without-correctness, the answer isn't to predict where the ag
 
 ## Collaborator, not oracle
 
-The most common mistake new users make is treating an agent like a search engine that talks back. Ask, get answer, accept answer. That mental model gives you the worst version of what these tools can do.
+The most common mistake new users make is treating an agent like a search engine that talks back. Ask, get answer, accept answer. That mental model gives you the worst version of what these tools can do. It stacks the costs of overconfidence, non-determinism, and uneven capability without taking advantage of any of the strengths.
 
-The frame that works better: you are working *with* a fast, broadly-knowledgeable collaborator who is sometimes wrong, sounds confident either way, and benefits from your judgment far more than from your obedience. When you bring that mindset, you ask follow-up questions. You push back. You redirect. You treat the first output as a starting point, not an answer.
+The frame that works better: you are working *with* a fast, broadly-knowledgeable collaborator who is sometimes wrong, sounds confident either way, and benefits from your judgment far more than from your obedience. When you bring that mindset, you ask follow-up questions. You push back. You redirect. You treat the first output as a starting point, not an answer. We cover the specific moves in [Working with Your Agent](working-with-your-agent.md).
+
+A collaborator who knows your project does better than one who walks in cold every session. The standing context that turns the agent from "knowledgeable stranger" into "teammate who knows the codebase" lives in [Building Your Harness](building-your-harness.md).
 
 Oracles return answers. Collaborators get worked with. You want the second one.
 
