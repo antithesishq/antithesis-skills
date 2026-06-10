@@ -86,25 +86,25 @@ You do **not** need to reason about replay, branching, or timelines when persist
 ### `anytime_`
 
 - **Purpose:** Continuous invariant checks.
-- **Scheduling:** Runs after `first_`, during any subsequent phase — including during driver execution and while `eventually_` or `finally_` commands start.
-- **Faults:** Active during driver phases. When `eventually_` or `finally_` runs, faults stop, but already-running `anytime_` commands complete.
-- **Concurrency:** May run alongside any command type except `first_`.
+- **Scheduling:** Runs after `first_`, during driver execution. When an `eventually_` command starts, running `anytime_` commands are cancelled.
+- **Faults:** Active during driver phases.
+- **Concurrency:** May run alongside driver commands. Never runs alongside `first_`, `eventually_`, or `finally_`.
 - **Examples:** "Read reflects previous write," availability monitoring.
 
 ### `eventually_`
 
 - **Purpose:** Check system recovery and eventually-true invariants — eventual consistency, convergence, availability after faults.
-- **Scheduling:** Runs only after at least one driver has started. Kills other running commands when it starts (except `anytime_`, which completes).
+- **Scheduling:** Runs only after at least one driver has started. Kills all other running commands when it starts.
 - **Faults:** All fault injection stops when this command starts.
-- **Concurrency:** Running `anytime_` commands complete; no new commands start alongside.
+- **Concurrency:** Nothing runs alongside.
 - **Notes:** The timeline branch will not resume testing after this command runs, so destructive actions are safe. Should include retry loops or health checks since the system may need time to stabilize after faults stop. If you need a mid-run liveness check where testing continues afterward, use `ANTITHESIS_STOP_FAULTS` instead (see Requesting Quiet Periods from Driver Commands).
 
 ### `finally_`
 
 - **Purpose:** Check final system state after all work completes.
-- **Scheduling:** Runs only after all started drivers complete naturally (not killed). Kills other running commands when it starts (except `anytime_`, which completes). Only runs on timelines where drivers finished on their own.
+- **Scheduling:** Unlike `eventually_` commands, `finally_` commands only run in timelines where every command started has run to completion and not been killed by a fault or another command.
 - **Faults:** All fault injection stops when this command starts.
-- **Concurrency:** Running `anytime_` commands complete; no new commands start alongside.
+- **Concurrency:** Nothing runs alongside.
 - **Notes:** The timeline branch will not resume testing after this command runs, so destructive actions are safe. Should include retry loops or health checks since the system may need time to stabilize after faults stop.
 - **Examples:** "Database contains exactly N rows," final consistency checks.
 
@@ -114,23 +114,23 @@ These two command types are similar but serve different purposes:
 
 | Aspect              | `eventually_`              | `finally_`                           |
 | ------------------- | -------------------------- | ------------------------------------ |
-| Question answered   | "Does the system recover?" | "Is the final state correct?"        |
-| When it runs        | After driver(s) start      | After all drivers complete naturally |
-| How drivers end     | Killed by Antithesis       | Completed on their own               |
+| Question answered   | "Does the system recover?" | "Is the final state correct?"                |
+| When it runs        | After driver(s) start      | After every started command completes        |
+| How prior commands end | Killed by Antithesis    | Completed on their own — none killed         |
 | Faults              | Stopped                    | Stopped                              |
 | Destructive actions | Safe — branch won't resume | Safe — branch won't resume           |
 
 ## Concurrency Summary
 
-| Command             | Faults active?       | Can run alongside                                                                                             |
-| ------------------- | -------------------- | ------------------------------------------------------------------------------------------------------------- |
-| `first_`            | No                   | Nothing                                                                                                       |
-| `parallel_driver_`  | Yes                  | `parallel_driver_`, `anytime_`                                                                                |
-| `serial_driver_`    | Yes                  | `anytime_`                                                                                                    |
-| `singleton_driver_` | Yes                  | `anytime_`                                                                                                    |
-| `anytime_`          | Yes (during drivers) | Any except `first_`; during `eventually_`/`finally_`, running instances complete but new ones are not started |
-| `eventually_`       | No                   | Running `anytime_` commands complete                                                                          |
-| `finally_`          | No                   | Running `anytime_` commands complete                                                                          |
+| Command             | Faults active?       | Can run alongside                                                                                          |
+| ------------------- | -------------------- | ---------------------------------------------------------------------------------------------------------- |
+| `first_`            | No                   | Nothing                                                                                                    |
+| `parallel_driver_`  | Yes                  | `parallel_driver_`, `anytime_`                                                                             |
+| `serial_driver_`    | Yes                  | `anytime_`                                                                                                 |
+| `singleton_driver_` | Yes                  | `anytime_`                                                                                                 |
+| `anytime_`          | Yes (during drivers) | Driver commands; cancelled when `eventually_` starts                                                       |
+| `eventually_`       | No                   | Nothing — kills all running commands when it starts                                                        |
+| `finally_`          | No                   | Nothing — starts only after every started command has completed                                            |
 
 ## Requesting Quiet Periods from Driver Commands
 
