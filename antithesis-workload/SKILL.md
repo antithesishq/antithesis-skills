@@ -151,7 +151,7 @@ Review criteria:
 - For every property in scope, the implementation covers the code paths, failure scenarios, and instrumentation points described in its evidence file — not just "an assertion exists" but "the assertions cover what the evidence says needs to be covered"
 - Each assertion uses the correct SDK assertion type for its property's semantics (`Always`/`AlwaysOrUnreachable` for safety, `Sometimes(cond)` for liveness or meaningful semantic state, `Reachable`/`Unreachable` for path and outcome checks)
 - `Sometimes(true, ...)` assertions should be rewritten as `Reachable(...)`.
-- Assertion messages are unique across the touched code; no broad property is implemented by reusing one message at multiple unrelated callsites
+- Assertion property names are inline constant string literals, unique across the whole project — never built at runtime or passed through variables (static analysis must pre-catalog them; see `references/assertions.md` "Naming"); no broad property is implemented by reusing one message at multiple unrelated callsites
 - Workload-only instrumentation was not used where surgical SUT-side assertions would provide materially better search guidance for rare, dangerous, or timing-sensitive internal states
 - Workload code makes progress toward stated goals under transient errors rather than bailing on first failure
 - The workload records both attempted and acknowledged operations so later assertions can check bounds (e.g., "counter changed by some value in `[acknowledged, attempted]`")
