@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-11
+
+- docs: explain why assertion property names must be inline, constant, and unique ([PR #160](https://github.com/antithesishq/antithesis-skills/pull/160))
+
 ## 2026-06-03
 
 - workload exit/state guidance; snouty doctor as triage preflight ([PR #158](https://github.com/antithesishq/antithesis-skills/pull/158))
