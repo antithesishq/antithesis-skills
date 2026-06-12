@@ -35,6 +35,12 @@ Because of this, **a test command that runs forever is an antipattern.** Antithe
 
 This does **not** mean commands must run quickly. A command may legitimately take a while — driving a long sequence of operations, waiting on the system to reach some state, polling through a retry loop. That's fine. The requirement is only that it _eventually_ finishes and returns an exit code. Structure each command as one bounded chunk of work (drive N operations, run for a bounded time/iteration budget, then exit) and let Antithesis re-run it to get more — rather than looping indefinitely inside a single invocation. Antithesis already checks the exit code, so a non-zero exit should mean something is genuinely wrong.
 
+## Exit non-zero only on a real bug
+
+Antithesis attaches a built-in property to each test command that fails whenever that command exits non-zero. So a test command should exit non-zero only when it has genuinely uncovered a bug. Even then, prefer to flag the bug with an Antithesis SDK assertion (`Always`/`Sometimes`/etc.) rather than relying on the exit code — assertions are more controllable and are reported as named property failures with full context.
+
+This is tricky under fault injection, where a SUT call can crash on something transient and expected — a dropped connection, a timeout, a partitioned or restarting node. Bailing on the first such error exits non-zero for something that is not a bug. So test commands should retry as much as needed rather than bailing. That way a non-zero exit means the command hit *actually* unexpected state, and a human should look — to either fix the test command or fix the bug the failure exposed.
+
 ## Maintaining state between commands
 
 Because each command invocation is a separate, bounded process (see "Test commands must exit"), any state that needs to outlive a single invocation — counters of attempted operations, sequence numbers, expected-value bookkeeping, a record of what's been done so far — has to live somewhere outside the process.
@@ -50,10 +56,10 @@ You do **not** need to reason about replay, branching, or timelines when persist
 ### `first_`
 
 - **Purpose:** One-time per-timeline initialization.
-- **Scheduling:** Runs after `setup_complete` but before all other commands. If multiple `first_` commands exist, Antithesis selects exactly one.
+- **Scheduling:** Runs after `setup_complete` but before all other commands. If a template has multiple `first_` commands, exactly one runs on every timeline using that template.
 - **Faults:** Not injected.
 - **Concurrency:** No other commands run alongside.
-- **Notes:** The `setup_complete` deadlock risk (see Test Command Requirements) is especially easy to trigger here, since `first_` commands handle initialization logic.
+- **Notes:** The `setup_complete` deadlock risk (see Test Command Requirements) is especially easy to trigger here, since `first_` commands handle initialization logic. As only one `first_` command runs per timeline, ensure that each `first_` command fully prepares the environment for testing.
 
 ### `parallel_driver_`
 
