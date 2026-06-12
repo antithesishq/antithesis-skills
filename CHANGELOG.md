@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-12
+
+- docs: clarify first_ selection and when test commands should exit non-zero ([PR #164](https://github.com/antithesishq/antithesis-skills/pull/164))
+
 ## 2026-06-11
 
 - docs: explain why assertion property names must be inline, constant, and unique ([PR #160](https://github.com/antithesishq/antithesis-skills/pull/160))
