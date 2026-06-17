@@ -193,10 +193,9 @@ Scan the raw traces for issues in these categories:
 
 - `snouty runs` invocations that fail with non-timeout errors (404, schema
   mismatch, unexpected exit codes)
-- `download-logs.sh` or `process-logs.py` failures
+- The log-download step (`snouty runs --json logs ... | jq -s '.'`) failing,
+  timing out, or returning truncated / partial output
 - `jq` queries that error out or return null where data should exist
-- The chunked-download fallback (`download-logs-chunked.py`) triggering
-  and then itself failing
 - Skill-documented commands that do not behave as the skill claims
 
 **Compliance violations** — the sub-agent did not follow the skill
@@ -208,8 +207,7 @@ protocol:
 - Triaging a run with no `links.triage_report` without first reporting
   that the run is not triageable
 - Rounding or reformatting `input_hash` / `vtime` before passing them to
-  `snouty runs logs` or `download-logs.sh` (the skill requires verbatim
-  values)
+  `snouty runs --json logs` (the skill requires verbatim values)
 - Concluding root cause for a property failure without downloading and
   inspecting the corresponding log when a moment is available
 - Treating a telemetry/meta property counterexample (non-`moment`

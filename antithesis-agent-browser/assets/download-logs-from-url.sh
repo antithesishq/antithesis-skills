@@ -10,7 +10,7 @@
 # the log URL, and downloads the log file in the requested format. The output
 # is written verbatim — no post-processing. If the caller wants vtime/fault
 # annotation on a JSON download, pipe the result through
-# antithesis-triage/assets/process-logs.py (or antithesis-debug/assets/process-logs.py) separately.
+# antithesis-debug/assets/process-logs.py separately.
 #
 # Exit codes:
 #   0  success

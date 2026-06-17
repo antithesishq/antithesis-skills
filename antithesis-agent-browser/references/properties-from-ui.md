@@ -116,4 +116,4 @@ If you do not have access to `bash` on this machine, read the download script an
 
 The script creates its own browser session using shared `antithesis` auth, navigates to the URL, waits for the page to load, and downloads the file verbatim (no post-processing). The default format is JSON. Use `--format txt` or `--format csv` when asked, but prefer JSON whenever possible.
 
-To annotate a downloaded JSON log with `vtime_seconds` and `active_faults`, pipe it through `antithesis-triage/assets/process-logs.py` (or `antithesis-debug/assets/process-logs.py`).
+To annotate a downloaded JSON log with `vtime_seconds` and `active_faults`, pipe it through `antithesis-debug/assets/process-logs.py`.
