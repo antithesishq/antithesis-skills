@@ -7,7 +7,7 @@ description: >
   occur even without a preceding fault?).
 compatibility: Requires snouty (https://github.com/antithesishq/snouty) and agent-browser (https://github.com/vercel-labs/agent-browser).
 metadata:
-  version: "2026-06-18 4d70d62"
+  version: "2026-06-18 8a80ff6"
 ---
 
 # Antithesis Logs Explorer

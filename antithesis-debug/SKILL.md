@@ -8,7 +8,7 @@ description: >
   debugger (default) and the advanced notebook mode.
 compatibility: Requires agent-browser v0.23.4+ (https://github.com/vercel-labs/agent-browser).
 metadata:
-  version: "2026-06-18 4d70d62"
+  version: "2026-06-18 8a80ff6"
 ---
 
 # Antithesis Multiverse Debugger
