@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-18
+
+- fix: gate agent-browser interactive auth on user confirmation ([PR #167](https://github.com/antithesishq/antithesis-skills/pull/167))
+
 ## 2026-06-12
 
 - docs: clarify first_ selection and when test commands should exit non-zero ([PR #164](https://github.com/antithesishq/antithesis-skills/pull/164))
