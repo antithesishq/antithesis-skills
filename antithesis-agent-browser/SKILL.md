@@ -76,7 +76,7 @@ agent-browser --session "$SESSION" wait --load networkidle
 agent-browser --session "$SESSION" get url
 ```
 
-If the URL starts with `https://$TENANT.antithesis.com` then you are authenticated. If it redirected to a login page, you need to authenticate — read `references/setup-auth.md`.
+If the URL starts with `https://$TENANT.antithesis.com` then you are authenticated. If it redirected to a login page, you need to authenticate — read `references/setup-auth.md`, which gates the interactive headed login on user confirmation.
 
 ## Runtime injection
 
