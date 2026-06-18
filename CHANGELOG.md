@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-06-18
 
+- workload: eventually cancels anytime commands; finally waits for all commands to complete ([PR #161](https://github.com/antithesishq/antithesis-skills/pull/161))
 - fix: gate agent-browser interactive auth on user confirmation ([PR #167](https://github.com/antithesishq/antithesis-skills/pull/167))
 
 ## 2026-06-12
