@@ -9,8 +9,8 @@ requires `snouty`:
 - DO NOT PROCEED if `snouty` is not installed. See
   `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md`
   for installation options.
-- DO NOT PROCEED if `snouty` is not at least version 0.5.0. Use `snouty
---version` to find the version.
+- DO NOT PROCEED if `snouty` is not at least version 0.6.0. Use `snouty
+--version` to find the version. Use `snouty update` to update.
 
 `snouty debug` is the launch command. Identify the target run with exactly
 one of `--run-id` (preferred) or `--session-id`, and pin the moment to debug

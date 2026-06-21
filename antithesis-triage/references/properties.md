@@ -1,11 +1,10 @@
 # Property queries
 
-Use `snouty runs --json properties` to retrieve properties and `assets/download-logs.sh` to download a log of a specific history. The `properties` return data will give you what you need to get the logs.
+Use `snouty runs --json properties` to retrieve properties and `snouty runs --json logs` to download a log of a specific history. The `properties` return data will give you what you need to get the logs.
 
 ## Getting all properties
 
-Use `snouty runs --json properties "${OPTION}" "${RUN_ID}"` to download all the properties for a run.
-OPTION can be `--passing` or `--failing` to retrieve just passing or just failing properties.
+Use `snouty runs --json properties FLAGS "${RUN_ID}"` to download all the properties for a run.
 
 Example return:
 
@@ -79,10 +78,11 @@ if more examples are needed.
 
 ### Filtering properties
 
-If you want to filter the properties based on passing or failing, this is supported
-directly by `snouty runs --json properties` with an option.
+`snouty runs --json properties` supports several filters (combine them as needed):
 
-Otherwise use `jq` to filter the output of `snouty runs --json properties`.
+- `--passing` / `--failing` — only passing or only failing properties.
+- `--name <substr>` — only properties whose name contains the substring (case-insensitive).
+- `--group <substr>` — only properties whose group contains the substring (case-insensitive).
 
 ### Using pass/fail ratios for triage prioritization
 

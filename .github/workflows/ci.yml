@@ -73,12 +73,5 @@ jobs:
 
       - name: Run asset unit tests
         run: |
-          python antithesis-triage/assets/process-logs.py --test
           python antithesis-debug/assets/process-logs.py --test
           python antithesis-query-logs/assets/build-url.py --test
-
-      - name: Import-smoke remaining asset scripts
-        run: |
-          python -c "import importlib.util, sys; \
-            spec = importlib.util.spec_from_file_location('m', 'antithesis-triage/assets/download-logs-chunked.py'); \
-            m = importlib.util.module_from_spec(spec); spec.loader.exec_module(m)"

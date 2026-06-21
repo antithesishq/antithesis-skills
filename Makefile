@@ -7,7 +7,6 @@ validate-changelog:
 	python3 .ci-scripts/changelog.py validate
 
 test:
-	uv run python antithesis-triage/assets/process-logs.py --test
 	uv run python antithesis-debug/assets/process-logs.py --test
 	uv run python antithesis-query-logs/assets/build-url.py --test
 
