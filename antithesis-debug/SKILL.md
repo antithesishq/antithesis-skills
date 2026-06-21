@@ -6,7 +6,7 @@ description: >
   inspect container filesystem and runtime state from inside the run.
 compatibility: Requires agent-browser v0.23.4+ (https://github.com/vercel-labs/agent-browser).
 metadata:
-  version: "2026-06-21 2cb7f61"
+  version: "2026-06-21 02b69b5"
 ---
 
 # Antithesis Multiverse Debugger
