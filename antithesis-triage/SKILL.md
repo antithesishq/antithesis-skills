@@ -7,7 +7,7 @@ description: >
   details. Load after a run completes or when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
-  version: "2026-06-18 8a80ff6"
+  version: "2026-06-21 2cb7f61"
 ---
 
 # Antithesis Run Triage
@@ -19,7 +19,7 @@ Use this skill to analyze Antithesis test runs.
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- DO NOT PROCEED if `snouty` is not at least version 0.5.0. Use `snouty --version` to find the version.
+- DO NOT PROCEED if `snouty` is not at least version 0.6.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 - **Note:** `snouty runs` may be hidden from `snouty --help` but is still supported. If you need to confirm availability or see subcommand syntax, `snouty runs --help` still works.
 

@@ -62,7 +62,7 @@ Set this environment variable in every Dockerfile (or in docker-compose.yaml env
 ENV NO_COLOR=1
 ```
 
-`NO_COLOR` is a widely adopted convention (see https://no-color.org/) honored by most CLI tools, test frameworks, and language runtimes.
+`NO_COLOR` is a widely adopted convention honored by most CLI tools, test frameworks, and language runtimes.
 
 Additionally, if the SUT or its dependencies have their own color flags (e.g. `--no-color`, `FORCE_COLOR=0`, `GCC_COLORS=`, `PYTEST_ADDOPTS=--no-header -p no:color`), disable those too. The goal is zero ANSI escape sequences in any container output.
 

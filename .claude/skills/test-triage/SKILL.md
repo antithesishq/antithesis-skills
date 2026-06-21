@@ -26,7 +26,7 @@ Before starting, verify the same prerequisites the triage skill requires:
 which snouty && which jq && snouty --version
 ```
 
-`snouty` must be at least version 0.5.0. Then confirm credentials with the canonical check (same as the triage skill's preflight):
+`snouty` must be at least version 0.6.0. Then confirm credentials with the canonical check (same as the triage skill's preflight):
 
 ```bash
 snouty doctor
