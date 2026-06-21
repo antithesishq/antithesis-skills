@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-06-21
 
+- BREAKING CHANGE: triage: rely on snouty native log annotation + property filters, drop bundled log scripts ([PR #165](https://github.com/antithesishq/antithesis-skills/pull/165))
 - debug: launch MVD sessions directly from run_id ([PR #162](https://github.com/antithesishq/antithesis-skills/pull/162))
 - fix: don't repurpose ANTITHESIS_SDK_LOCAL_OUTPUT for setup-complete ([PR #168](https://github.com/antithesishq/antithesis-skills/pull/168))
 
