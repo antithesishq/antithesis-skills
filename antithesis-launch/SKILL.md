@@ -8,7 +8,7 @@ description: >
   run. This skill takes duration in minutes as input.
 compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-06-18 8a80ff6"
+  version: "2026-06-21 2cb7f61"
 ---
 
 # Antithesis Launch
