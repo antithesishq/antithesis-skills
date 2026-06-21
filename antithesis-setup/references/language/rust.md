@@ -23,7 +23,7 @@ Call `antithesis_sdk::antithesis_init()` as soon as possible at program startup.
 
 Outside Antithesis, behavior depends on the build:
 
-- **`full` feature (the default):** the SDK is fully compiled in — assertions evaluate, the catalog registers, and randomness functions return values. Reporting is silent unless you set `ANTITHESIS_SDK_LOCAL_OUTPUT` to a file path, in which case assertion and lifecycle events are written there as JSON.
+- **`full` feature (the default):** the SDK is fully compiled in — assertions evaluate, the catalog registers, and randomness functions return values.
 - **default features disabled:** a true no-op — assertion and lifecycle calls compile away to nothing.
 
 ## Instrumentation

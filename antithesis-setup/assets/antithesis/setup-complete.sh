@@ -9,14 +9,11 @@ set -euo pipefail
 # automatically. This script is setup to emit `setup_complete` to the
 # `sdk.jsonl` file in that directory.
 
-OUTPUT_PATH="/tmp/antithesis_sdk.jsonl"
 if [[ -n "${ANTITHESIS_OUTPUT_DIR:-}" ]]; then
   OUTPUT_PATH="${ANTITHESIS_OUTPUT_DIR}/sdk.jsonl"
+  mkdir -p $(dirname "$OUTPUT_PATH")
   echo "Running in Antithesis, emitting setup_complete to ${OUTPUT_PATH}"
-elif [[ -n "${ANTITHESIS_SDK_LOCAL_OUTPUT:-}" ]]; then
-  OUTPUT_PATH="${ANTITHESIS_SDK_LOCAL_OUTPUT}"
-  echo "Antithesis SDK local output override detected, emitting setup_complete to ${OUTPUT_PATH}"
+  echo '{"antithesis_setup":{"status":"complete","details":{"message":"ready to go"}}}' >> "${OUTPUT_PATH}"
+else
+  echo "\$ANTITHESIS_OUTPUT_DIR is unset, not emitting setup-complete"
 fi
-
-mkdir -p $(dirname "$OUTPUT_PATH")
-echo '{"antithesis_setup":{"status":"complete","details":{"message":"ready to go"}}}' >> "${OUTPUT_PATH}"
