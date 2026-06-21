@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-21
+
+- fix: don't repurpose ANTITHESIS_SDK_LOCAL_OUTPUT for setup-complete ([PR #168](https://github.com/antithesishq/antithesis-skills/pull/168))
+
 ## 2026-06-18
 
 - workload: eventually cancels anytime commands; finally waits for all commands to complete ([PR #161](https://github.com/antithesishq/antithesis-skills/pull/161))
