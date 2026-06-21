@@ -2,38 +2,36 @@
 
 ## Download a log
 
-Use the `assets/download-logs.sh` script:
+Use `snouty runs --json logs`, redirecting the stream to a file:
 
 ```bash
-assets/download-logs.sh \
-  -o /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.json \
-  "$RUN_ID" "$INPUT_HASH" "$VTIME"
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+  > /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
 ```
 
-The script wraps `snouty runs --json logs RUN_ID INPUT_HASH VTIME` and pipes the NDJSON stream through `process-logs.py`, which strips ANSI escape codes, adds `vtime_seconds`, and annotates each event with `active_faults`. The output is a JSON array.
+`snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
-`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array — pass them as strings, do not round or reformat. Pass `--raw` to skip annotation and write the unmodified NDJSON.
+`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array (or from `failure_moment` in `snouty runs --json show`, or from `snouty runs --json events`) — pass them verbatim, do not round or reformat.
 
 Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
 
 ## JSON Log format
 
-This document focuses on understanding the JSON log format from Antithesis. You may use this to interpret other formats, but the result will be much more lossy.
+This document focuses on understanding the JSON log format from `snouty`. You may use this to interpret other formats, but the result will be much more lossy.
 
-The JSON log format is an array of event objects. Every event has `source` and
-`moment` fields. The remaining fields vary by event type.
+The JSON log is a stream of event objects, one per line. Every event has `source` and `moment` fields. The remaining fields vary by event type.
 
 ### Event schema
 
 ```
 {
   "source": {
-    "name": string, // e.g. "fault_injector", "container-name", "setup"
+    "name": string, // e.g. "fault_injector", "setup", the container name
     "stream"?: "info"|"error",
     "container"?: string // Docker container name, present on app events
   },
   "moment": {
-    "vtime": string,        // virtual time in seconds, string-encoded for full precision
+    "vtime": number,                // virtual time in seconds
     "input_hash": string
   },
   "output_text"?: string,           // application stdout/stderr line
@@ -48,19 +46,17 @@ The JSON log format is an array of event objects. Every event has `source` and
 
 ### Virtual time
 
-Events are globally ordered by `moment.vtime`, a string-encoded number representing deterministic virtual time in seconds. It is encoded as a string (not a float) to preserve full precision when round-tripping back to the API.
-
-The `process-logs.py` script adds a `vtime_seconds` field (the rounded float) to every event so jq filters can compare numerically. For API calls (e.g. `snouty runs logs`), pass the unmodified `moment.vtime` string verbatim.
+Events are globally ordered by `moment.vtime`, deterministic virtual time in seconds. In a downloaded log, snouty emits `moment.vtime` as a JSON number, so jq filters can compare it numerically directly (e.g. `.moment.vtime >= 100`).
 
 ### Event types at a glance
 
-| Identifying field(s)             | Source name                | What it is                                                       |
+| Identifying field(s)             | `.source.name`             | What it is                                                       |
 | -------------------------------- | -------------------------- | ---------------------------------------------------------------- |
 | `output_text`                    | container name             | Application log line (stdout/stderr)                             |
 | `fault`                          | `fault_injector`           | Fault injection event                                            |
 | `info`                           | `fault_injector`           | Fault injector status message                                    |
-| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/die)                      |
-| `antithesis_setup`               | `*/sdk.jsonl`              | SDK setup-complete signal                                        |
+| `event`, `image`                 | `containers_meta`          | Container lifecycle (create/init/start/died)                     |
+| `antithesis_setup`               | `*`                        | SDK setup-complete signal                                        |
 | `command`, `started_task`        | `antithesis_test_composer` | Test command started                                             |
 | `command`, `command_return_code` | `antithesis_test_composer` | Test command finished                                            |
 | `probability`                    | `bug_probability`          | Bug probability snapshot (causal-analysis runs only — see below) |
@@ -110,22 +106,33 @@ could have avoided the failure, after it the failure is essentially locked
 in. This is a more precise pointer to root-cause timing than the assertion
 firing itself, which often happens long after the damaging events.
 
-Extract the trajectory with jq:
+Extract the trajectory with jq (the log is in `moment.vtime` order, so the
+output is too):
 
 ```bash
-jq '[.[] | select(.source.name == "bug_probability") | {vt: .vtime_seconds, p: .probability}] | sort_by(.vt)' "$LOG"
+jq 'select(.source.name == "bug_probability") | {vt: .moment.vtime, p: .probability}' "$LOG"
 ```
 
-If the array is empty, the log is from a normal run and there is no
+If this produces no output, the log is from a normal run and there is no
 bug-probability signal to use.
 
 ## Analyzing logs with jq
 
-All examples below assume the log path is in `$LOG`:
+The downloaded log is NDJSON — one JSON event per line. All examples below
+assume the log path is in `$LOG`:
 
 ```bash
-LOG="/path/to/clean.json"
+LOG="/path/to/log.ndjson"
 ```
+
+**Working with NDJSON:** filter by streaming — `jq 'select(…)'` applies the
+filter to each event and prints the matches. The output is a stream of JSON
+values, which you can pipe straight into another `jq` to refine further (jq reads
+a stream of values whether they are compact or pretty-printed). Logs are always
+ordered by `moment.vtime`, so matches come out chronological — no need to re-sort.
+When you genuinely need to aggregate across all events — dedup with `unique`,
+reorder with `sort_by`, bucket with `group_by`, or count with `length` — slurp
+the stream with `jq -s` and use jq's builtins.
 
 **Null-safe string matching:** Many event fields are optional and may be `null`,
 including `source.name`. Use jq's `//` (coalesce) operator before string
@@ -140,20 +147,20 @@ These three queries orient you quickly when opening a new log.
 combinations to see what is in the log:
 
 ```bash
-jq '[.[] | {name: .source.name, container: .source.container}] | unique' "$LOG"
+jq -s '[.[] | {name: .source.name, container: .source.container}] | unique' "$LOG"
 ```
 
 **2. Find failed commands** — find test commands that finished with non-zero
 exit:
 
 ```bash
-jq '[.[] | select(.command_return_code != null and .command_return_code != "0") | {vtime_seconds, command, command_return_code}]' "$LOG"
+jq 'select(.command_return_code != null and .command_return_code != "0") | {vtime: .moment.vtime, command, command_return_code}' "$LOG"
 ```
 
 **3. Search for errors in application logs**:
 
 ```bash
-jq '[.[] | select(.output_text // "" | test("error|panic|fatal|crash"; "i")) | {vtime_seconds, source: .source.name, text: .output_text[:200]}]' "$LOG"
+jq 'select(.output_text // "" | test("error|panic|fatal|crash"; "i")) | {vtime: .moment.vtime, source: .source.name, text: .output_text[:200]}' "$LOG"
 ```
 
 ### Filtering events
@@ -161,67 +168,67 @@ jq '[.[] | select(.output_text // "" | test("error|panic|fatal|crash"; "i")) | {
 Filter by source name:
 
 ```bash
-jq '[.[] | select(.source.name == "fault_injector")]' "$LOG"
+jq 'select(.source.name == "fault_injector")' "$LOG"
 ```
 
 Filter by stream (application stderr only):
 
 ```bash
-jq '[.[] | select(.source.stream == "error")]' "$LOG"
+jq 'select(.source.stream == "error")' "$LOG"
 ```
 
 Filter fault events by fault name:
 
 ```bash
-jq '[.[] | select(.fault.name == "partition")]' "$LOG"
+jq 'select(.fault.name == "partition")' "$LOG"
 ```
 
 Filter by fault type:
 
 ```bash
-jq '[.[] | select(.fault.type == "network")]' "$LOG"
+jq 'select(.fault.type == "network")' "$LOG"
 ```
 
 Search output_text for a keyword (case-insensitive):
 
 ```bash
-jq '[.[] | select(.output_text // "" | test("error"; "i"))]' "$LOG"
+jq 'select(.output_text // "" | test("error"; "i"))' "$LOG"
 ```
 
-Container lifecycle events:
+Container lifecycle events (`create` / `init` / `start` / `died`):
 
 ```bash
-jq '[.[] | select(.event == "die")]' "$LOG"
+jq 'select(.event != null)' "$LOG"
 ```
 
 Find failed test-template commands (non-zero exit code):
 
 ```bash
-jq '[.[] | select(.command_return_code != null and .command_return_code != "0")]' "$LOG"
+jq 'select(.command_return_code != null and .command_return_code != "0")' "$LOG"
 ```
 
 Find all test command completions:
 
 ```bash
-jq '[.[] | select(.command_return_code != null)]' "$LOG"
+jq 'select(.command_return_code != null)' "$LOG"
 ```
 
 Find all SDK assertion events:
 
 ```bash
-jq '[.[] | select(.antithesis_assert != null)]' "$LOG"
+jq 'select(.antithesis_assert != null)' "$LOG"
 ```
 
 Find all assertion events for a specific property:
 
 ```bash
-jq '[.[] | select(.antithesis_assert.id == "property name here")]' "$LOG"
+jq 'select(.antithesis_assert.id == "property name here")' "$LOG"
 ```
 
 Combine filters — fault partitions affecting a specific container:
 
 ```bash
-jq '[.[] | select(.fault.name == "partition" and (.fault.affected_nodes | index("mycontainer") or index("ALL")))]' "$LOG"
+jq 'select(.fault.name == "partition" and (.fault.affected_nodes | index("mycontainer") or index("ALL")))' "$LOG"
 ```
 
 ### Filtering by virtual time
@@ -229,13 +236,13 @@ jq '[.[] | select(.fault.name == "partition" and (.fault.affected_nodes | index(
 Filter events within a time range (in seconds):
 
 ```bash
-jq '[.[] | select(.vtime_seconds >= 100 and .vtime_seconds <= 110)]' "$LOG"
+jq 'select(.moment.vtime >= 100 and .moment.vtime <= 110)' "$LOG"
 ```
 
 Events after a specific time:
 
 ```bash
-jq '[.[] | select(.vtime_seconds >= 85.5)]' "$LOG"
+jq 'select(.moment.vtime >= 85.5)' "$LOG"
 ```
 
 ## Interpreting logs
@@ -283,7 +290,7 @@ Antithesis logs interleave two sources:
 
 ### Active (ongoing) faults
 
-The `process-logs.py` script adds an `active_faults` field to every event. This
+Snouty adds an `active_faults` field to every event. This
 field is a dictionary tracking currently active fault windows. The schema:
 
 ```json
@@ -343,25 +350,25 @@ field is a dictionary tracking currently active fault windows. The schema:
 To find events that occurred during a network partition:
 
 ```bash
-jq '[.[] | select(.active_faults.network_partition != null)]' "$LOG"
+jq 'select(.active_faults.network_partition != null)' "$LOG"
 ```
 
 To find events during any node fault:
 
 ```bash
-jq '[.[] | select(.active_faults | keys[] | startswith("node_"))]' "$LOG"
+jq 'select(.active_faults | keys[] | startswith("node_"))' "$LOG"
 ```
 
 To find events that happened during any ongoing fault:
 
 ```bash
-jq '[.[] | select(.active_faults != {})]' "$LOG"
+jq 'select(.active_faults != {})' "$LOG"
 ```
 
 To find faults within a region of vtime:
 
 ```bash
-jq '[.[] | select(.fault != null and .vtime_seconds >= 85.0 and .vtime_seconds <= 86.0)]' "$LOG"
+jq 'select(.fault != null and .moment.vtime >= 85.0 and .moment.vtime <= 86.0)' "$LOG"
 ```
 
 ### Virtual time vs application timestamps
@@ -370,9 +377,4 @@ Antithesis tags each event with its virtual time, which represents an unambiguou
 
 Use virtual time as the source of truth for ordering logs rather than timestamps embedded in application logs. Timestamps printed by the application can be out of order due to faults like clock skew and thread pausing.
 
-Use `vtime_seconds` for all time-based analysis. For events that fall within the same rounded second, tiebreak by `moment.vtime`.
-
-> **Note:** `vtime_seconds` is rounded to 5 decimal places (10 µs resolution) and
-> is intended for human-readable filters and ordering only. To address a moment
-> when calling the Antithesis API or `snouty runs logs`, always pass the
-> unmodified `moment.vtime` string verbatim — the rounded value will not match.
+Use `moment.vtime` for all time-based analysis and ordering.

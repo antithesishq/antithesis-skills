@@ -18,7 +18,7 @@ https://agentskills.io/specification.md
 - `make validate-links`: runs the `lychee` link checker (config in
   `lychee.toml`).
 - `make test`: runs unit tests for skill helper scripts (`process-logs.py`
-  in triage and debug; `build-url.py` in query-logs).
+  in debug; `build-url.py` in query-logs).
 - `make install-dev`: bootstraps the dev environment via
   `scripts/install.sh`.
 
