@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-06-21
 
+- debug: launch MVD sessions directly from run_id ([PR #162](https://github.com/antithesishq/antithesis-skills/pull/162))
 - fix: don't repurpose ANTITHESIS_SDK_LOCAL_OUTPUT for setup-complete ([PR #168](https://github.com/antithesishq/antithesis-skills/pull/168))
 
 ## 2026-06-18
