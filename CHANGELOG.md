@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-06-22
+
+- triage: resolve tenant via snouty doctor --json and offer report in browser ([PR #169](https://github.com/antithesishq/antithesis-skills/pull/169))
+
 ## 2026-06-21
 
 - BREAKING CHANGE: triage: rely on snouty native log annotation + property filters, drop bundled log scripts ([PR #165](https://github.com/antithesishq/antithesis-skills/pull/165))
