@@ -35,7 +35,7 @@ Apply these rules, in order.
    https://<TENANT_ID>.antithesis.com/report/***/***.html?auth=<AUTH_TOKEN>
    ```
 
-   You should verify the `TENANT_ID` matches the `$ANTITHESIS_TENANT` environment variable before proceeding. If it does not match, then `snouty` will not be able to find the run.
+   You should verify the `TENANT_ID` matches snouty's resolved tenant (shown by `snouty doctor --json`; see the skill's Preflight) before proceeding. If it does not match, then `snouty` will not be able to find the run.
 
    Everything before the `?auth=` query string is stable per run. Thus, use this pattern to find the run id for a provided URL:
 

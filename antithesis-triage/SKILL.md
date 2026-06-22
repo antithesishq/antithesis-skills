@@ -21,25 +21,30 @@ Use this skill to analyze Antithesis test runs.
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
 - DO NOT PROCEED if `snouty` is not at least version 0.6.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
-- **Note:** `snouty runs` may be hidden from `snouty --help` but is still supported. If you need to confirm availability or see subcommand syntax, `snouty runs --help` still works.
 
 ### Preflight: confirm triage can work
 
-This version of the triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Before doing any work, confirm the setup is ready with the following command:
+The triage skill talks to Antithesis through the snouty API (`snouty runs ...`). Before doing any work, confirm the setup is ready:
 
 ```bash
-snouty doctor
+snouty doctor --json
 ```
 
-If this command reports any failure, relay that failure to the user and stop. Do not attempt to interact with the Antithesis API until it passes.
+This validates API connectivity and reports snouty's resolved configuration.
 
-You can skip preflight if you already know (from context or memory) that the user's setup is working.
+Proceed only when the top-level `ok` is `true` and the `api_key` check's `status` is `ok`. Otherwise relay the failing check's `message`/`notes` and stop; if `api_key` is the failing check, tell the user to set `ANTITHESIS_API_KEY`.
+
+The `settings` array in the same output carries snouty's resolved parameters. For example, you can look up the resolved tenant with:
+
+```bash
+snouty doctor --json | jq -r '.settings[] | select(.name == "tenant") | .value'
+```
 
 ## Gathering user input
 
 Before starting, collect the following from the user:
 
-1. **Tenant Name** (required) — You must know the tenant name. Check the `$ANTITHESIS_TENANT` environment variable. Ask the user if you do not have evidence for the tenant name.
+1. **Tenant Name** (required) — You must know the tenant name. Read snouty's resolved tenant from `snouty doctor --json` (see Preflight); snouty resolves it from the environment or a settings file, so trust that value. Only ask the user if `doctor` shows the tenant is unset.
 
 2. **What they want to know** — Are they interested in all failures in a specific run? Are they investigating a specific failure? Are they getting a general overview? Comparing runs? This determines which workflow to follow.
 
@@ -110,6 +115,7 @@ If the "status" of a specific run is "incomplete", there may be an error log to 
 - **Review logs before concluding on failures.** When a failed property has examples with a moment supplied, download + analyze the logs before declaring a root cause. Some properties have no examples or logs — for those, the status alone is the evidence.
 - **For property failures, consider the "details" section if provided.** These are curated fields supplied by the property author designed to illuminate the state of the system at the time of failure.
 - **Present results clearly.** When reporting property statuses, use a table or list. When reporting log findings, include the virtual timestamp, source, container, and log text.
+- **Offer the report in a browser; don't paste the signed URL.** When the user wants to see the full triage report, suggest `snouty runs show <RUN_ID> --web` rather than printing the long `links.triage_report` URL. `--web` works only when a triage report exists. See `references/run-info.md`.
 
 ## Suggesting follow-up skills
 
