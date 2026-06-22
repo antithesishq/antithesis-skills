@@ -10,7 +10,7 @@ We wrote this for engineers who:
 
 - **Have written code and tests before.** The kind of test most engineers have written (give some input, check the result) is our floor. With that experience comes the everyday vocabulary of software development: bug, triage, refactor, debug, and so on. You don't need property-based testing or anything more exotic. If "what's a test" is a real question for you, this isn't where to start.
 
-- **Have a basic familiarity with Antithesis and what you use it for.** You don't need to be an expert. You just need to have the basic shape in your head: what Antithesis does, why you'd reach for it, where it fits in how you build and test software. If that's not you yet, start at *[pointer to Antithesis intro]* before reading the rest of this guide.
+- **Have a basic familiarity with Antithesis and what you use it for.** You don't need to be an expert. You just need to have the basic shape in your head: what Antithesis does, why you'd reach for it, where it fits in how you build and test software. If that's not you yet, start at [the Antithesis introduction](https://antithesis.com/docs/introduction/welcome_to_antithesis/) before reading the rest of this guide.
 
 - **Have at least a vague mental model of what an LLM coding tool is.** You've chatted with an LLM somewhere (ChatGPT, Claude.ai in a browser, or similar). You don't need to have used an agentic tool yet; the guide is in part here to bridge from chatbot to agentic. If you've never used any LLM at all, try one in a browser first.
 
@@ -20,8 +20,8 @@ If you're more experienced than the floor we just described, with months or year
 
 If you're not at the floor on Antithesis or agentic tools yet, here's where to start:
 
-- **New to Antithesis?** Start at *[pointer to Antithesis intro]*. We'll touch on Antithesis concepts where we have to, but the real introduction lives elsewhere.
-- **Never used an agentic coding tool at all?** Start at your tool's own getting-started guide: *[Claude Code pointer]*, *[Codex pointer]*. Get the tool installed, try a small task or two, then come back here. Much of this guide lands harder without that first hands-on experience.
+- **New to Antithesis?** Start at [the Antithesis introduction](https://antithesis.com/docs/introduction/welcome_to_antithesis/). We'll touch on Antithesis concepts where we have to, but the real introduction lives elsewhere.
+- **Never used an agentic coding tool at all?** Start at your tool's own getting-started guide: [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), [Codex](https://developers.openai.com/codex/). Get the tool installed, try a small task or two, then come back here. Much of this guide lands harder without that first hands-on experience.
 
 ## Vocabulary
 
