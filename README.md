@@ -3,7 +3,7 @@
 Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
 > Table of contents:  
-> **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
+> **[Working with LLM agents](#working-with-llm-agents)** · **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
 
 ## Skills overview
 
@@ -37,6 +37,12 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 > [!NOTE]
 > These skills are under active development. LLMs are inherently non-deterministic, so they may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
+
+## Working with LLM agents
+
+These skills run inside an agent like Claude Code or Codex. Using them well means knowing how to work with the agent itself, not just the skills.
+
+If you're new to agentic tools, or you've been using them for a while and want to dig deeper, read [Getting Started with Antithesis Skills](getting-started-documentation/). It's a companion guide covering mental model, day-to-day working patterns, context and memory, building up your harness, and recognizing failure modes.
 
 ## Recommended workflow
 
