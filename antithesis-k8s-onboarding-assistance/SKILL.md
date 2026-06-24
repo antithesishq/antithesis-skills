@@ -24,7 +24,7 @@ Success means:
 
 This skill applies only to customers running on Kubernetes. Customers using Docker Compose directly skip this skill and go straight from `antithesis-research` to `antithesis-setup`.
 
-Note: `antithesis-setup` currently builds Docker Compose harnesses. Setup-side k8s support is a separate effort. When that effort lands, this skill's final report becomes setup's input for k8s customers; until then, the report is a structured handoff to the Antithesis engagement team rather than a direct setup input. The skill produces the same artifact regardless of which path the consumer takes downstream.
+Note: `antithesis-setup` consumes this skill's final report directly on its Kubernetes path (`antithesis-setup/references/kubernetes.md`), building manifests for the SUT and real dependencies from the component inventory. One gap remains: setup does not yet *build* the fakes for `dependency-stub` components, so those stub specifications are still a handoff item for the customer and their Antithesis engagement team. The skill produces the same artifact regardless of how far downstream consumes it.
 
 ## Prerequisites and Scoping
 
@@ -254,7 +254,7 @@ Body — *History* section: pass-by-pass log. Short entries: what changed in cur
 
 ### Final report: `antithesis/scratchbook/k8s-minimization.md`
 
-Generated only when handoff readiness passes. A snapshot of the working file's *Current state* sections (no history, no `Open` items, no live frontmatter beyond a snapshot date). Once setup's k8s support lands, `antithesis-setup` will read this file directly; until then, it is the structured handoff packet the customer shares with their Antithesis engagement team.
+Generated only when handoff readiness passes. A snapshot of the working file's *Current state* sections (no history, no `Open` items, no live frontmatter beyond a snapshot date). `antithesis-setup` reads this file directly on its Kubernetes path to construct the test environment; it also remains the handoff packet for the Antithesis engagement team — notably for `dependency-stub` components, which setup does not yet build.
 
 If a downstream issue (setup, engagement-team feedback, customer-side discovery) prompts re-entry to this skill and changes are made, regenerate the final report on the next handoff readiness pass — overwriting the prior snapshot. Working file history preserves the audit trail across regenerations.
 
@@ -433,7 +433,7 @@ questions; customer engineer unable to get internal traction.">
 - `antithesis/scratchbook/k8s-minimization-work/working.md` (live across passes)
 - `antithesis/scratchbook/k8s-minimization-work/ops-questions.md` (current pass only, regenerated each pass)
 - `antithesis/scratchbook/k8s-minimization-work/escalation.md` (on demand only)
-- `antithesis/scratchbook/k8s-minimization.md` (generated when handoff readiness passes; once setup's k8s support lands, consumed by `antithesis-setup`; until then, the structured handoff packet for the Antithesis engagement team)
+- `antithesis/scratchbook/k8s-minimization.md` (generated when handoff readiness passes; consumed by `antithesis-setup` on its Kubernetes path, and also the structured handoff packet for the Antithesis engagement team — notably for `dependency-stub` components, which setup does not yet build)
 
 ## Self-Review
 

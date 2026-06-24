@@ -1,0 +1,148 @@
+# TODO: replace this skeleton with the real manifests for your system.
+#
+# This is the Kubernetes analogue of the docker-compose.yaml template. Build the
+# real manifests from antithesis/scratchbook/k8s-minimization.md, applying the
+# rules in the antithesis-setup skill's references/kubernetes.md. Everything in
+# this file (and any other *.yaml you add under manifests/) is applied to the
+# cluster. Package this directory into the config image with a config/Dockerfile:
+#   FROM scratch
+#   COPY manifests/ /manifests/
+#
+# Every workload must satisfy these Antithesis requirements (see kubernetes.md):
+#   - imagePullPolicy: Never; image referenced by digest or tag (prefer a stable tag over latest)
+#   - NO_COLOR=1 in the container env
+#   - resources.requests set; total under 1 CPU and 10 GiB across all pods
+#   - a readiness probe (gates traffic) and a conservative liveness probe
+#   - namespace set explicitly; RFC-1123 names (hyphens, no underscores)
+#   - ClusterIP Services (not LoadBalancer); PVCs use local-path + ReadWriteOnce
+#   - no anti-affinity/topology spread (single node), no privileged containers,
+#     no hostPath/RWX volumes, no NetworkPolicy, no hardcoded IPs/CIDRs
+#
+# The `noop` Deployment at the bottom just keeps the harness idle so it comes up
+# before you've added real components. Delete it once you add the SUT.
+#
+# --- Example: stateless component (Deployment + Service) ---------------------
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: <component>            # RFC-1123: lowercase, hyphens, no underscores
+#   namespace: default           # set explicitly
+#   labels: { app: <component> }
+# spec:
+#   type: ClusterIP              # not LoadBalancer — servicelb is disabled
+#   ports:
+#     - { name: http, port: <port>, targetPort: http }
+#   selector: { app: <component> }
+# ---
+# apiVersion: apps/v1
+# kind: Deployment
+# metadata:
+#   name: <component>
+#   namespace: default
+#   labels: { app: <component> }
+# spec:
+#   replicas: 1
+#   selector:
+#     matchLabels: { app: <component> }
+#   template:
+#     metadata:
+#       labels: { app: <component> }
+#     spec:
+#       containers:
+#         - name: <component>
+#           image: <registry>/<image>:<tag>             # digest (@sha256:...) or tag both fine; avoid latest
+#           imagePullPolicy: Never                       # images are pre-pulled into the air-gapped node
+#           env:
+#             - { name: NO_COLOR, value: "1" }           # Antithesis stores raw bytes; suppress ANSI
+#           ports:
+#             - { name: http, containerPort: <port> }
+#           readinessProbe:                              # gates traffic until the component is serving
+#             httpGet: { port: <port>, path: /healthz }
+#             initialDelaySeconds: 10
+#             periodSeconds: 10
+#             failureThreshold: 5
+#           livenessProbe:                               # conservative — avoid killing pods under injected faults
+#             httpGet: { port: <port>, path: /healthz }
+#             initialDelaySeconds: 30
+#             periodSeconds: 30
+#             failureThreshold: 5
+#           resources:
+#             requests: { cpu: 100m, memory: 128Mi }     # required; keep totals under 1 CPU / 10 GiB
+#             limits:   { memory: 256Mi }                # memory limit recommended; CPU limit optional
+#
+# --- Example: stateful component (StatefulSet + headless Service + PVC) -------
+# Use this shape for components needing stable identity or storage (databases,
+# queues, clustered services).
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: <component>-headless
+#   namespace: default
+#   labels: { app: <component> }
+# spec:
+#   clusterIP: None                 # headless — stable per-pod DNS
+#   ports:
+#     - { name: <port-name>, port: <port>, targetPort: <port-name> }
+#   selector: { app: <component> }
+# ---
+# apiVersion: apps/v1
+# kind: StatefulSet
+# metadata:
+#   name: <component>
+#   namespace: default
+#   labels: { app: <component> }
+# spec:
+#   replicas: 1                     # co-located on the single node if >1
+#   serviceName: <component>-headless
+#   selector:
+#     matchLabels: { app: <component> }
+#   template:
+#     metadata:
+#       labels: { app: <component> }
+#     spec:
+#       containers:
+#         - name: <component>
+#           image: <registry>/<image>:<tag>             # digest or tag both fine; avoid latest
+#           imagePullPolicy: Never
+#           env:
+#             - { name: NO_COLOR, value: "1" }
+#           ports:
+#             - { name: <port-name>, containerPort: <port> }
+#           readinessProbe: { tcpSocket: { port: <port> }, initialDelaySeconds: 10, periodSeconds: 10, failureThreshold: 5 }
+#           resources:
+#             requests: { cpu: 100m, memory: 128Mi }
+#             limits:   { memory: 256Mi }
+#           volumeMounts:
+#             - { name: data, mountPath: /var/lib/<component> }
+#   volumeClaimTemplates:
+#     - metadata: { name: data }
+#       spec:
+#         accessModes: ["ReadWriteOnce"]     # local-path is RWO only
+#         storageClassName: local-path
+#         resources:
+#           requests: { storage: 1Gi }
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: noop
+  namespace: default
+  labels: { app: noop }
+spec:
+  replicas: 1
+  selector:
+    matchLabels: { app: noop }
+  template:
+    metadata:
+      labels: { app: noop }
+    spec:
+      containers:
+        - name: noop
+          image: debian:stable-slim
+          imagePullPolicy: Never           # pre-pulled into the air-gapped node
+          env:
+            - { name: NO_COLOR, value: "1" }
+          command: ["sh", "-c", "tail -f /dev/null"]
+          resources:
+            requests: { cpu: 10m, memory: 32Mi }
+            limits:   { memory: 64Mi }

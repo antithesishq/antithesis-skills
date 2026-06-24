@@ -18,7 +18,7 @@ in a mostly idle, ready state.
 
 Success means:
 
-- `antithesis/config/docker-compose.yaml` exists and required SUT images are referenced with `build:` directives
+- The deployment definition exists in `antithesis/config/` and references the required SUT images. For the Compose path this is `docker-compose.yaml` with `build:` directives; for the Kubernetes path it is strict k8s manifests packaged in a config image (see `references/kubernetes.md`)
 - `snouty validate` on `antithesis/config/` succeeds
 - the SUT dependency graph includes the relevant Antithesis SDK where assertions or lifecycle hooks will run
 - at least one minimal bootstrap property exists in a simple SUT path and is expected to show up in the first Antithesis run
@@ -55,6 +55,7 @@ Success means:
 Use the `antithesis-documentation` skill to access these pages. Prefer `snouty docs`.
 
 - Docker Compose setup guide: `https://antithesis.com/docs/getting_started/setup/`
+- Kubernetes setup guide (for the Kubernetes deployment path): `https://antithesis.com/docs/getting_started/setup_k8s/`
 - Docker best practices: `https://antithesis.com/docs/best_practices/docker_best_practices/`
 - Coverage instrumentation: `https://antithesis.com/docs/instrumentation/coverage_instrumentation/`
 - Assertion cataloging: `https://antithesis.com/docs/instrumentation/assertion_cataloging/`
@@ -65,10 +66,19 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 
 This skill is broken out into multiple steps, each in a different reference file. Read and implement each reference file listed below one at a time to fully set up a project. After implementing each step, check whether what you learned invalidates any decisions from earlier steps. Instrumentation decisions (step 2) are the most common thing that needs revision once you start building images (step 3).
 
+**Determine the deployment type first.** This decision picks the deployment-definition step (`references/docker-compose.md` vs `references/kubernetes.md`); every other reference applies to both deployment types unchanged. Do not default silently — work through this explicitly:
+
+1. **Is `antithesis/scratchbook/k8s-minimization.md` present?** If yes, this is the **Kubernetes path** — that report is the `antithesis-k8s-onboarding-assistance` skill's output and is the input to `references/kubernetes.md`. Proceed on the k8s path.
+2. **If it is absent, check whether the SUT is actually Kubernetes-based before assuming Compose.** Scan the repo for Kubernetes tells: `Chart.yaml` / a `charts/` or `templates/` tree (Helm), `kustomization.yaml` (Kustomize), raw manifests (files with `apiVersion:` + `kind:` Deployment/StatefulSet/Service/etc.), ArgoCD/Flux `Application` resources, or a `k8s/`/`deploy/`/`manifests/` directory.
+   - **If you find k8s tells but there is no `k8s-minimization.md`:** the user likely ran setup without first running onboarding. **Stop and tell them.** A Kubernetes SUT must go through `antithesis-k8s-onboarding-assistance` first — it minimizes the production manifests into the report this skill consumes. Setting up a k8s system as Compose, or building k8s manifests without the minimization report, produces broken or grossly oversized scaffolding. Do not proceed on either path until the report exists or the user explicitly confirms the system is not Kubernetes.
+   - **If you find no k8s tells:** this is the **Compose path** (the common case). Use `references/docker-compose.md`.
+3. **If it is still ambiguous, ask the user** which deployment type applies rather than guessing.
+
 - `references/directory-init.md`: initialize or merge the `antithesis/` directory from `assets/antithesis/`
 - `references/instrumentation.md`: decide how each SUT service is instrumented, how the SDK is installed, how symbols are delivered, and where the bootstrap property lives
 - `references/docker-images.md`: create or adapt Dockerfiles for SUT components
-- `references/docker-compose.md`: write `antithesis/config/docker-compose.yaml`
+- `references/docker-compose.md`: **(Compose path)** write `antithesis/config/docker-compose.yaml`
+- `references/kubernetes.md`: **(Kubernetes path)** write strict k8s manifests and the config image, using `antithesis/scratchbook/k8s-minimization.md` as input
 - `references/config-dir.md`: understand what belongs in `antithesis/config/`
 - `references/submit-and-test.md`: test locally and submit the first run
 
@@ -103,6 +113,8 @@ Before declaring this skill complete, review your work against the criteria belo
 
 Review criteria:
 
+The criteria from `antithesis/config/docker-compose.yaml` through the `logging:`/`internal:`/`pull_policy:` rule are **Docker Compose-specific** — apply them only on the Compose path. On the **Kubernetes path**, replace them with the Kubernetes criteria block at the end of this list. The remaining criteria (instrumentation, SDK, bootstrap property, symbols, `setup_complete`, `NO_COLOR`, amd64, workload readiness, research provenance) apply to both.
+
 - `antithesis/config/docker-compose.yaml` exists and every service has `build:` (for local images) or `image:` (for public images) configured correctly
 - Every service in docker-compose.yaml includes `platform: linux/amd64`
 - Every service has `hostname:` set to match its `container_name:`, and neither contains an underscore (use hyphens — underscores are not valid DNS label characters)
@@ -120,3 +132,16 @@ Review criteria:
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use
 - If the user asks to launch a run, the `antithesis-launch` skill is used instead of running `snouty launch` directly
 - Whatever research provenance was present in `sut-analysis.md` and `deployment-topology.md` was described to the user and confirmed before scaffolding began (provenance frontmatter format is defined in the `antithesis-research` skill, `references/scratchbook-setup.md`)
+
+Kubernetes path only (replace the Compose-specific criteria above with these):
+
+- A config image is defined (`FROM scratch` + `COPY manifests/ /manifests/`) and `antithesis/config/manifests/` contains the deployment YAML
+- The manifests are strict Kubernetes manifests — not Helm charts or Kustomize overlays (any chart/overlay source was rendered to static YAML, consistent with the inventory in `antithesis/scratchbook/k8s-minimization.md`)
+- Every resource sets `namespace` explicitly, and every required resource (Namespace, ServiceAccount, RoleBinding, etc.) is included
+- Every container sets `imagePullPolicy: Never` explicitly; images are referenced by digest or a specific tag (prefer a stable tag over `latest`)
+- Workloads are Deployments/StatefulSets (not bare Pods), with readiness probes and conservatively-tuned liveness probes so `kapp` can determine when the deployment is up
+- `resources.requests` are set on all containers and stay within the aggregate limits (under 1 CPU and 10 GiB total); PVCs use `local-path` (or blank) and `ReadWriteOnce`
+- No multi-node-only constructs (pod anti-affinity, topology spread), `LoadBalancer` Services, `hostPath`/RWX volumes, privileged containers, hardcoded IPs/CIDRs, or duplicate resource names — see `references/kubernetes.md` for the full Do/Don't list
+- If the deployment includes operators that spawn pods from custom resources, the user was told those images are not image-inferred and must be provisioned explicitly
+- If `setup_complete` relies on `kapp` success, any depended-on custom resources expose ready status conditions; otherwise `setup_complete` is emitted from the SDK
+- If the minimization report classified any dependencies as *dependency-stub*, the user was told those stub services are not generated by this skill (out of scope for now) and the SUT may not reach `setup_complete` without them — they were not silently dropped

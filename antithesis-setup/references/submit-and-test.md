@@ -4,6 +4,8 @@ How to test locally and submit to Antithesis.
 
 ## Local Testing First
 
+On the Kubernetes path, the build/validate flow differs (there is no `compose build`) — see `references/kubernetes.md` → *Local testing and validation*. The principles below still apply; only the build command changes.
+
 Before submitting to Antithesis, test locally:
 
 - Use `podman compose` if available; fall back to `docker compose`.

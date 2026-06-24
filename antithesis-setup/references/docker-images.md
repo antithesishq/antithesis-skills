@@ -35,6 +35,8 @@ Do not use generic names like `server`, `workload`, or `config` without the proj
 
 Reference each local image in `docker-compose.yaml` with both `build:` (for local `compose build`) and `image:` (for the registry tag). Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. Without this, builds on ARM hosts (e.g. macOS Apple Silicon) will produce images with the wrong architecture.
 
+On the Kubernetes path, the SUT images are built the same way (same base-image, instrumentation, symbol, and `NO_COLOR` guidance applies), but they are not referenced from a compose file — they are referenced in the manifests by digest with `imagePullPolicy: Never`, and there is an additional `FROM scratch` config image that packages the manifests. See `references/kubernetes.md`.
+
 ```yaml
 services:
   server:
