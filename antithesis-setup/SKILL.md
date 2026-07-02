@@ -88,7 +88,7 @@ This skill is broken out into multiple steps, each in a different reference file
   complete until the relevant images expose `/opt/antithesis/catalog/` or
   `/symbols/` correctly for their language.
 - Treat local testing as required before the first submission.
-- Use `snouty launch` directly to submit runs. Run `compose build` before `snouty launch` to ensure images are up to date.
+- Use the `antithesis-launch` skill to submit runs, do not run `snouty launch` directly. If the `antithesis-launch` skill is not present, then use `snouty launch` directly to submit runs. Run `compose build` before `snouty launch` to ensure images are up to date.
 - Do not add a separate Dockerfile under `antithesis/config/` unless the
   deployment explicitly requires it.
 - Disable color/ANSI output in every container. Antithesis stores raw bytes and
