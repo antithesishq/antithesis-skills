@@ -1,9 +1,9 @@
 ---
 name: antithesis-setup
 description: >
-  Scaffold the Antithesis harness: initialize the working directory, write
+  Scaffold the Antithesis harness with docker-compose: initialize the working directory, write
   Dockerfiles and docker-compose.yaml with build directives, and prepare
-  to submit your first Antithesis test run.
+  to submit your first Antithesis test run. If the desired setup is Kubernetes, defer to the antithesis-setup-k8s skill.
 compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
 metadata:
   version: "2026-07-07 38a11c4"
