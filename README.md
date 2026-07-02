@@ -18,6 +18,9 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 **`antithesis-research` produces planning artifacts that you should review carefully.**
 
+> [!IMPORTANT]
+> `antithesis-research` is thorough by design. It fans out across sub-agents to study your system from several angles — reading source, comments, docs, commit history, and issues — then runs multiple evaluation passes over the properties it discovers. That depth is what makes the artifacts valuable, but it also means the run is not quick: on most codebases, expect it to work for > _30 minutes to an hour_* and to use a meaningful amount of tokens along the way.
+
 `antithesis-k8s-onboarding-assistance` is for customers running on Kubernetes. It's an interview-driven assistant that helps the customer (and the Antithesis engagement team) figure out what's in the k8s setup, what to keep/drop/stub for testing, and produces structured questions the customer can take to their ops team. K8s customers run it before `antithesis-setup`.
 
 > [!NOTE]
@@ -144,8 +147,8 @@ These skills invoke external tools (Docker, Snouty, agent-browser) that your AI 
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
-| Skill                      | Tools used                      |
-| -------------------------- | ------------------------------- |
+| Skill                                  | Tools used                      |
+| -------------------------------------- | ------------------------------- |
 | `antithesis-research`                  | No explicit external tools      |
 | `antithesis-k8s-onboarding-assistance` | No explicit external tools      |
 | `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
@@ -154,7 +157,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-triage`                    | `snouty`, `jq`                  |
 | `antithesis-debug`                     | `agent-browser`, `jq`           |
 | `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
-| `antithesis-agent-browser`            | `agent-browser`, `jq`           |
+| `antithesis-agent-browser`             | `agent-browser`, `jq`           |
 | `antithesis-documentation`             | `snouty docs`                   |
 
 ## Install
