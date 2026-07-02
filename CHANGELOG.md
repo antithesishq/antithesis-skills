@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-07-02
+
+- Update antithesis-setup to use explicitly use antithesis-launch rather than snouty launch ([PR #176](https://github.com/antithesishq/antithesis-skills/pull/176))
+
 ## 2026-06-22
 
 - triage: resolve tenant via snouty doctor --json and offer report in browser ([PR #169](https://github.com/antithesishq/antithesis-skills/pull/169))
