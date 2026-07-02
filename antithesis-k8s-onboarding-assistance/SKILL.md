@@ -7,7 +7,7 @@ description: >
   what to keep, drop, or stub for testing, and produces structured
   questions for ops plus an escalation packet when stuck.
 metadata:
-  version: "2026-06-22 23dabcd"
+  version: "2026-07-02 a0b9ada"
 ---
 
 # Antithesis K8s Onboarding Assistance
