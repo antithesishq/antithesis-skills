@@ -2,6 +2,10 @@
 
 How to test locally and submit to Antithesis.
 
+## Defer to using `antithesis-launch`
+
+Use the `antithesis-launch` skill to kick off a run. That skill should handle all that's needed to kick off a run with Antithesis. If for some reason, the `antithesis-launch` skill is not present, fall back to using the steps listed below.  
+
 ## Local Testing First
 
 Before submitting to Antithesis, test locally:

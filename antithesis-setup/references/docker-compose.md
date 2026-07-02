@@ -24,7 +24,7 @@ Do not use underscores in `hostname` or `container_name` — underscores are not
 
 Services use one of two patterns:
 
-- **Local images** use `build:` with a context path and `image:` with `name:tag`. Build these before invoking `snouty launch`.
+- **Local images** use `build:` with a context path and `image:` with `name:tag`. Build these before invoking `antithesis-launch` or `snouty launch`.
 - **Public images** use `image:` directly (e.g. `docker.io/library/postgres:17.2`).
 
 Every service must include `platform: linux/amd64` because Antithesis runs on x86-64. This applies to both local and public images — without it, builds and pulls on ARM hosts (e.g. macOS Apple Silicon) will produce the wrong architecture.
