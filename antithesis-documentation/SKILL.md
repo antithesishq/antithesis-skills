@@ -59,8 +59,8 @@ Always add the `.md` extension before requesting files from `https://antithesis.
 
 Examples:
 
-- `https://antithesis.com/docs/using_antithesis/sdk/go/` becomes `https://antithesis.com/docs/using_antithesis/sdk/go.md`
-- `/using_antithesis/sdk/go/` becomes `https://antithesis.com/docs/using_antithesis/sdk/go.md`
+- `https://antithesis.com/docs/reference/sdk/go/` becomes `https://antithesis.com/docs/reference/sdk/go.md`
+- `/reference/sdk/go/` becomes `https://antithesis.com/docs/reference/sdk/go.md`
 
 Exceptions:
 

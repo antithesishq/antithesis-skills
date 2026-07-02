@@ -72,7 +72,7 @@ per-container rule). Low-level intrinsics like `__rdtsc()` are unaffected.
 
 Thread pausing
 : Individual threads are paused briefly, causing unexpected interleavings.
-Requires [instrumentation](https://antithesis.com/docs/instrumentation/coverage_instrumentation/).
+Requires [instrumentation](https://antithesis.com/docs/reference/instrumentation/coverage_instrumentation.md).
 
 CPU modulation
 : The simulated processor clock speed and instruction-level performance

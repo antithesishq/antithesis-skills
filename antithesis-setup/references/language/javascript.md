@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for JavaScript instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/javascript_sdk/`
+- `https://antithesis.com/docs/reference/sdk/javascript_sdk.md`
 
 There is no Antithesis JavaScript SDK. For JavaScript projects, use the fallback SDK for assertions and lifecycle by following `references/language/fallback.md`.
 

@@ -54,12 +54,12 @@ Success means:
 
 Use the `antithesis-documentation` skill to access these pages. Prefer `snouty docs`.
 
-- Docker Compose setup guide: `https://antithesis.com/docs/getting_started/setup/`
-- Docker best practices: `https://antithesis.com/docs/best_practices/docker_best_practices/`
-- Coverage instrumentation: `https://antithesis.com/docs/instrumentation/coverage_instrumentation/`
-- Assertion cataloging: `https://antithesis.com/docs/instrumentation/assertion_cataloging/`
-- Handling external dependencies: `https://antithesis.com/docs/reference/dependencies/`
-- Fault injection: `https://antithesis.com/docs/environment/fault_injection/`
+- Docker Compose setup guide: `https://antithesis.com/docs/getting_started/setup_guide/docker_compose.md`
+- Docker best practices: `https://antithesis.com/docs/best_practices/docker_best_practices.md`
+- Coverage instrumentation: `https://antithesis.com/docs/reference/instrumentation/coverage_instrumentation.md`
+- Assertion cataloging: `https://antithesis.com/docs/reference/sdk/assertion_cataloging.md`
+- Handling external dependencies: `https://antithesis.com/docs/reference/dependencies.md`
+- Fault injection: `https://antithesis.com/docs/concepts/fault_injection.md`
 
 ## Workflow
 

@@ -6,9 +6,9 @@ Use this reference for any language that does not have a first-class Antithesis 
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs relevant to the fallback SDK.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/fallback/`
+- `https://antithesis.com/docs/reference/sdk/fallback.md`
 
-You MUST use the latest fallback SDK schema and message format. To look it up, load `https://antithesis.com/docs/using_antithesis/sdk/fallback/schema/` and follow the current schema there.
+You MUST use the latest fallback SDK schema and message format. To look it up, load `https://antithesis.com/docs/reference/sdk/fallback/schema.md` and follow the current schema there.
 
 The fallback SDK path works for any language because it relies on writing JSONL messages to Antithesis rather than linking a language-native SDK.
 

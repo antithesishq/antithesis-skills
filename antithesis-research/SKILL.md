@@ -52,10 +52,10 @@ If scratchbook artifacts already exist, treat them as inputs and extend them ins
 
 Use the `antithesis-documentation` skill to ground Antithesis-specific terminology and implementation advice.
 
-- Properties and assertions: `https://antithesis.com/docs/properties_assertions/assertions.md`
-- Sometimes assertions: `https://antithesis.com/docs/best_practices/sometimes_assertions/`
-- Define test properties: `https://antithesis.com/docs/using_antithesis/sdk/define_test_properties/`
-- SDK runtime modes and production behavior: `https://antithesis.com/docs/using_antithesis/sdk/`
+- Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
+- Sometimes assertions: `https://antithesis.com/docs/concepts/properties_assertions/sometimes_assertions.md`
+- Define test properties: `https://antithesis.com/docs/reference/sdk/define_test_properties.md`
+- SDK runtime modes and production behavior: `https://antithesis.com/docs/reference/sdk.md`
 - Optimize for testing: `https://antithesis.com/docs/best_practices/optimizing.md`
 
 ## Reference Files

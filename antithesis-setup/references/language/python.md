@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for Python instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/python/`
+- `https://antithesis.com/docs/reference/sdk/python.md`
 
 You MUST use the latest version of the Antithesis Python SDK. To look up the latest version, load `https://pypi.org/pypi/antithesis/json` and use `info.version`.
 

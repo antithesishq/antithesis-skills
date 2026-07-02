@@ -92,10 +92,10 @@ Ask the user only for blockers or scoping decisions you cannot infer safely, suc
 
 Use the `antithesis-documentation` skill to access these pages. Prefer `snouty docs`.
 
-- Test commands reference: `https://antithesis.com/docs/test_templates/test_composer_reference.md`
-- SDK reference: `https://antithesis.com/docs/using_antithesis/sdk.md`
-- Properties and assertions: `https://antithesis.com/docs/properties_assertions/assertions.md`
-- Fault injection: `https://antithesis.com/docs/environment/fault_injection.md`
+- Test commands reference: `https://antithesis.com/docs/product/test_templates/test_composer_reference.md`
+- SDK reference: `https://antithesis.com/docs/reference/sdk.md`
+- Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
+- Fault injection: `https://antithesis.com/docs/concepts/fault_injection.md`
 
 ## Reference Files
 
