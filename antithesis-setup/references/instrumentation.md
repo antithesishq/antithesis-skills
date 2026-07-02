@@ -121,5 +121,5 @@ If instrumentation is missing in the report, fix the image contents or build fla
 
 ## Documentation Grounding
 
-- Coverage instrumentation: `https://antithesis.com/docs/instrumentation/coverage_instrumentation/`
-- Assertion cataloging: `https://antithesis.com/docs/instrumentation/assertion_cataloging/`
+- Coverage instrumentation: `https://antithesis.com/docs/reference/instrumentation/coverage_instrumentation.md`
+- Assertion cataloging: `https://antithesis.com/docs/reference/sdk/assertion_cataloging.md`

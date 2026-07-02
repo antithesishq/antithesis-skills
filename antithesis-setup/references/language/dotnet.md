@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for .NET instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/dotnet/instrumentation/`
+- `https://antithesis.com/docs/reference/sdk/dotnet/instrumentation.md`
 
 You MUST use the latest version of the Antithesis .NET SDK. To look up the latest version, load `https://api.nuget.org/v3-flatcontainer/antithesis.sdk/index.json` and use the last entry in the `versions` array.
 

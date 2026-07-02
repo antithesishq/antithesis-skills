@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for Java instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/java/how_to_build_with_sdk/`
+- `https://antithesis.com/docs/reference/sdk/java/how_to_build_with_sdk.md`
 
 You MUST use the latest version of the Antithesis Java SDK. To look up the latest version, load `https://repo.maven.apache.org/maven2/com/antithesis/sdk/maven-metadata.xml` and use the `<release>` value.
 

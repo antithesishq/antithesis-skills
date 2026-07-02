@@ -2,8 +2,8 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for Rust integration before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/rust/`
-- `https://antithesis.com/docs/using_antithesis/sdk/rust/instrumentation/`
+- `https://antithesis.com/docs/reference/sdk/rust.md`
+- `https://antithesis.com/docs/reference/sdk/rust/instrumentation.md`
 
 You MUST use the latest version of both Antithesis Rust crates. To look up the latest versions, load the crates.io API and use `crate.max_stable_version`:
 

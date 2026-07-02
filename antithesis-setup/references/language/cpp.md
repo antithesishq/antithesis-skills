@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for C/C++ instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/cpp/instrumentation/`
+- `https://antithesis.com/docs/reference/sdk/cpp/instrumentation.md`
 
 You MUST use the latest version of the Antithesis C/C++ SDK. To lookup the latest version, load `https://api.github.com/repos/antithesishq/antithesis-sdk-cpp/tags` and find the tag representing the latest version.
 

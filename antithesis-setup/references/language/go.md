@@ -2,7 +2,7 @@
 
 First, use the `antithesis-documentation` skill to load the latest Antithesis docs for Go instrumentation before applying this guidance.
 
-- `https://antithesis.com/docs/using_antithesis/sdk/go/instrumentor/`
+- `https://antithesis.com/docs/reference/sdk/go/instrumentor.md`
 
 You MUST use the latest version of the Antithesis Go SDK. To look up the latest version, load `https://proxy.golang.org/github.com/antithesishq/antithesis-sdk-go/@latest` and use the returned `Version`; use that same version for `antithesis-go-instrumentor`.
 
