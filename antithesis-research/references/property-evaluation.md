@@ -165,7 +165,7 @@ Before spawning agents, create a directory for evaluation evidence files at
 - The path to `antithesis/scratchbook/properties/` (evidence files directory)
 - One evaluation lens (its full description from above)
 - The path to write its evidence file
-- The list of user-named external references with their `why` notes
+- The list of user-named external references with their `why` notes — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 - The `sut_path`, current `commit`, and today's date (so the agent can write provenance frontmatter on its evidence file)
 - These instructions:
 
@@ -255,9 +255,11 @@ After categorization:
    - The existing property catalog (to avoid duplicating existing properties)
    - The path to existing assertions
    - The property catalog format from `references/property-catalog.md`
-   - The list of user-named external references with their `why` notes
+   - The list of user-named external references with their `why` notes — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 
-   Each agent returns properties in catalog format and writes evidence files.
+   Each agent returns properties in catalog format and writes evidence files. As
+   in property discovery, a reported bug must be confirmed a real system defect
+   per `references/validating-claims.md` before it becomes a property.
    Targeted discovery agents may carry forward unresolved questions in their
    new evidence files; they populate the Open Questions list per
    `references/property-catalog.md` ("Open Questions Conventions"). Synthesize
@@ -293,7 +295,8 @@ If your environment does not support sub-agents:
    builds on awareness of what the first 3 found, looking for what they missed.
 4. Categorize all findings as Gap, Bias, or Refinement.
 5. Address findings: apply refinements, fill gaps by running targeted discovery
-   passes, collect biases for the human.
+   passes (validate any external claim per `references/validating-claims.md`
+   before building a property on it), collect biases for the human.
 6. Write the synthesis to `antithesis/scratchbook/evaluation/synthesis.md`. Begin
    `synthesis.md` with provenance frontmatter per `references/scratchbook-setup.md`.
 

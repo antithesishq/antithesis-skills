@@ -27,7 +27,7 @@ At the start of every research run, ask the user about external references:
 
 > Before I start, are there docs, design notes, related repos, issue trackers, or anything else outside this directory tree that I should also consult? "Just this directory" is fine.
 
-Capture the answer verbatim. Each external reference becomes a `path` (or URL) plus a brief `why` note. The orchestrator (this skill) holds the answer for the full duration of the run and threads it as input to every reference workflow that produces a top-level artifact: `sut-discovery.md`, `sut-analysis.md`, `property-discovery.md`, `deployment-topology.md`, `property-evaluation.md`. Each of those references' agent-instruction sections accepts the list as input. The list is also recorded in the provenance frontmatter of every top-level artifact (see `references/scratchbook-setup.md`).
+Capture the answer verbatim. Each external reference becomes a `path` (or URL) plus a brief `why` note. The orchestrator (this skill) holds the answer for the full duration of the run and threads it as input to every reference workflow that produces a top-level artifact: `sut-discovery.md`, `sut-analysis.md`, `property-discovery.md`, `deployment-topology.md`, `property-evaluation.md`. Each of those references' agent-instruction sections accepts the list as input. The list is also recorded in the provenance frontmatter of every top-level artifact (see `references/scratchbook-setup.md`). Any agent that receives the external references treats each as a lead to validate, not a fact — see `references/validating-claims.md`.
 
 Beyond the scope question, ask only for blockers or scoping decisions you cannot infer safely:
 
@@ -67,6 +67,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 | `references/sut-analysis.md`        | General methodology for analyzing the codebase and understanding components |
 | `references/property-discovery.md`  | Discovering properties through structured attention focuses |
 | `references/property-catalog.md`    | Format and methodology for documenting properties   |
+| `references/validating-claims.md`   | How to treat claims from docs and issues — validate before building on them |
 | `references/faults.md`              | Understanding fault types, quiet periods, and process fault availability |
 | `references/deployment-topology.md` | Designing the container topology for Antithesis     |
 | `references/property-evaluation.md` | Evaluating the property catalog as a portfolio       |
@@ -101,7 +102,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 1. Read `references/sut-discovery.md` and `references/sut-analysis.md` if the system model is missing or stale
 2. Read `references/property-discovery.md` and `references/property-catalog.md`
 3. Discover properties using the ensemble or single-agent workflow from `references/property-discovery.md`
-4. Turn claimed guarantees, incidents, and bug reports into explicit properties, and choose the Antithesis assertion type that matches each one
+4. Turn claimed guarantees into explicit properties. For incidents and bug reports, confirm the reported defect is a real system defect before making it a property (see `references/validating-claims.md`). Choose the Antithesis assertion type that matches each one
 5. Update `antithesis/scratchbook/property-catalog.md` and record assumptions or open questions
 6. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
 7. Update `antithesis/scratchbook/property-relationships.md` with any new clusters or connections
@@ -125,7 +126,8 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 ## General Guidance
 
 - Prefer specific, checkable guarantees over vague goals like "test failover"
-- If the system claims a guarantee in docs, comments, or issues, try to make it a property
+- If the system's docs or comments claim a guarantee, make it a property to test — the property verifies the claim; don't state in the analysis that the guarantee holds
+- A bug report in an issue is a lead, not a fact. Confirm the reported defect is a real system defect before building anything on it (see `references/validating-claims.md`)
 - Record not just the invariant, but why the chosen Antithesis assertion type is the right semantic fit for that property
 - Use `Sometimes(cond)` for liveness or non-trivial semantic states, not for invariants that must hold on every evaluation and not as a substitute for `Reachable(...)`
 - Identify where surgical SUT-side assertions would give materially better search guidance than workload-only checks, especially for rare, dangerous, timing-sensitive, or externally invisible states
@@ -174,7 +176,8 @@ Review criteria:
 - `antithesis/scratchbook/property-relationships.md` exists and groups related properties into clusters with brief notes on suspected connections and dominance
 - Every property slug referenced in `property-relationships.md` corresponds to a property in the catalog
 - Properties focus on timing-sensitive, concurrency-sensitive, and partial-failure scenarios where Antithesis is strongest
-- Claimed guarantees from docs, comments, or issues are represented as properties
+- Claimed guarantees from docs or comments are represented as properties to test, and the analysis does not state any guarantee as an established fact
+- Any statement that a specific defect exists, taken from a bug report, cites primary evidence that the defect is real and rules out the reporter's environment or config — not just a link to the issue or a matching symptom
 - Property evaluation was performed: `antithesis/scratchbook/evaluation/synthesis.md` exists with categorized findings
 - Evaluation refinements have been applied to the catalog
 - Evaluation gaps have been filled via targeted discovery, and the resulting properties are in the catalog with evidence files
