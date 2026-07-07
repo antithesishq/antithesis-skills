@@ -139,13 +139,17 @@ Spawn one agent per focus. Each agent receives:
 - The path to `antithesis/scratchbook/existing-assertions.md` — read this before
   writing evidence files; for each property, note which assertions already exist
   vs. which are missing
-- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 - These instructions:
 
 > Examine the codebase through the lens of your assigned attention focus. Produce
 > properties in the standard catalog format. For each property, include your
 > confidence (high/medium/low) and what evidence in the codebase supports it. If
 > this focus yields no relevant properties for this system, say so and explain why.
+> Before you build a property on a claim from an external source — an issue or a
+> doc — validate it per `references/validating-claims.md`: a reported bug is a
+> lead, not a fact, and must be confirmed a real system defect (not the reporter's
+> environment or config) before it becomes a property.
 
 **Wildcard agent:** The wildcard agent (Focus 11) runs in parallel with the others
 but receives different context. Instead of a "look for" list, it receives:
@@ -160,7 +164,7 @@ but receives different context. Instead of a "look for" list, it receives:
   the others search it.
 - The path to `antithesis/scratchbook/existing-assertions.md`
 - Access to the codebase
-- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 
 ### Agent Output
 
@@ -232,11 +236,11 @@ After all agents complete, synthesize into a single property catalog:
 
 For each property that has open questions in its evidence file, spawn an agent to investigate. Run these in parallel — one agent per property with open questions.
 
-Each agent receives the path to the evidence file, codebase access, and the path to `antithesis/scratchbook/existing-assertions.md`.
+Each agent receives the path to the evidence file, codebase access, the path to `antithesis/scratchbook/existing-assertions.md`, and `references/validating-claims.md`.
 
 Each agent must:
 
-- Read the evidence file's explanation of why each question matters and investigate the code to answer it.
+- Read the evidence file's explanation of why each question matters and investigate the code to answer it. If a question asks whether a reported defect is real, confirm it per `references/validating-claims.md` — cite discriminating primary evidence, not the report's description.
 - Not fabricate answers. If a question can't be resolved from code, docs, or other available evidence, leave it open with partial findings noted. Tag `(partial: ...)` when there are partial findings; tag `(needs human input)` only after exhausting investigation against code and docs. Some questions legitimately need human input — that is a normal outcome, not a failure of the step.
 - Record an investigation log in the evidence file under an `### Investigation Log` heading (see `references/property-catalog.md` "Investigation Log") so the "attempted" check in `SKILL.md` self-review is auditable.
 - Update the evidence file: remove resolved questions, note partial findings, apply human-input tags. Correct any instrumentation suggestions against `existing-assertions.md` to reflect what already exists vs. what is missing.
@@ -254,8 +258,11 @@ focuses as a sequential checklist:
 2. Read `antithesis/scratchbook/existing-assertions.md` so you have the full
    picture of what's already instrumented before writing any evidence files.
 3. For each attention focus 1–10 in order, make an explicit pass through the
-   codebase with that lens. After each pass, add new properties to a running
-   catalog. If a focus yields nothing for this system, note why and move on.
+   codebase with that lens. Treat any claim from an external source (an issue or
+   doc) as a lead to validate, not a fact — confirm a reported bug is a real
+   defect per `references/validating-claims.md` before building a property on it.
+   After each pass, add new properties to a running catalog. If a focus yields
+   nothing for this system, note why and move on.
 4. Run the wildcard pass (Focus 11) last. Unlike the other passes, the wildcard is
    not a fresh examination — it deliberately builds on awareness of what the
    previous passes covered, looking for properties they missed.
@@ -279,7 +286,9 @@ focuses as a sequential checklist:
     code to answer them:
 
     - Read the evidence file's explanation of why each question matters and
-      trace the code to answer it.
+      trace the code to answer it. If a question asks whether a reported defect
+      is real, confirm it per `references/validating-claims.md` — cite
+      discriminating primary evidence, not the report's description.
     - Don't fabricate answers. Tag `(partial: ...)` when partial findings exist;
       tag `(needs human input)` only after exhausting investigation against code
       and docs.

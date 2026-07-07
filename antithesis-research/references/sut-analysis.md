@@ -16,10 +16,12 @@ Build a comprehensive understanding of the system — its architecture, componen
 Read the user-named external references gathered during scoping (see `SKILL.md` "Prerequisites and Scoping"). They are typically:
 
 - **Architecture docs:** Reveal the intended design and the guarantees the system claims to make.
-- **Open bugs (especially in target components):** These are known weaknesses. Antithesis may find deeper variants.
-- **Recently closed bugs (regression targets):** A fix that handles one case may miss related edge cases. These are high-value Antithesis targets.
+- **Open bugs (especially in target components):** Reported weaknesses. A bug report is one person's guess about a suspected defect and is often wrong about the cause — validate that each is a real system defect before building on it (see `references/validating-claims.md`). Once confirmed, Antithesis may find deeper variants.
+- **Recently closed bugs (regression targets):** A fix that handles one case may miss related edge cases. These are high-value Antithesis targets. Confirm the real mechanism from the fix and discussion first — some issues close as "not a bug."
 - **RFCs and design docs:** Reveal what developers know is hard. Sections labeled "future work" or "known limitations" are gold.
 - **Production incident reports:** Show what actually breaks in practice, not just what might break in theory.
+
+Everything here is a lead, not a fact: turn a source into an analysis statement or a property only after grounding it in primary evidence, and validate only what you build on. See `references/validating-claims.md`.
 
 ## Identify Claimed Properties
 
@@ -31,7 +33,7 @@ Every system makes guarantees. Extract them explicitly. Look for statements like
 - "Automatic failover completes within Y seconds"
 - "No data loss under semi-synchronous replication"
 
-These claimed properties become the foundation of the property catalog. If the system claims it, Antithesis should verify it.
+These claimed properties become properties for Antithesis to verify. A claimed guarantee is a claim to test, not a verified fact — don't state in the analysis that the guarantee holds; state that the system claims it and the property checks it. See `references/validating-claims.md`.
 
 ## Identify Attack Surfaces
 

@@ -47,14 +47,17 @@ structures, channels, shared mutable globals, concurrent access to collections.
 Explicitly claimed invariants the system promises will never be violated. Look for:
 statements in docs, comments, or design docs like "acknowledged writes survive
 failover," "exactly one leader per partition," "no duplicate processing," "data is
-never corrupted." These become the foundation of safety properties.
+never corrupted." These become safety properties for Antithesis to test — a
+claimed guarantee is a claim to test, not a verified fact (see
+`references/validating-claims.md`).
 
 ### 5. Liveness Guarantees
 
 Progress properties the system promises will eventually hold. Look for: statements
 like "failover completes within X seconds," "queued work is eventually processed,"
 "clients eventually get a consistent view," "the system recovers automatically."
-These become the foundation of liveness properties.
+These become liveness properties for Antithesis to test — a claimed guarantee is a
+claim to test, not a verified fact (see `references/validating-claims.md`).
 
 ### 6. Bug History and Density
 
@@ -62,7 +65,10 @@ Map where bugs have clustered and where they haven't. Look for: components with
 many filed issues (hotspots), components with no bug history (suspiciously quiet —
 possibly undertested rather than correct), recently closed bugs (regression targets
 where the fix may not cover all edge cases), recurring bug patterns that suggest
-systemic issues.
+systemic issues. A filed issue is a reported bug, not a confirmed one — the
+reporter is often wrong about the cause. Before you build a property on a reported
+bug, confirm the defect is real from primary evidence, not the issue's description
+(see `references/validating-claims.md`).
 
 ### 7. Existing Test Strategy
 
@@ -153,7 +159,7 @@ Spawn one agent per focus. Each agent receives:
 - The general SUT analysis methodology from `references/sut-analysis.md`
 - One attention focus (its full description and "look for" guidance from above)
 - Access to the codebase, documentation, and issue tracker
-- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 - These instructions:
 
 > Examine the system through the lens of your assigned attention focus, using the
@@ -172,7 +178,7 @@ but receives different context. Instead of a "look for" list, it receives:
   the detailed "Look for:" lists — the wildcard should know what territory is
   covered, not how the others search it.
 - Access to the codebase, documentation, and issue tracker
-- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis
+- The list of user-named external references with their `why` notes (from the scope question), so the agent can consult them as part of its analysis — treat each as a lead to validate, not a fact (see `references/validating-claims.md`)
 
 ### Agent Output Format
 

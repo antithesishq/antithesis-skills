@@ -24,7 +24,7 @@ Ask: "What exact condition would I check in code to verify this?" If you can't a
 
 ## Cross-Reference Closed Issues as Regression Targets
 
-A recently-fixed bug is a great Antithesis test because the fix may not cover all edge cases. For each closed bug in the target area:
+A recently-fixed bug is a great Antithesis test because the fix may not cover all edge cases. Confirm the real root cause and mechanism from the fix and the discussion before turning a closed issue into a property — the report's own description of the cause is a lead, not the confirmed mechanism, and some issues close as "not a bug" or user error and describe no system defect at all (see `references/validating-claims.md`). For each closed bug in the target area:
 
 - What was the root cause?
 - What timing or fault condition triggered it?
