@@ -148,7 +148,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | -------------------------------------- | ------------------------------- |
 | `antithesis-research`                  | No explicit external tools      |
 | `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
-| `antithesis-setup-k8s`                 | `snouty`, `docker`/`podman`, optionally: `kubectl`, `k3s`, `kapp`, `helm`, `kustomize` |
+| `antithesis-setup-k8s`                 | `docker`/`podman`, `snouty`     |
 | `antithesis-workload`                  | `snouty`                        |
 | `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
 | `antithesis-triage`                    | `snouty`, `jq`                  |
