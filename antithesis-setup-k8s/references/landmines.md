@@ -12,6 +12,7 @@ Every entry has these fields:
 - **Fidelity impact** — what behavior changes when the default is applied; which kinds of apps actually feel it
 - **Override recipe** — if the customer wants to keep it, concrete steps for setup
 - **Calibration question (optional)** — asked of the customer (not ops), only if the answer would change the default
+- **Antithesis support (optional)** — what changes need to be informed to get this running in Antithesis
 - **Confidence factors** — signals that bump confidence in the default. Low confidence triggers the calibration question; high confidence applies the default silently.
 
 When a landmine doesn't have a calibration question, apply its default action without asking the customer. When a landmine has a calibration question, ask it only when the *Confidence factors* indicate confidence is low; otherwise apply the default silently.
@@ -32,7 +33,8 @@ When a landmine doesn't have a calibration question, apply its default action wi
 - **Working file rationale**: "Dropped Istio mesh — pod-to-pod via direct Service DNS in single-node test env."
 - **Fidelity impact**: Diverges if the app relies on mTLS workload identity for service-to-service AuthZ, Istio-level retries/timeouts, traffic splitting, fault injection used in tests, or Istio-emitted telemetry the app depends on. Most apps don't notice; some do.
 - **Override recipe**: Install Istio in the test environment (`istioctl install --set profile=demo` or via Helm), re-add `istio-injection: enabled` on the SUT namespace, accept ~30–60s of extra pod startup. Note: Antithesis's deterministic single-node environment may interact unusually with Istio's distributed-system features (retries, circuit breakers).
-- **Calibration question**: "Does your app's correctness depend on Istio behavior — workload identity for service-to-service AuthZ, retry/timeout policies, or traffic splitting? If unsure, the safer choice is to keep Istio."
+- **Calibration question**: "Does your app's correctness depend on Istio behavior — workload identity for service-to-service AuthZ, retry/timeout policies, or traffic splitting? If unsure, drop and we'll add it back if we hit issues."
+- **Antithesis support**: Antithesis does not support network faults for systems that include istio out of the box. Changes can be made on Antithesis's side to support this but this is much better left out. 
 - **Confidence factors**:
   - High confidence in `drop` if only injection is configured and no `AuthorizationPolicy`, `RequestAuthentication`, or `PeerAuthentication` resources exist
   - Lower confidence (ask the calibration question) if any of those AuthZ/AuthN resources are present, since the app likely depends on Istio for AuthZ
@@ -64,7 +66,7 @@ When a landmine doesn't have a calibration question, apply its default action wi
 - **Default action**: `drop`. Drop all cert-manager CRs, strip cert-manager annotations from `Ingress` resources. For `Secret` resources that cert-manager would have populated with TLS material, replace with a self-signed cert generated at startup or hand-baked into the manifest.
 - **Working file rationale**: "Dropped cert-manager — TLS not material to test scope; self-signed substitute if internal TLS needed."
 - **Fidelity impact**: Negligible for most apps. Diverges only if app inspects cert metadata, depends on rotation behavior, or has logic conditional on the issuing authority.
-- **Override recipe**: Install cert-manager in the test environment (`kubectl apply -f https://github.com/cert-manager/cert-manager/releases/...`), use a self-signed `ClusterIssuer` instead of Let's Encrypt or any cloud issuer, accept ~30s startup.
+- **Override recipe**: Install cert-manager in the test environment (`kubectl apply -f https://github.com/cert-manager/cert-manager/releases/...`), use a self-signed `ClusterIssuer` instead of Let's Encrypt or any cloud issuer, accept ~30s startup delay.
 - **Calibration question**: Usually skip. Ask only if the working file's *Application overview* mentions cert-related behavior (rotation testing, etc.).
 - **Confidence factors**: High confidence in `drop` for typical web apps that use TLS via ingress.
 
@@ -80,7 +82,7 @@ When a landmine doesn't have a calibration question, apply its default action wi
 - **Default action**: `replace-with-equivalent`. For each `ExternalSecret`, create a plain `Secret` with test values (customer provides values, or skill generates placeholders for non-sensitive items). Drop `SecretStore` and the operator itself.
 - **Working file rationale**: "Replaced N ExternalSecret resources with plain Secrets containing test values."
 - **Fidelity impact**: None. The app sees `Secret` resources either way; the only difference is how they're populated, which is invisible to the app.
-- **Override recipe**: Customer would not usually want to keep ESO — its purpose is to source from cloud secret stores, which we can't reach. Skip override.
+- **Override recipe**: Customer would not usually want to keep ESO — its purpose is to source from cloud secret stores, which cannot be reached from air-gapped Antithesis. Skip override.
 - **Calibration question**: "For each of these N secrets, can you provide test values? Some need real-looking values for the app to function (database connection strings, etc.) and some don't (API keys for services we're stubbing). Walk through them with me."
 - **Confidence factors**: This is more a workflow question than a confidence question. The replacement is mechanical; the inputs are what need customer involvement.
 
@@ -235,7 +237,7 @@ When you encounter a Custom Resource or operator that doesn't match any entry ab
 - **Recognition signals**: A CR with a group/kind not explicitly handled elsewhere; an operator Deployment whose role isn't immediately obvious.
 - **Default action**: `drop`. Drop both the CR and (if present in the customer's manifests) the CRD definition. If the operator produces a workload that the SUT depends on, see `references/operator-recipes.md` for the replace-with-primitives pattern.
 - **Working file rationale**: "Dropped <CR/operator> — unrecognized platform construct; flag if app relies on it."
-- **Fidelity impact**: Unknown. Customer pushback at the customer review checkpoint or at handoff is the correction mechanism.
+- **Fidelity impact**: Unknown. Customer pushback when reviewing the classification is the intended flow.
 - **Override recipe**: Customer states the role of the operator and how the app depends on it. If the answer is "the operator provides a runtime service the SUT calls," classify the produced workload using `references/operator-recipes.md`. If the answer is "platform-only, the SUT doesn't depend on it," confirm `drop`.
 - **Calibration question**: "I don't recognize this CRD/operator. Briefly: what does it do, and does the SUT depend on its presence at runtime?"
 - **Confidence factors**: Low confidence by default. Always ask the calibration question for unknown operators.

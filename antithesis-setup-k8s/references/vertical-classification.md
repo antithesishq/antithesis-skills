@@ -4,7 +4,7 @@
 
 For each component that survived horizontal classification (SUT or dep-real), strip platform/cloud/observability cruft. The output is a description of what the component looks like *after* minimization — what should be kept, what should be dropped, and what should be replaced.
 
-This skill produces descriptions, not YAML. Vertical classification populates the *Component inventory* section of the working file with structured per-component entries that `antithesis-setup` later materializes.
+This skill produces descriptions, not YAML. Vertical classification populates the *Component inventory* section of the working file with structured per-component entries that `apply-findings.md` later materializes.
 
 ## Framework
 
@@ -39,7 +39,7 @@ Two internal axes drive each per-resource decision:
 | Security/Policy | Drop (single-node, deterministic env) |
 | Unclear | Drop unless referenced by something we're keeping |
 
-The "Unclear → drop" default is what makes "no archaeology" work in practice. If the customer wants to keep something Unclear, they can override at customer review.
+The "Unclear → drop" default is what makes "no archaeology" work in practice. If the customer wants to keep something Unclear, they can override when reviewing the classification.
 
 ## Method, Not Encyclopedia
 
@@ -62,17 +62,17 @@ For the non-obvious cases — Antithesis-specific landmines with known recipes �
 
 Five steps for each pass through vertical classification:
 
-1. **Scan for operator-flagged components from horizontal.** Before applying the decision matrix to anything, look at the working file's *Horizontal classification* section for any operator-produced components flagged during phase 4 (e.g., a Postgres CR managed by an operator). For each, apply the matching recipe from `references/operator-recipes.md` to expand the CR into primitives in *Component inventory*. The operator itself is dropped via the matrix (Platform → drop); the produced workload becomes its own component entry to classify normally.
+1. **Scan for operator-flagged components from horizontal.** Before applying the decision matrix to anything, look at the working file's *Horizontal classification* section for any operator-produced components flagged during horizontal classification (e.g., a Postgres CR managed by an operator). For each, apply the matching recipe from `references/operator-recipes.md` to expand the CR into primitives in *Component inventory*. The operator itself is dropped via the matrix (Platform → drop); the produced workload becomes its own component entry to classify normally.
 
 2. **Iterate over kept components.** For each component classified as SUT or dep-real, apply the Origin × Necessity framework. Use the curated landmines (`references/landmines.md`) for known constructs; rely on Claude's general k8s knowledge for routine ones.
 
 3. **Surface fidelity tradeoffs.** When applying a default with meaningful fidelity impact, state the fidelity cost and the override path to the customer. See *Defaults Are Defaults* below for when this matters.
 
-4. **Generate calibration questions when confidence is low.** Each landmine entry's *Confidence factors* tell you when to ask the calibration question. Add any calibration questions to `ops-questions.md`.
+4. **Generate calibration questions when confidence is low.** Each landmine entry's *Confidence factors* tell you when to ask the calibration question. Ask the user inline and add answers to the working file's `Open questions & answers` section.
 
 5. **Record per-component output.** Populate *Component inventory* in the working file using the schema in *Per-Component Output* below.
 
-When all kept components have entries, advance `current_phase` to `7` (stub strategy).
+Stub construction for Dependency — stub components is deferred to antithesis-workload; this skill only records the decision..
 
 ## Per-Component Output
 
@@ -137,9 +137,8 @@ When vertical classification is complete:
 - Every kept component has a Component inventory entry
 - Every entry has status `Confirmed`, `Defaulted`, or `Open`
 - Decisions applied are listed per component, not aggregated globally
-- Update `current_phase` to `7` (stub strategy)
-- Generate any new ops-questions raised during vertical (calibration questions where confidence was low; questions about specific config the customer needs ops input on)
+- Ask any low-confidence calibration questions inline and record them under *Open questions & answers*
 
 ## Output
 
-Working file *Component inventory* section, populated. `current_phase` set to `7`. Updated `ops-questions.md` if any new questions surfaced.
+Working file *Component inventory* section, populated.

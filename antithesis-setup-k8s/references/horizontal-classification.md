@@ -13,11 +13,11 @@ The "no archaeology" principle applies here twice over: classification is built 
 
 ## Process
 
-Six steps. Customer review (the next phase) follows this; do not advance to vertical until it has passed.
+Six steps. Ask the user when confidence is low or an interaction cannot be inferred; Record answers in the working file's `Open questions & answers` section.
 
 ### 1. Identify the SUT
 
-Read `antithesis/scratchbook/sut-analysis.md` (or the research-equivalent input captured in the working file's *Application overview*). Map the named SUT components to manifest entries.
+Read the working file's Application overview. If it's empty, check `antithesis/scratchbook/sut-analysis.md` created by `antithesis-research` skill. Map the named SUT components to manifest entries.
 
 If the SUT named in research doesn't obviously map to a single manifest component, ask the customer once which manifest entry corresponds. Record the mapping in the working file.
 
@@ -49,22 +49,15 @@ Three confidence tiers. Document edges by tier in the working file's *Horizontal
 - Scheduled jobs that touch the SUT
 - Backend services hit through shared API gateways
 
-For non-inferable interactions, generate exactly one structural ops-question in `ops-questions.md` using the standard *Blocking* question schema:
+For non-inferable interactions, ask the user exactly one structural question inline:
 
-```markdown
-### Q<n>: Are there interactions involving the SUT we can't see from the manifests?
+> From the manifests, the SUT calls <A, B, ...>. Are there interactions I can't see from the manifests — async messaging via queues/pub-sub, scheduled jobs that trigger the SUT, indirect dependencies through a shared database or cache, or backend services reached through a shared gateway?
 
-**Where**: <SUT manifest references>
+Record the question and the user's answer under *Open questions & answers* in the working file, then act on it:
 
-**Why we're asking**: From the manifests, the SUT calls <list of A, B, ...>. We want to know if there are other interactions we can't see — async messaging via queues, scheduled jobs that trigger the SUT, indirect dependencies through shared databases or caches, or anything else where the SUT participates without it being visible in service refs/env vars/etc.
-
-**Pick one**:
-- [ ] No — the manifests show all the interactions; nothing else touches the SUT during the tested flow → we proceed with the current classification
-- [ ] Yes, here are the others: <ops fills in> → we promote those components from out-of-scope into Dependency candidates and re-classify
-- [ ] Don't know → we proceed assuming the manifests are complete; we'll catch missing interactions during setup or at runtime if they break things
-```
-
-Don't fragment this into one question per suspected channel. One structural question is enough; the answer either confirms the inferred call graph or promotes out-of-scope components to in-scope.
+- **No / nothing else** → proceed with the current classification.
+- **Yes, here are the others** → promote those components from out-of-scope into Dependency candidates and re-classify.
+- **Don't know** → proceed assuming the manifests are complete; record it as an open item (Status: `Open`) so setup or runtime can catch a missing interaction if it breaks.
 
 ### 3. Classify by reachability from SUT
 
@@ -74,7 +67,7 @@ For each component:
 - Transitive dep (something the SUT's direct deps call, but the SUT doesn't touch) → *Out of scope*, default
 - No path to SUT in the inferred graph → *Out of scope*
 
-When in doubt, drop. The customer review checkpoint catches false drops; aggressive cuts are cheap to revert.
+When in doubt, drop. False drops are cheap to revert.
 
 ### 4. Decide stub vs. real for dependencies
 
@@ -102,8 +95,6 @@ Write the classification to the *Horizontal classification* section of `working.
   - Status: <Confirmed | Defaulted | Open>
   - Reasoning: <one or two sentences of why>
 ```
-
-Update `current_phase` in frontmatter to `5` (the customer review checkpoint phase). The customer review is its own phase; don't combine it with horizontal classification.
 
 ## Edge Cases
 
@@ -147,10 +138,9 @@ Classification:
 - The operator → vertical-platform-cruft, drop (handled in vertical classification)
 - The thing the operator produces → its own component entry, classified normally (typically dep-real if it's a database)
 
-In the working file's *Component inventory*, the operator-produced thing should be described in primitives terms (StatefulSet, Service, ConfigMap, etc.) rather than as a CR. The recipe for converting comes from `references/operator-recipes.md`. Phase 6 (vertical classification) handles the actual conversion; phase 4 only needs to flag that the operator-produced component exists and what its role is.
+In the working file's *Component inventory*, the operator-produced thing should be described in primitives terms (StatefulSet, Service, ConfigMap, etc.) rather than as a CR. The recipe for converting comes from `references/operator-recipes.md`. Vertical classification handles the actual conversion; Horizontal classification only needs to flag that the operator-produced component exists and what its role is.
 
 ## Output
 
-Working file *Horizontal classification* section, fully populated, with status fields per component. The structural ops-question (if needed) is in `ops-questions.md`. `current_phase` is set to `5`.
+Working file *Horizontal classification* section, fully populated, with status fields per component. Any questions asked to the user are recorded under *Open questions & answers* in the working file.
 
-Customer review checkpoint follows. Do not advance to vertical classification before that phase has passed.
