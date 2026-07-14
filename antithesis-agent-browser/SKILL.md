@@ -4,10 +4,12 @@ description: >
   Authenticate `agent-browser` against an Antithesis tenant and read data from Antithesis web pages (triage reports, runs page, logs viewer, causality reports). Only invoke this skill when explicitly requested by another skill or the user. Requires interactive browser authentication and is unsuitable for fully headless workflows.
 compatibility: agent-browser (https://github.com/vercel-labs/agent-browser) and jq.
 metadata:
-  version: "2026-07-10 a2ee187"
+  version: "2026-07-14 1f59c97"
 ---
 
 # Antithesis agent-browser
+
+**Skill version:** `2026-07-14 1f59c97`
 
 A helper skill for reading data from authenticated Antithesis web pages
 when the snouty API doesn't expose what's needed. Other skills
