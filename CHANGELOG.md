@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-07-14
+
+- feat: write skill version into SKILL.md body below the title ([PR #179](https://github.com/antithesishq/antithesis-skills/pull/179))
+
 ## 2026-07-10
 
 - BREAKING CHANGE: feat: Create antithesis-setup-k8s skill to get started with Antithesis using a Kubernetes environment ([PR #178](https://github.com/antithesishq/antithesis-skills/pull/178))
