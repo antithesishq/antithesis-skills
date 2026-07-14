@@ -88,6 +88,56 @@ def _update_frontmatter_version(content: str, version: str) -> str:
     return "\n".join(lines)
 
 
+# Marker for the in-body version line. Kept simple so it's easy to spot both
+# by humans and by the agent (which only sees the body, not the frontmatter).
+BODY_VERSION_RE = re.compile(r"^\*\*Skill version:\*\* ")
+
+
+def _update_body_version(content: str, version: str) -> str:
+    """Insert or update a `**Skill version:** ...` line immediately below the
+    skill's title, so the version is visible in the skill body (agents don't
+    receive the YAML frontmatter)."""
+    lines = content.split("\n")
+
+    if not lines or lines[0] != "---":
+        print("ERROR: file does not start with frontmatter delimiter", file=sys.stderr)
+        sys.exit(1)
+
+    close_idx = None
+    for i in range(1, len(lines)):
+        if lines[i] == "---":
+            close_idx = i
+            break
+
+    if close_idx is None:
+        print("ERROR: no closing frontmatter delimiter found", file=sys.stderr)
+        sys.exit(1)
+
+    version_line = f"**Skill version:** `{version}`"
+
+    # If a version line already exists anywhere in the body, replace it in
+    # place so we don't accumulate duplicates across runs.
+    for i in range(close_idx + 1, len(lines)):
+        if BODY_VERSION_RE.match(lines[i]):
+            lines[i] = version_line
+            return "\n".join(lines)
+
+    # Otherwise insert it just below the first top-level `# ` heading.
+    title_idx = None
+    for i in range(close_idx + 1, len(lines)):
+        if lines[i].startswith("# "):
+            title_idx = i
+            break
+
+    if title_idx is None:
+        print("ERROR: no top-level heading found in skill body", file=sys.stderr)
+        sys.exit(1)
+
+    lines.insert(title_idx + 1, "")
+    lines.insert(title_idx + 2, version_line)
+    return "\n".join(lines)
+
+
 def cmd_update(sha: str) -> int:
     """Update metadata.version in all skills."""
     date = _read_changelog_date()
@@ -97,6 +147,7 @@ def cmd_update(sha: str) -> int:
     for skill_md in skills:
         content = skill_md.read_text(encoding="utf-8")
         updated = _update_frontmatter_version(content, version)
+        updated = _update_body_version(updated, version)
         skill_md.write_text(updated, encoding="utf-8")
         print(f"Updated {skill_md.relative_to(REPO_ROOT)}")
 
