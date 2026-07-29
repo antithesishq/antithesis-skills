@@ -2,18 +2,125 @@
 
 ## Download a log
 
-Use `snouty runs --json logs`, redirecting the stream to a file:
+Use `snouty runs --json logs`, redirecting the stream to a file. Always bound
+the download with `timeout` — log sizes vary enormously and there is no way to
+know a log's size before fetching it:
 
 ```bash
-snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
-  > /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
+mkdir -p /tmp/triage
+LOG=/tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
+timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 ```
+
+If `timeout` exits **124**, the log is large — a full history can take 10+
+minutes to stream. Do **not** just retry with a bigger timeout; read "Large
+logs: download a window" below.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
 `INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array (or from `failure_moment` in `snouty runs --json show`, or from `snouty runs --json events`) — pass them verbatim, do not round or reformat.
 
 Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
+
+## Large logs: download a window
+
+Streaming runs **earliest entry → `VTIME`**. So a download cut short by
+`timeout` holds the *oldest* events and is missing the part you care about most:
+the moment of failure at the end. Never analyze a timed-out log as if it were
+complete.
+
+Fetch only a window of virtual time with `--begin-vtime`, which starts the
+stream at that vtime instead of the timeline's earliest entry:
+
+```bash
+timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+  --begin-vtime "$BEGIN_VTIME" > window.ndjson
+```
+
+### Discard the timed-out partial; probe with a narrow window instead
+
+Do **not** try to extract a download rate from the timed-out file. There is a
+server-side preparation phase that emits nothing, so a `timeout` landing in it
+yields a **0-byte file**, and elapsed time mostly measures that fixed latency
+rather than transfer speed. Observed on a 1031-vtime-second run: 4s and 6s
+budgets both produced 0 bytes, 8s produced the *complete* 56 MB log, and 10s
+produced a 48 MB prefix. Wall-clock is not a reliable size signal.
+
+Instead, probe with a **narrow window** ending at the moment. It completes
+quickly, and unlike a truncated download it is immediately usable:
+
+```bash
+BEGIN_VTIME=$(python3 -c "print($VTIME - 30)")
+timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+  --begin-vtime "$BEGIN_VTIME" > probe.ndjson
+wc -c probe.ndjson
+```
+
+Divide the byte count by the window's vtime width to get bytes per
+vtime-second, then multiply to size a wider window or to estimate the full log
+(`bytes_per_vt * VTIME`). Density is fairly uniform over nearby vtime — the
+same run measured 87 KB, 91 KB, and 96 KB per vtime-second over 10, 50, and 200
+second windows. Whole-run density is *lower* (55 KB/vt there, since early
+setup is sparse), so extrapolating from a late window over-estimates the full
+size. That errs toward caution, which is what you want when deciding whether to
+attempt the whole thing.
+
+Then decide:
+
+- **Estimate is manageable and you need whole-run context** — re-run without
+  `--begin-vtime` and a generous timeout.
+- **Otherwise** — keep working in windows ending at `VTIME`. That is the failure
+  neighborhood, where triage usually concludes. Widen backwards with a smaller
+  `BEGIN_VTIME` if the cause predates the window.
+
+If the timed-out partial is non-empty, keep it: it holds run-startup context
+(`setup`, container lifecycle, early workload) that a late window cannot
+contain. Guard `jq` with `fromjson? // empty` when reading it, since a
+truncated file can end in a half-written line:
+
+```bash
+jq -R 'fromjson? // empty | .moment.vtime' partial.ndjson \
+  | awk 'NR==1{first=$0} {last=$0} END{print "first="first, "last="last, "events="NR}'
+```
+
+`--begin-input-hash` is an optional optimization and **must** be paired with
+`--begin-vtime` (snouty exits 2 otherwise). It does not change the output —
+omit it unless you know the input hash in effect at `BEGIN_VTIME`, e.g. from
+`snouty runs --json events`.
+
+### Always pad the window: `active_faults` needs warm-up
+
+`active_faults` is reconstructed from the fault events snouty sees *in the
+stream*, so a window that starts after a fault began reports **no fault at
+all** — not merely an under-reported one. This is a trap: the window contains
+zero `fault` events, so nothing inside it hints that anything is missing.
+
+Measured on the same run, for the identical event at vtime `1031.4932`:
+
+| Download                | `active_faults` at that event               |
+| ----------------------- | ------------------------------------------- |
+| Full log                | `{"network_partition":{"vtime":1027.32}}`    |
+| `--begin-vtime 1030`    | `{}` — and no `fault` events in the window   |
+| `--begin-vtime 1020`    | `{"network_partition":{"vtime":1027.32}}` ✓ |
+
+So **start the window earlier than the region you intend to analyze** and treat
+the pad as warm-up you do not trust. Padding back to 1020 above recovered the
+fault state exactly while still being 58× smaller than the full log (966 KB vs
+56 MB). A pad comfortably larger than typical `max_duration` values (those were
+~6s) is usually enough; widen it if `active_faults` looks suspiciously empty.
+
+Faults that never expire cannot be recovered by any bounded pad — permanent
+clock skew (`skip` with no `max_duration`) and a `partition` left open until a
+later `restore` may have started arbitrarily far back. When a window shows no
+active faults, say that fault state was not established rather than that no
+faults were active.
+
+### Other caveats when analyzing a window
+
+- Run-startup events (`setup`, `containers_meta`, `antithesis_setup`) live at
+  the beginning of the history and will not appear in a late window.
+- Say which vtime range you analyzed when reporting findings from a window, so
+  conclusions aren't read as covering the whole history.
 
 ## JSON Log format
 
