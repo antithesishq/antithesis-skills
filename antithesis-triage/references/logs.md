@@ -67,8 +67,10 @@ attempt the whole thing.
 
 Then decide:
 
-- **Estimate is manageable and you need whole-run context** — re-run without
-  `--begin-vtime` and a generous timeout.
+- **You need whole-run context, or your analysis depends on fault state** —
+  re-run without `--begin-vtime` and a generous timeout. Fault correlation
+  requires the full log; see "Fault state is not trustworthy in a windowed log"
+  below.
 - **Otherwise** — keep working in windows ending at `VTIME`. That is the failure
   neighborhood, where triage usually concludes. Widen backwards with a smaller
   `BEGIN_VTIME` if the cause predates the window.
@@ -88,32 +90,39 @@ jq -R 'fromjson? // empty | .moment.vtime' partial.ndjson \
 omit it unless you know the input hash in effect at `BEGIN_VTIME`, e.g. from
 `snouty runs --json events`.
 
-### Always pad the window: `active_faults` needs warm-up
+### Fault state is not trustworthy in a windowed log
 
-`active_faults` is reconstructed from the fault events snouty sees *in the
-stream*, so a window that starts after a fault began reports **no fault at
-all** — not merely an under-reported one. This is a trap: the window contains
-zero `fault` events, so nothing inside it hints that anything is missing.
+**Only a full log establishes fault state.** `active_faults` is reconstructed
+from the fault events snouty sees *in the stream*. A window cannot see fault
+events before its `BEGIN_VTIME`, so any fault window opened earlier is absent
+from the annotation — and absent as `{}`, not as something partial.
 
+Nothing inside the window reveals this. The window contains zero `fault` events,
+so an incomplete annotation and a genuinely fault-free region look identical.
 Measured on the same run, for the identical event at vtime `1031.4932`:
 
-| Download                | `active_faults` at that event               |
-| ----------------------- | ------------------------------------------- |
-| Full log                | `{"network_partition":{"vtime":1027.32}}`    |
-| `--begin-vtime 1030`    | `{}` — and no `fault` events in the window   |
-| `--begin-vtime 1020`    | `{"network_partition":{"vtime":1027.32}}` ✓ |
+| Download             | `active_faults` at that event             |
+| -------------------- | ----------------------------------------- |
+| Full log             | `{"network_partition":{"vtime":1027.32}}` |
+| `--begin-vtime 1030` | `{}` — and no `fault` events in the window |
 
-So **start the window earlier than the region you intend to analyze** and treat
-the pad as warm-up you do not trust. Padding back to 1020 above recovered the
-fault state exactly while still being 58× smaller than the full log (966 KB vs
-56 MB). A pad comfortably larger than typical `max_duration` values (those were
-~6s) is usually enough; widen it if `active_faults` looks suspiciously empty.
+Consequences for analysis:
 
-Faults that never expire cannot be recovered by any bounded pad — permanent
-clock skew (`skip` with no `max_duration`) and a `partition` left open until a
-later `restore` may have started arbitrarily far back. When a window shows no
-active faults, say that fault state was not established rather than that no
-faults were active.
+- **Never conclude "no fault was active" from a windowed log.** Report that
+  fault state could not be established, not that the region was fault-free.
+- **If your conclusion depends on fault correlation, download the full log.**
+  This is the case where windowing is not an option — pay the download cost.
+  Correlating a failure with an injected fault is exactly the analysis a window
+  cannot support.
+
+Starting the window earlier does make a correct annotation *more likely* — on
+that run `--begin-vtime 1020` recovers the partition exactly, at 966 KB vs
+56 MB — so pad generously past typical `max_duration` values when you must work
+in a window. But padding is a mitigation, not a fix: you cannot verify from inside
+the window that the pad was deep enough, and fault windows with no bounded end —
+a `partition` open until a later `restore`, a permanent clock `skip` with no
+`max_duration` — can begin arbitrarily far back, so no offset is sufficient in
+general.
 
 ### Other caveats when analyzing a window
 
