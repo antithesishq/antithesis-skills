@@ -77,6 +77,9 @@ PRs should include:
 
 - What changed and why.
 - Validation evidence (`make validate` output).
+- A changelog label on every customer-facing change: `changelog - breaking` or
+  `changelog - non-breaking`. Ask the user which label to apply if you are
+  unsure.
 - Any follow-up work for future PRs or limitations. Omit if irrelevant.
 
 ## Automation: do not bump versions or edit the changelog by hand
@@ -85,10 +88,19 @@ Scripts in `.ci-scripts/` run on merge and handle these chores for you. Do not
 propose or perform them as part of a PR.
 
 - `update_skill_versions.py` manages `metadata.version` in every `SKILL.md`.
-- `changelog.py` appends an entry to `CHANGELOG.md` from the PR title (and the
-  `changelog - breaking` / `changelog - non-breaking` label, if present). For
-  notable changes (new skills, breaking changes, significant fixes), add the
-  appropriate label; breaking entries are prefixed with `BREAKING CHANGE:`.
+- `changelog.py` appends an entry to `CHANGELOG.md` from the PR title and the
+  `changelog - breaking` / `changelog - non-breaking` label. The label controls
+  the entry:
+  - Always set one of the two labels when the PR changes what customers get:
+    skill content, skill assets, or a new or removed skill. Use
+    `changelog - breaking` when the change removes or renames a skill, or
+    changes behavior that users rely on. Use `changelog - non-breaking` for all
+    other customer-facing changes. Breaking entries are prefixed with
+    `BREAKING CHANGE:`.
+  - Set no label when the PR only touches repository internals, such as CI,
+    validation tooling, or these guidelines. Without a label the merge workflow
+    adds no entry.
+  - Ask the user which label to apply if you are unsure.
 
 Edit `SKILL.md` content freely, but leave the `metadata.version` field alone,
 and do not edit `CHANGELOG.md` directly unless directly requested by the user.
