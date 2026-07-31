@@ -5,15 +5,62 @@
 Use `snouty runs --json logs`, redirecting the stream to a file:
 
 ```bash
-snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
-  > /tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
+mkdir -p /tmp/triage
+LOG=/tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 ```
+
+Some logs are very large. A download can take 10 minutes or more, and you cannot
+know the size of a log before you download it. Run the download with a timeout.
+If the download does not complete, read "Large logs" below.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
 `INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array (or from `failure_moment` in `snouty runs --json show`, or from `snouty runs --json events`) — pass them verbatim, do not round or reformat.
 
 Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
+
+## Large logs
+
+If the download does not complete before the timeout, decide what to do:
+
+- **You need the full log** — wait for the download to complete. Use a longer
+  timeout, or wait for the command if it continues in the background. Only a
+  full log gives the complete fault state.
+- **A part of the log is sufficient** — cancel the download. Then get a slice
+  with `--begin-vtime`.
+
+Do not try to estimate the size of the log or the time that remains. The density
+of the log is not constant. One part of a run can be silent. Another part can be
+very dense.
+
+Keep the incomplete file if you cancel the download. It contains the start of the
+run: `setup`, container lifecycle, and the early workload. A slice does not have
+this data. But the incomplete file does not contain the moment of the failure. Do
+not analyze it as a complete log. Its last line can be incomplete, so use
+`fromjson? // empty` in your jq filters.
+
+### Get a slice of the log
+
+`--begin-vtime` starts the stream at a vtime that you select:
+
+```bash
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+  --begin-vtime "$BEGIN_VTIME" > slice.ndjson
+```
+
+A slice that stops at `VTIME` contains the moment of the failure. This is
+usually the most useful part of the log. For more context, use a smaller
+`BEGIN_VTIME`.
+
+> **The fault annotations in a slice are partial.** Snouty calculates
+> `active_faults` from the fault events in the stream. A slice does not contain
+> the events before `BEGIN_VTIME`, so a fault that started earlier does not
+> appear. The faults that you see are correct, but other faults can also be
+> active. An empty `active_faults` is not proof that no fault was active.
+> Download the full log if you need the complete fault state.
+
+Give the vtime range that you analyzed when you report results from a slice.
 
 ## JSON Log format
 
