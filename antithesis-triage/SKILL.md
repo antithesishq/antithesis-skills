@@ -83,7 +83,7 @@ If the run has a status of "incomplete", refer to the `Diagnose incomplete run` 
 3. For each property to investigate:
    a. Pick the first failing example
    b. Find the moment. If the counterexample has no `moment` field (telemetry / meta properties — see `references/properties.md`), report the counterexample value as the evidence and skip steps c–e.
-   c. Download the example's log using `snouty runs --json logs $RUN_ID $INPUT_HASH $VTIME`. Make sure vtime does not get rounded. `input_hash` and `vtime` should match exactly what is contained in the example's `moment` structure. Bound the download with `timeout`; if it times out the log is large, and you must switch to windowed downloads with `--begin-vtime` rather than waiting on the full stream — see "Large logs: download a window" in `references/logs.md`.
+   c. Download the example's log using `snouty runs --json logs $RUN_ID $INPUT_HASH $VTIME`. Make sure vtime does not get rounded. `input_hash` and `vtime` should match exactly what is contained in the example's `moment` structure. Log sizes are unknown in advance and a full history can take 10+ minutes to stream, so size it first with a narrow `--begin-vtime` probe rather than pulling the whole thing blindly — see "Large logs: download a window" in `references/logs.md`.
    d. Analyze the downloaded log locally
    e. If you aren't certain what caused the issue, consider downloading logs from other counterexamples and examples for the same property. Compare each occurrence and try to see if there are any similarities or differences that might explain the failure cause. Logs from passing examples can be useful to compare against to find differences between success and failure cases.
 

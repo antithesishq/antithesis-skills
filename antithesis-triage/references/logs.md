@@ -2,19 +2,19 @@
 
 ## Download a log
 
-Use `snouty runs --json logs`, redirecting the stream to a file. Always bound
-the download with `timeout` — log sizes vary enormously and there is no way to
-know a log's size before fetching it:
+Use `snouty runs --json logs`, redirecting the stream to a file:
 
 ```bash
 mkdir -p /tmp/triage
 LOG=/tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
-timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 ```
 
-If `timeout` exits **124**, the log is large — a full history can take 10+
-minutes to stream. Do **not** just retry with a bigger timeout; read "Large
-logs: download a window" below.
+Log sizes vary enormously and cannot be known before fetching — a full history
+can take 10+ minutes to stream, which exceeds the command timeout in many agent
+harnesses. **Size the log before pulling it in full**: read "Large logs:
+download a window" below, which probes cheaply with `--begin-vtime` and tells
+you what a full download would cost.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
@@ -24,61 +24,62 @@ Always write logs to a unique path unless you have explicit instructions otherwi
 
 ## Large logs: download a window
 
-Streaming runs **earliest entry → `VTIME`**. So a download cut short by
-`timeout` holds the *oldest* events and is missing the part you care about most:
-the moment of failure at the end. Never analyze a timed-out log as if it were
-complete.
-
-Fetch only a window of virtual time with `--begin-vtime`, which starts the
-stream at that vtime instead of the timeline's earliest entry:
+`--begin-vtime` starts the stream at a given vtime instead of the timeline's
+earliest entry, so you can fetch a bounded window instead of the whole history:
 
 ```bash
-timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
   --begin-vtime "$BEGIN_VTIME" > window.ndjson
 ```
 
-### Discard the timed-out partial; probe with a narrow window instead
+Use this to size the log *before* committing to a full download.
 
-Do **not** try to extract a download rate from the timed-out file. There is a
-server-side preparation phase that emits nothing, so a `timeout` landing in it
-yields a **0-byte file**, and elapsed time mostly measures that fixed latency
-rather than transfer speed. Observed on a 1031-vtime-second run: 4s and 6s
-budgets both produced 0 bytes, 8s produced the *complete* 56 MB log, and 10s
-produced a 48 MB prefix. Wall-clock is not a reliable size signal.
+### Probe with a narrow window first
 
-Instead, probe with a **narrow window** ending at the moment. It completes
-quickly, and unlike a truncated download it is immediately usable:
+A narrow window ending at the moment returns in seconds regardless of how large
+the full history is, so it is always safe to run first:
 
 ```bash
 BEGIN_VTIME=$(python3 -c "print($VTIME - 30)")
-timeout 120 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
   --begin-vtime "$BEGIN_VTIME" > probe.ndjson
 wc -c probe.ndjson
 ```
 
 Divide the byte count by the window's vtime width to get bytes per
 vtime-second, then multiply to size a wider window or to estimate the full log
-(`bytes_per_vt * VTIME`). Density is fairly uniform over nearby vtime — the
-same run measured 87 KB, 91 KB, and 96 KB per vtime-second over 10, 50, and 200
-second windows. Whole-run density is *lower* (55 KB/vt there, since early
-setup is sparse), so extrapolating from a late window over-estimates the full
-size. That errs toward caution, which is what you want when deciding whether to
-attempt the whole thing.
+(`bytes_per_vt * VTIME`). Density is fairly uniform over nearby vtime — one
+1031-vtime-second run measured 87 KB, 91 KB, and 96 KB per vtime-second over
+10, 50, and 200 second windows. Whole-run density is *lower* (55 KB/vt there,
+since early setup is sparse), so extrapolating from a late window over-estimates
+the full size. That errs toward caution, which is what you want when deciding
+whether to attempt the whole thing.
 
 Then decide:
 
 - **You need whole-run context, or your analysis depends on fault state** —
-  re-run without `--begin-vtime` and a generous timeout. Fault correlation
-  requires the full log; see "Fault state is not trustworthy in a windowed log"
-  below.
+  download the full log. Fault correlation requires it; see "Fault state is not
+  trustworthy in a windowed log" below. If the estimate suggests the download
+  will outlast your harness's command timeout, run it in the background (in
+  Claude Code, `run_in_background: true`) rather than in the foreground.
 - **Otherwise** — keep working in windows ending at `VTIME`. That is the failure
   neighborhood, where triage usually concludes. Widen backwards with a smaller
   `BEGIN_VTIME` if the cause predates the window.
 
-If the timed-out partial is non-empty, keep it: it holds run-startup context
-(`setup`, container lifecycle, early workload) that a late window cannot
-contain. Guard `jq` with `fromjson? // empty` when reading it, since a
-truncated file can end in a half-written line:
+Do not try to infer size from a download your harness cut short. Snouty has a
+server-side preparation phase that emits nothing before the bulk transfer
+begins, so a truncated download is often **0 bytes**, and elapsed wall-time
+mostly measures that fixed latency rather than transfer speed. On the run above,
+budgets of 4s and 6s both produced 0 bytes, 8s produced the *complete* 56 MB
+log, and 10s produced a 48 MB prefix — not monotonic, and useless as a signal.
+The narrow-window probe is the reliable measurement.
+
+If you do end up with a partial file, it is still worth keeping: it holds
+run-startup context (`setup`, container lifecycle, early workload) that a late
+window cannot contain. Because streaming runs **earliest entry → `VTIME`**, a
+partial holds the *oldest* events and is missing the failure moment at the end —
+never analyze one as if it were complete. Guard `jq` with `fromjson? // empty`
+when reading it, since a truncated file can end in a half-written line:
 
 ```bash
 jq -R 'fromjson? // empty | .moment.vtime' partial.ndjson \
