@@ -42,8 +42,7 @@ not analyze it as a complete log. Its last line can be incomplete, so use
 
 ### Get a slice of the log
 
-`--begin-vtime` starts the stream at a vtime that you select. The stream does
-not start at the earliest entry:
+`--begin-vtime` starts the stream at a vtime that you select:
 
 ```bash
 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
@@ -53,10 +52,6 @@ snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
 A slice that stops at `VTIME` contains the moment of the failure. This is
 usually the most useful part of the log. For more context, use a smaller
 `BEGIN_VTIME`.
-
-`--begin-input-hash` is optional. You must use it together with `--begin-vtime`.
-If you do not, snouty exits with code 2. It does not change the output. Omit it
-if you do not know the input hash at `BEGIN_VTIME`.
 
 > **The fault annotations in a slice are partial.** Snouty calculates
 > `active_faults` from the fault events in the stream. A slice does not contain
