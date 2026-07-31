@@ -26,8 +26,7 @@ If the download does not complete before the timeout, decide what to do:
 
 - **You need the full log** — wait for the download to complete. Use a longer
   timeout, or wait for the command if it continues in the background. Only a
-  full log gives correct fault annotations. See "Fault state is not trustworthy
-  in a slice" below.
+  full log gives the complete fault state.
 - **A part of the log is sufficient** — cancel the download. Then get a slice
   with `--begin-vtime`.
 
@@ -36,10 +35,10 @@ of the log is not constant. One part of a run can be silent. Another part can be
 very dense.
 
 Keep the incomplete file if you cancel the download. It contains the start of the
-run: `setup`, container lifecycle, and the early workload. A slice at the end of
-the run does not contain this data. But the incomplete file does not contain the
-moment of the failure. Do not analyze it as a complete log. Its last line can be
-incomplete, so use `fromjson? // empty` in your jq filters.
+run: `setup`, container lifecycle, and the early workload. A slice does not have
+this data. But the incomplete file does not contain the moment of the failure. Do
+not analyze it as a complete log. Its last line can be incomplete, so use
+`fromjson? // empty` in your jq filters.
 
 ### Get a slice of the log
 
@@ -59,41 +58,14 @@ usually the most useful part of the log. For more context, use a smaller
 If you do not, snouty exits with code 2. It does not change the output. Omit it
 if you do not know the input hash at `BEGIN_VTIME`.
 
-### Fault state is not trustworthy in a slice
+> **The fault annotations in a slice are partial.** Snouty calculates
+> `active_faults` from the fault events in the stream. A slice does not contain
+> the events before `BEGIN_VTIME`, so a fault that started earlier does not
+> appear. The faults that you see are correct, but other faults can also be
+> active. An empty `active_faults` is not proof that no fault was active.
+> Download the full log if you need the complete fault state.
 
-**Only a full log gives correct fault state.** Snouty calculates `active_faults`
-from the fault events in the stream. A slice does not contain the fault events
-before `BEGIN_VTIME`. Snouty cannot see a fault that started earlier. It reports
-`active_faults` as `{}`.
-
-The slice gives you no indication of this problem. It contains no `fault`
-events. An incomplete annotation and a region with no faults look the same.
-
-For the same event at vtime `1031.4932` in one run:
-
-| Download             | `active_faults`                           |
-| -------------------- | ----------------------------------------- |
-| Full log             | `{"network_partition":{"vtime":1027.32}}` |
-| `--begin-vtime 1030` | `{}` — and no `fault` events in the slice  |
-
-Therefore:
-
-- Do not conclude that no fault was active. Report that you cannot establish
-  the fault state.
-- If your conclusion needs fault correlation, download the full log.
-
-An earlier `BEGIN_VTIME` makes a correct annotation more probable. It is not a
-solution. You cannot confirm from the slice that you went back far enough. Some
-fault windows have no end: a `partition` that stays open until a later
-`restore`, or a permanent clock `skip` with no `max_duration`. These can start
-at any earlier vtime.
-
-### Other limits of a slice
-
-- A slice at the end of the run does not contain the start-up events (`setup`,
-  `containers_meta`, `antithesis_setup`).
-- Give the vtime range that you analyzed when you report your results. Then a
-  reader does not apply your results to the full history.
+Give the vtime range that you analyzed when you report results from a slice.
 
 ## JSON Log format
 
