@@ -7,12 +7,12 @@ description: >
   details. Load after a run completes or when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
-  version: "2026-07-14 1f59c97"
+  version: "2026-07-31 5bcc2aa"
 ---
 
 # Antithesis Run Triage
 
-**Skill version:** `2026-07-14 1f59c97`
+**Skill version:** `2026-07-31 5bcc2aa`
 
 Use this skill to analyze Antithesis test runs.
 
