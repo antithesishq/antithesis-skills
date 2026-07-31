@@ -10,11 +10,9 @@ LOG=/tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 ```
 
-Log sizes vary enormously and cannot be known before fetching — a full history
-can take 10+ minutes to stream, which exceeds the command timeout in many agent
-harnesses. **Size the log before pulling it in full**: read "Large logs:
-download a window" below, which probes cheaply with `--begin-vtime` and tells
-you what a full download would cost.
+Some logs are very large. A download can take 10 minutes or more. You cannot
+know the size of a log before you download it. Read "Large logs" below before
+you start.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
@@ -22,115 +20,100 @@ you what a full download would cost.
 
 Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
 
-## Large logs: download a window
+## Large logs
 
-`--begin-vtime` starts the stream at a given vtime instead of the timeline's
-earliest entry, so you can fetch a bounded window instead of the whole history:
+Run the log download in the background. Do not wait for it in the foreground.
+In Claude Code, use `run_in_background: true`. Then monitor the progress.
+
+### Monitor the progress
+
+Snouty writes the log in order of virtual time. It starts at the earliest entry
+and stops at `VTIME`. To see the progress, read the size of the file and the
+last vtime in it:
+
+```bash
+wc -c "$LOG"
+jq -R 'fromjson? // empty | .moment.vtime' "$LOG" | tail -1
+```
+
+Use `fromjson? // empty`. The last line can be incomplete while the download
+runs.
+
+Compare the last vtime with your target `VTIME`. This shows you how far the
+download has advanced.
+
+**You cannot calculate the total size or the time that remains.** The density of
+the log is not constant. One part of a run can be silent. Another part can be
+very dense. Use the progress only to see if the download continues to advance.
+
+### Decide what to do
+
+If the download is too slow, make a decision:
+
+- **You need the full log** — let the download continue. Only a full log gives
+  correct fault annotations. See "Fault state is not trustworthy in a slice"
+  below.
+- **A part of the log is sufficient** — stop the download. Then get a slice
+  with `--begin-vtime`.
+
+Keep the incomplete file if you have one. It contains the start of the run:
+`setup`, container lifecycle, and the early workload. A slice at the end of the
+run does not contain this data. But the incomplete file does not contain the
+moment of the failure. Do not analyze it as a complete log.
+
+### Get a slice of the log
+
+`--begin-vtime` starts the stream at a vtime that you select. The stream does
+not start at the earliest entry:
 
 ```bash
 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
-  --begin-vtime "$BEGIN_VTIME" > window.ndjson
+  --begin-vtime "$BEGIN_VTIME" > slice.ndjson
 ```
 
-Use this to size the log *before* committing to a full download.
+A slice that stops at `VTIME` contains the moment of the failure. This is
+usually the most useful part of the log. For more context, use a smaller
+`BEGIN_VTIME`.
 
-### Probe with a narrow window first
+`--begin-input-hash` is optional. You must use it together with `--begin-vtime`.
+If you do not, snouty exits with code 2. It does not change the output. Omit it
+if you do not know the input hash at `BEGIN_VTIME`.
 
-A narrow window ending at the moment returns in seconds regardless of how large
-the full history is, so it is always safe to run first:
+### Fault state is not trustworthy in a slice
 
-```bash
-BEGIN_VTIME=$(python3 -c "print($VTIME - 30)")
-snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" \
-  --begin-vtime "$BEGIN_VTIME" > probe.ndjson
-wc -c probe.ndjson
-```
+**Only a full log gives correct fault state.** Snouty calculates `active_faults`
+from the fault events in the stream. A slice does not contain the fault events
+before `BEGIN_VTIME`. Snouty cannot see a fault that started earlier. It reports
+`active_faults` as `{}`.
 
-Divide the byte count by the window's vtime width to get bytes per
-vtime-second, then multiply to size a wider window or to estimate the full log
-(`bytes_per_vt * VTIME`). Density is fairly uniform over nearby vtime — one
-1031-vtime-second run measured 87 KB, 91 KB, and 96 KB per vtime-second over
-10, 50, and 200 second windows. Whole-run density is *lower* (55 KB/vt there,
-since early setup is sparse), so extrapolating from a late window over-estimates
-the full size. That errs toward caution, which is what you want when deciding
-whether to attempt the whole thing.
+The slice gives you no indication of this problem. It contains no `fault`
+events. An incomplete annotation and a region with no faults look the same.
 
-Then decide:
+For the same event at vtime `1031.4932` in one run:
 
-- **You need whole-run context, or your analysis depends on fault state** —
-  download the full log. Fault correlation requires it; see "Fault state is not
-  trustworthy in a windowed log" below. If the estimate suggests the download
-  will outlast your harness's command timeout, run it in the background (in
-  Claude Code, `run_in_background: true`) rather than in the foreground.
-- **Otherwise** — keep working in windows ending at `VTIME`. That is the failure
-  neighborhood, where triage usually concludes. Widen backwards with a smaller
-  `BEGIN_VTIME` if the cause predates the window.
-
-Do not try to infer size from a download your harness cut short. Snouty has a
-server-side preparation phase that emits nothing before the bulk transfer
-begins, so a truncated download is often **0 bytes**, and elapsed wall-time
-mostly measures that fixed latency rather than transfer speed. On the run above,
-budgets of 4s and 6s both produced 0 bytes, 8s produced the *complete* 56 MB
-log, and 10s produced a 48 MB prefix — not monotonic, and useless as a signal.
-The narrow-window probe is the reliable measurement.
-
-If you do end up with a partial file, it is still worth keeping: it holds
-run-startup context (`setup`, container lifecycle, early workload) that a late
-window cannot contain. Because streaming runs **earliest entry → `VTIME`**, a
-partial holds the *oldest* events and is missing the failure moment at the end —
-never analyze one as if it were complete. Guard `jq` with `fromjson? // empty`
-when reading it, since a truncated file can end in a half-written line:
-
-```bash
-jq -R 'fromjson? // empty | .moment.vtime' partial.ndjson \
-  | awk 'NR==1{first=$0} {last=$0} END{print "first="first, "last="last, "events="NR}'
-```
-
-`--begin-input-hash` is an optional optimization and **must** be paired with
-`--begin-vtime` (snouty exits 2 otherwise). It does not change the output —
-omit it unless you know the input hash in effect at `BEGIN_VTIME`, e.g. from
-`snouty runs --json events`.
-
-### Fault state is not trustworthy in a windowed log
-
-**Only a full log establishes fault state.** `active_faults` is reconstructed
-from the fault events snouty sees *in the stream*. A window cannot see fault
-events before its `BEGIN_VTIME`, so any fault window opened earlier is absent
-from the annotation — and absent as `{}`, not as something partial.
-
-Nothing inside the window reveals this. The window contains zero `fault` events,
-so an incomplete annotation and a genuinely fault-free region look identical.
-Measured on the same run, for the identical event at vtime `1031.4932`:
-
-| Download             | `active_faults` at that event             |
+| Download             | `active_faults`                           |
 | -------------------- | ----------------------------------------- |
 | Full log             | `{"network_partition":{"vtime":1027.32}}` |
-| `--begin-vtime 1030` | `{}` — and no `fault` events in the window |
+| `--begin-vtime 1030` | `{}` — and no `fault` events in the slice  |
 
-Consequences for analysis:
+Therefore:
 
-- **Never conclude "no fault was active" from a windowed log.** Report that
-  fault state could not be established, not that the region was fault-free.
-- **If your conclusion depends on fault correlation, download the full log.**
-  This is the case where windowing is not an option — pay the download cost.
-  Correlating a failure with an injected fault is exactly the analysis a window
-  cannot support.
+- Do not conclude that no fault was active. Report that you cannot establish
+  the fault state.
+- If your conclusion needs fault correlation, download the full log.
 
-Starting the window earlier does make a correct annotation *more likely* — on
-that run `--begin-vtime 1020` recovers the partition exactly, at 966 KB vs
-56 MB — so pad generously past typical `max_duration` values when you must work
-in a window. But padding is a mitigation, not a fix: you cannot verify from inside
-the window that the pad was deep enough, and fault windows with no bounded end —
-a `partition` open until a later `restore`, a permanent clock `skip` with no
-`max_duration` — can begin arbitrarily far back, so no offset is sufficient in
-general.
+An earlier `BEGIN_VTIME` makes a correct annotation more probable. It is not a
+solution. You cannot confirm from the slice that you went back far enough. Some
+fault windows have no end: a `partition` that stays open until a later
+`restore`, or a permanent clock `skip` with no `max_duration`. These can start
+at any earlier vtime.
 
-### Other caveats when analyzing a window
+### Other limits of a slice
 
-- Run-startup events (`setup`, `containers_meta`, `antithesis_setup`) live at
-  the beginning of the history and will not appear in a late window.
-- Say which vtime range you analyzed when reporting findings from a window, so
-  conclusions aren't read as covering the whole history.
+- A slice at the end of the run does not contain the start-up events (`setup`,
+  `containers_meta`, `antithesis_setup`).
+- Give the vtime range that you analyzed when you report your results. Then a
+  reader does not apply your results to the full history.
 
 ## JSON Log format
 
