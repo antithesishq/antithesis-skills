@@ -10,9 +10,9 @@ LOG=/tmp/triage/${PROPERTY_NAME}_${INPUT_HASH}.ndjson
 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 ```
 
-Some logs are very large. A download can take 10 minutes or more. You cannot
-know the size of a log before you download it. Read "Large logs" below before
-you start.
+Some logs are very large. A download can take 10 minutes or more, and you cannot
+know the size of a log before you download it. Run the download with a timeout.
+If the download does not complete, read "Large logs" below.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
@@ -22,44 +22,24 @@ Always write logs to a unique path unless you have explicit instructions otherwi
 
 ## Large logs
 
-Run the log download in the background. Do not wait for it in the foreground.
-In Claude Code, use `run_in_background: true`. Then monitor the progress.
+If the download does not complete before the timeout, decide what to do:
 
-### Monitor the progress
-
-Snouty writes the log in order of virtual time. It starts at the earliest entry
-and stops at `VTIME`. To see the progress, read the size of the file and the
-last vtime in it:
-
-```bash
-wc -c "$LOG"
-jq -R 'fromjson? // empty | .moment.vtime' "$LOG" | tail -1
-```
-
-Use `fromjson? // empty`. The last line can be incomplete while the download
-runs.
-
-Compare the last vtime with your target `VTIME`. This shows you how far the
-download has advanced.
-
-**You cannot calculate the total size or the time that remains.** The density of
-the log is not constant. One part of a run can be silent. Another part can be
-very dense. Use the progress only to see if the download continues to advance.
-
-### Decide what to do
-
-If the download is too slow, make a decision:
-
-- **You need the full log** — let the download continue. Only a full log gives
-  correct fault annotations. See "Fault state is not trustworthy in a slice"
-  below.
-- **A part of the log is sufficient** — stop the download. Then get a slice
+- **You need the full log** — wait for the download to complete. Use a longer
+  timeout, or wait for the command if it continues in the background. Only a
+  full log gives correct fault annotations. See "Fault state is not trustworthy
+  in a slice" below.
+- **A part of the log is sufficient** — cancel the download. Then get a slice
   with `--begin-vtime`.
 
-Keep the incomplete file if you have one. It contains the start of the run:
-`setup`, container lifecycle, and the early workload. A slice at the end of the
-run does not contain this data. But the incomplete file does not contain the
-moment of the failure. Do not analyze it as a complete log.
+Do not try to estimate the size of the log or the time that remains. The density
+of the log is not constant. One part of a run can be silent. Another part can be
+very dense.
+
+Keep the incomplete file if you cancel the download. It contains the start of the
+run: `setup`, container lifecycle, and the early workload. A slice at the end of
+the run does not contain this data. But the incomplete file does not contain the
+moment of the failure. Do not analyze it as a complete log. Its last line can be
+incomplete, so use `fromjson? // empty` in your jq filters.
 
 ### Get a slice of the log
 
