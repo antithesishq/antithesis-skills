@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-07-31
+
+- feat: teach triage to window large log downloads with --begin-vtime ([PR #180](https://github.com/antithesishq/antithesis-skills/pull/180))
+
 ## 2026-07-14
 
 - feat: write skill version into SKILL.md body below the title ([PR #179](https://github.com/antithesishq/antithesis-skills/pull/179))
