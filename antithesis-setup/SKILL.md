@@ -61,7 +61,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 - Coverage instrumentation: `https://antithesis.com/docs/reference/instrumentation/coverage_instrumentation.md`
 - Assertion cataloging: `https://antithesis.com/docs/reference/sdk/assertion_cataloging.md`
 - Handling external dependencies: `https://antithesis.com/docs/reference/dependencies.md`
-- Fault injection: `https://antithesis.com/docs/concepts/fault_injection.md`
+- Fault injection: `https://antithesis.com/docs/product/fault_injection.md`
 
 ## Workflow
 

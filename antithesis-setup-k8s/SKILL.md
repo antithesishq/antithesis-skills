@@ -44,7 +44,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 - Kubernetes setup guide: `https://antithesis.com/docs/getting_started/setup_guide/setup_k8s.md`
 - Kubernetes best practices: `https://antithesis.com/docs/best_practices/k8s_best_practices.md`
 - Handling external dependencies: `https://antithesis.com/docs/reference/dependencies.md`
-- Fault injection: `https://antithesis.com/docs/environment/fault_injection.md`
+- Fault injection: `https://antithesis.com/docs/product/fault_injection.md`
 
 ## Workflow
 
