@@ -97,7 +97,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 - Test commands reference: `https://antithesis.com/docs/product/test_templates/test_composer_reference.md`
 - SDK reference: `https://antithesis.com/docs/reference/sdk.md`
 - Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
-- Fault injection: `https://antithesis.com/docs/concepts/fault_injection.md`
+- Fault injection: `https://antithesis.com/docs/product/fault_injection.md`
 
 ## Reference Files
 

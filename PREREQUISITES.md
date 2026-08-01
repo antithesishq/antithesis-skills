@@ -2,7 +2,7 @@
 
 You need the following to use antithesis-skills:
 
-- **An AI agent** that supports skills — tested with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenAI Codex](https://openai.com/index/openai-codex/). Other agents that support skills may also work.
+- **An AI agent** that supports skills — tested with [Claude Code](https://code.claude.com/docs) and [OpenAI Codex](https://openai.com/index/openai-codex/). Other agents that support skills may also work.
 - **npm** — the installer runs via `npx`, which ships with [npm](https://www.npmjs.com/).
 - **A container runtime** — [Docker](https://github.com/docker) and [Docker Compose](https://docs.docker.com/compose/install/), or [Podman](https://podman.io/).
 - **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.

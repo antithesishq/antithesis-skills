@@ -21,7 +21,7 @@ If you're more experienced than the floor we just described, with months or year
 If you're not at the floor on Antithesis or agentic tools yet, here's where to start:
 
 - **New to Antithesis?** Start at [the Antithesis introduction](https://antithesis.com/docs/introduction/welcome_to_antithesis/). We'll touch on Antithesis concepts where we have to, but the real introduction lives elsewhere.
-- **Never used an agentic coding tool at all?** Start at your tool's own getting-started guide: [Claude Code](https://docs.claude.com/en/docs/claude-code/overview), [Codex](https://developers.openai.com/codex/). Get the tool installed, try a small task or two, then come back here. Much of this guide lands harder without that first hands-on experience.
+- **Never used an agentic coding tool at all?** Start at your tool's own getting-started guide: [Claude Code](https://code.claude.com/docs/en/overview), [Codex](https://learn.chatgpt.com/docs). Get the tool installed, try a small task or two, then come back here. Much of this guide lands harder without that first hands-on experience.
 
 ## Vocabulary
 

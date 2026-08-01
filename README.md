@@ -132,7 +132,7 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 
 **Platform**: macOS or Linux.
 
-**AI agent**: Tested with [Claude Code](https://docs.anthropic.com/en/docs/claude-code) and [OpenAI Codex](https://openai.com/index/openai-codex/). These skills work best with agents that can spawn sub-agents for self-review. Other agents that support skills may also work.
+**AI agent**: Tested with [Claude Code](https://code.claude.com/docs) and [OpenAI Codex](https://openai.com/index/openai-codex/). These skills work best with agents that can spawn sub-agents for self-review. Other agents that support skills may also work.
 
 ## Prerequisites
 
