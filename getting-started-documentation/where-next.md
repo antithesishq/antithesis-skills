@@ -12,7 +12,7 @@ Whichever tool you're using has its own documentation. The parts about hooks, sk
 
 For Claude Code: [code.claude.com/docs](https://code.claude.com/docs).
 
-For Codex: [learn.chatgpt.com/docs](https://learn.chatgpt.com/docs).
+For Codex: [learn.chatgpt.com/docs/codex/cli](https://learn.chatgpt.com/docs/codex/cli).
 
 ## Where to ask for help
 
