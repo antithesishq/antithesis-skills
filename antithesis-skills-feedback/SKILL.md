@@ -7,12 +7,12 @@ description: >
   feedback on, any Antithesis skill. Does not auto-submit — presents the
   URL for the user to review.
 metadata:
-  version: "2026-07-31 5bcc2aa"
+  version: "2026-08-01 5b6aeb5"
 ---
 
 # Antithesis Skills feedback
 
-**Skill version:** `2026-07-31 5bcc2aa`
+**Skill version:** `2026-08-01 5b6aeb5`
 
 Help the user file a bug report against the Antithesis skills by opening a pre-filled GitHub issue.
 
