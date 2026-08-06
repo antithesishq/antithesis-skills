@@ -74,7 +74,8 @@ If the run has a status of "incomplete", refer to the `Diagnose incomplete run` 
 2. If `links.triage_report` is null/absent in the run-info output, no triage report was generated for this run (typical for `cancelled` runs and some `unknown`/`starting` states). Report that the run is not triageable — the properties and logs endpoints will return 404 for these runs.
 3. Read `references/properties.md` to load properties
 4. Review passed/failed counts
-5. Build a detailed summary of the run including a review of all failures as well as flagging any new failures.
+5. Check the instrumentation setup signals — the `Software was instrumented` and `Symbols were uploaded` properties. Read `references/instrumentation.md` to interpret them.
+6. Build a detailed summary of the run including a review of all failures as well as flagging any new failures. Include the instrumentation status in the summary.
 
 ### Investigate failed properties
 
@@ -101,6 +102,10 @@ If the run has a status of "incomplete", refer to the `Diagnose incomplete run` 
 6. Report your findings.
 
 **Important:** The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
+
+### Verify instrumentation
+
+To verify that the SUT and the workload are instrumented and that their symbols are registered, read `references/instrumentation.md`.
 
 ### Diagnose incomplete run
 
@@ -143,3 +148,4 @@ Review criteria:
 - Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend
 - If comparing runs, differences are grounded in data from both reports, not just one
+- Claims that a binary is not instrumented follow `references/instrumentation.md` and do not rest only on the deduplicated examples of the `Software was instrumented` property
