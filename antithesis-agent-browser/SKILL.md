@@ -57,7 +57,7 @@ here when they need an authenticated browser session.
 Every invocation MUST use a unique `--session` value. Generate it once and reuse it whenever you see `$SESSION` referenced by this skill.
 
 ```sh
-SESSION=`antithesis-ab-$(date +%s)-$$`
+SESSION=antithesis-ab-$(date +%s)-$$
 ```
 
 Use `--session-name antithesis` on the FIRST `agent-browser` command that references a new `$SESSION`. This creates the session and restores saved cookies. Subsequent commands for the same `$SESSION` do not need `--session-name` — the session already exists.
