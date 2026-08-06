@@ -148,4 +148,4 @@ Review criteria:
 - Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend
 - If comparing runs, differences are grounded in data from both reports, not just one
-- Claims that a binary is not instrumented follow the evidence rules in `references/instrumentation.md`, not only the deduplicated examples of the `Software was instrumented` property
+- Claims that a binary is not instrumented follow `references/instrumentation.md` and do not rest only on the deduplicated examples of the `Software was instrumented` property
