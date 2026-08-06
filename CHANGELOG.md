@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-08-06
+
+- feat: triage instrumentation setup signals in antithesis-triage ([PR #184](https://github.com/antithesishq/antithesis-skills/pull/184))
+
 ## 2026-08-01
 
 - fix: repair broken fault injection doc links and resolve redirects ([PR #182](https://github.com/antithesishq/antithesis-skills/pull/182))
