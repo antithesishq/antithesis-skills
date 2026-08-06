@@ -3,12 +3,12 @@ name: antithesis-documentation
 description: Use Antithesis documentation efficiently for product, workflow, and integration questions. Prefer the snouty docs CLI when available, and otherwise request markdown versions of documentation pages directly.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-08-01 5b6aeb5"
+  version: "2026-08-06 957060a"
 ---
 
 # Antithesis Documentation
 
-**Skill version:** `2026-08-01 5b6aeb5`
+**Skill version:** `2026-08-06 957060a`
 
 ## Antithesis Overview
 

@@ -6,12 +6,12 @@ description: >
   to submit your first Antithesis test run. If the desired setup is Kubernetes, defer to the antithesis-setup-k8s skill.
 compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-08-01 5b6aeb5"
+  version: "2026-08-06 957060a"
 ---
 
 # Antithesis Setup
 
-**Skill version:** `2026-08-01 5b6aeb5`
+**Skill version:** `2026-08-06 957060a`
 
 ## Purpose and Goal
 
