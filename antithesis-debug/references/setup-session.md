@@ -37,9 +37,12 @@ optional semicolon-delimited list of emails to notify.
 
 Infer which moment to use based on the user's prompt. The user may ask you to get a moment from a few different sources:
 
-- A `Moment.from({ ... })` blob from the report's _copy moment_ button, a
-  copied log line, or some free-form message — read the `input_hash` and `vtime`
-  out of it yourself.
+- **A moment pasted from the Antithesis UI.** The report's _copy moment_ button
+  gives a `Moment.from({ ... })` blob. A copied log line or a free-form message
+  can also contain one. Read the `run_id`, `input_hash`, and `vtime` out of the
+  blob yourself and pass them as the flags above. Do not pipe the blob into
+  `snouty debug --stdin`: snouty 0.7.0 removed `Moment.from` parsing, and
+  `--stdin` accepts JSON only.
 - **The API.** Moments come back from `snouty runs show $RUN_ID` (the failure
   moment of an incomplete run), `snouty runs properties $RUN_ID --detail`
   (example / counterexample moments per property), and the `moment` attached
