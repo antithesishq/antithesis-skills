@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-08-15
+
+- fix: pass pasted moment values to snouty as flags ([PR #188](https://github.com/antithesishq/antithesis-skills/pull/188))
+
 ## 2026-08-06
 
 - feat: triage instrumentation setup signals in antithesis-triage ([PR #184](https://github.com/antithesishq/antithesis-skills/pull/184))
