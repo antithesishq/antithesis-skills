@@ -161,19 +161,19 @@ These skills invoke external tools (Docker, Snouty, agent-browser) that your AI 
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
-| Skill                         | Tools used                                       |
-| ----------------------------- | ------------------------------------------------ |
-| `antithesis-research`         | No explicit external tools                       |
-| `antithesis-setup`            | `docker`/`podman`, `snouty`                      |
-| `antithesis-setup-k8s`        | `docker`/`podman`, `snouty`                      |
-| `antithesis-workload`         | `snouty`                                         |
-| `antithesis-launch`           | `docker`/`podman`, `snouty`                      |
-| `antithesis-triage`           | `snouty`, `jq`                                   |
-| `antithesis-debug`            | `agent-browser`, `jq`                            |
-| `antithesis-query-logs`       | `snouty`, `agent-browser`, `jq`                  |
-| `antithesis-agent-browser`    | `agent-browser`, `jq`                            |
-| `antithesis-documentation`    | `snouty docs`                                    |
-| `antithesis-mutation-testing` | `docker-compose`, `snouty`, `jq`, `git`, `rsync` |
+| Skill                                  | Tools used                      |
+| -------------------------------------- | ------------------------------- |
+| `antithesis-research`                  | No explicit external tools      |
+| `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
+| `antithesis-setup-k8s`                 | `docker`/`podman`, `snouty`     |
+| `antithesis-workload`                  | `snouty`                        |
+| `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
+| `antithesis-triage`                    | `snouty`, `jq`                  |
+| `antithesis-debug`                     | `agent-browser`, `jq`           |
+| `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
+| `antithesis-agent-browser`             | `agent-browser`, `jq`           |
+| `antithesis-documentation`             | `snouty docs`                   |
+| `antithesis-mutation-testing`          | `docker-compose`, `snouty`, `jq`, `git`, `rsync` |
 
 ## Install
 
