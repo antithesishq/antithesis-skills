@@ -15,7 +15,11 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY \
       GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_NAMESPACE \
       GIT_CEILING_DIRECTORIES GIT_PREFIX
 
-MARKER=".antithesis-mutation-fork"
+# Inside .git deliberately. The work tree is what `git add -A -f` sweeps into a
+# commit and what `git clean -x` deletes, so a marker living there gets
+# committed into every mutant patch and removed by a reset. .git is neither
+# copied by rsync nor reachable from the index.
+MARKER=".git/antithesis-mutation-fork"
 
 SOURCE=""
 PATCHES=""
@@ -180,11 +184,8 @@ cd "$SOURCE"
 # would keep mut/* branches for mutants whose patches are gone.
 rm -rf "${DEST:?}"
 mkdir -p "$DEST"
-printf 'source=%s\n' "$SOURCE" > "$DEST/$MARKER"
-
 rsync -a --delete \
   --exclude ".git" \
-  --exclude "$MARKER" \
   ${AUTO[@]+"${AUTO[@]}"} \
   ${EXCLUDES[@]+"${EXCLUDES[@]}"} \
   "$SOURCE"/ "$DEST"/
@@ -201,12 +202,19 @@ rsync -a --delete \
 # them out, not .gitignore.
 # Neutralize global git config that would otherwise fail or rewrite the commit.
 git -C "$DEST" init -q --template=''
-# Keep the marker out of the commit: it records --source, so committing it would
-# make base_tree depend on where the source tree is mounted and invalidate a
-# sound baseline on any move. info/exclude rather than merely untracked, because
-# select-mutant.sh runs `git clean -qfd` and would otherwise delete it.
 mkdir -p "$DEST/.git/info"   # --template='' leaves no info/ directory
-printf '/%s\n' "$MARKER" >> "$DEST/.git/info/exclude"
+printf 'source=%s\n' "$SOURCE" > "$DEST/$MARKER"
+# Local config, so every later git command in the fork inherits it -- not just
+# the two commits below. A global core.hooksPath runs the user's hooks inside
+# the fork on every checkout select-mutant.sh does, and their side effects get
+# swept into the exported patch. core.autocrlf would rewrite line endings on
+# checkout but not on the rsync, so the fork would stop matching the source and
+# a CRLF entrypoint stops exec'ing.
+git -C "$DEST" config core.hooksPath "$DEST/.git/mutation-no-hooks"
+git -C "$DEST" config core.autocrlf false
+# Defeats `* text=auto` from a global core.attributesFile, which converts
+# regardless of core.autocrlf.
+printf '* -text\n' > "$DEST/.git/info/attributes"
 git -C "$DEST" config user.email "mutation-testing@antithesis.invalid"
 git -C "$DEST" config user.name "Antithesis Mutation Testing"
 git -C "$DEST" config commit.gpgsign false

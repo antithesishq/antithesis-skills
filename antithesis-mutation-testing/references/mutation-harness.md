@@ -127,9 +127,9 @@ siblings, never a stack. That is what lets every patch apply independently to
 `mutation-base`, so two mutants touching the same file don't collide at build
 time.
 
-1. `git checkout -f -B mut/<mutant-id> mutation-base && git clean -qfd` in the fork
+1. `git checkout -f -B mut/<mutant-id> mutation-base && git clean -qfdx` in the fork
 2. Make the change (see `mutant-design.md` for what the patch contains)
-3. `git add -A && git commit -m "<mutant-id>"` — `-am` stages only *tracked* files, so a mutant that adds a file (a helper, a marker shim) would be exported as a partial patch that still carries its announcement and therefore still passes verification
+3. `git add -A -f && git commit -m "<mutant-id>"` — `-am` stages only *tracked* files, so a mutant that adds a file (a helper, a marker shim) would be exported as a partial patch that still carries its announcement and therefore still passes verification. **`-f` is not optional either:** a plain `git add -A` skips a file the tree's `.gitignore` covers, which exports the announcement without the bug — the same partial patch, from the other direction
 4. Repeat for each mutant, each on its own `mut/<id>` branch off `mutation-base`
 5. `sync-patches.sh --fork "$FORK" --patches "$PATCHES"` exports each branch to `{id}.patch`
 
@@ -139,8 +139,11 @@ time.
 plus a rewritten `image:` tag. `git add -A` then sweeps the previous mutant's
 bug into this one's patch, `verify-mutant.sh` still passes because it only greps
 for the new mutant's own announcement, and the run's verdict gets credited to
-the wrong property. `-f` handles tracked files and `git clean -qfd` the
-untracked ones a patch may have added.
+the wrong property. `-f` handles tracked files and `git clean -qfdx` the
+untracked ones a patch may have added — **`-x` included**, since a file the
+previous mutant created under a `.gitignore` rule is untracked *and* ignored, so
+plain `clean -fd` leaves it in place. The fork marker lives inside
+`.git`, so neither `-x` nor `add -A -f` can reach it.
 
 The branch name supplies the mutant id and the patch filename, so the id
 survives verbatim — it is not derived from the commit subject and cannot be

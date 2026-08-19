@@ -156,8 +156,11 @@ if [ "${NOPATCHES:-0}" -eq 1 ]; then
 fi
 
 # Leave the fork pristine so a stray build cannot pick up a mutant by accident.
+# Not fatal on its own: under `set -e` a failure here would kill the script
+# before the FAILED summary below, hiding which mutants must not be launched.
 "$SELECT" baseline --fork "$WORK" --patches "$PATCHES" \
-  --images "$IMAGES" --config "$CONFIG" >/dev/null
+  --images "$IMAGES" --config "$CONFIG" >/dev/null ||
+  echo "warning: could not reset the fork to baseline; do not build or launch from it as-is" >&2
 
 echo "built $BUILT mutant image set(s)."
 if [ -n "$FAILED" ]; then

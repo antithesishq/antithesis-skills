@@ -106,7 +106,11 @@ export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$WORK_CANON" | cksum | awk '
 "$SELECT" "$TARGET" --fork "$WORK" --patches "$PATCHES" \
   --images "$IMAGES" --config "$CONFIG"
 
-teardown() { "${COMPOSE_CMD[@]}" -f "$COMPOSE" down -v >/dev/null 2>&1 || true; }
+# No -v. COMPOSE_PROJECT_NAME scopes implicitly-named volumes, but a top-level
+# volume with an explicit `name:` gets no project prefix -- so `down -v` in a
+# fork would remove the user's real data volume. Containers and networks are
+# project-scoped and go either way.
+teardown() { "${COMPOSE_CMD[@]}" -f "$COMPOSE" down >/dev/null 2>&1 || true; }
 trap teardown EXIT
 # Containers left over from an earlier verify keep their logs, and those logs
 # carry this mutant's announcement. Grepping them would pass a rebuilt image

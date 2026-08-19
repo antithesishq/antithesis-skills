@@ -30,6 +30,20 @@ USAGE
 
 die() { echo "sync-patches.sh: $*" >&2; exit 1; }
 
+# Patches come from committed tips, so anything uncommitted is left out of the
+# export and then destroyed by the next fork.sh. A modified compose file is the
+# expected residue of select-mutant.sh; anything else is probably unsaved work.
+warn_dirty() {
+  local branch dirty
+  branch=$(git -C "$WORK" symbolic-ref -q --short HEAD 2>/dev/null) || return 0
+  case "$branch" in mut/*) ;; *) return 0 ;; esac
+  dirty=$(git -C "$WORK" status --porcelain -- . ":(exclude)*/docker-compose.yaml" 2>/dev/null)
+  [ -n "$dirty" ] || return 0
+  echo "warning: $branch has uncommitted changes, which are NOT exported:" >&2
+  printf '%s\n' "$dirty" >&2
+  echo "commit them on that branch and re-run, or they are lost at the next fork" >&2
+}
+
 while [ $# -gt 0 ]; do
   case "$1" in
     --fork) WORK="${2:?--fork needs a value}"; shift 2 ;;
@@ -45,6 +59,8 @@ done
 
 git -C "$WORK" rev-parse mutation-base >/dev/null 2>&1 ||
   die "$WORK has no mutation-base tag; is it a fork?"
+
+warn_dirty
 
 BRANCHES=$(git -C "$WORK" for-each-ref --format='%(refname:short)' 'refs/heads/mut/*')
 [ -n "$BRANCHES" ] || die "no mut/* branches in $WORK; author each mutant on its own branch off mutation-base"

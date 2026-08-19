@@ -11,7 +11,7 @@ unset GIT_DIR GIT_WORK_TREE GIT_INDEX_FILE GIT_OBJECT_DIRECTORY \
       GIT_ALTERNATE_OBJECT_DIRECTORIES GIT_COMMON_DIR GIT_NAMESPACE \
       GIT_CEILING_DIRECTORIES GIT_PREFIX
 
-MARKER=".antithesis-mutation-fork"
+MARKER=".git/antithesis-mutation-fork"
 
 SOURCE=""
 WORK=""
@@ -114,6 +114,19 @@ if git -C "$SOURCE" rev-parse --git-dir >/dev/null 2>&1; then
   hits=$(git -C "$SOURCE" grep -l --untracked --no-exclude-standard -F "ANTITHESIS MUTANT ACTIVE" \
     -- ${SKIP[@]+"${SKIP[@]}"} 2>/dev/null)
   status=$?
+  # git grep refuses --untracked with --recurse-submodules, and a submodule is
+  # a separate repo the parent's search never enters -- so a mutation there
+  # would report as "carries no mutation". Search each one on its own.
+  while IFS= read -r sub; do
+    [ -n "$sub" ] && [ -d "$SOURCE/$sub" ] || continue
+    subhits=$(git -C "$SOURCE/$sub" grep -l --untracked --no-exclude-standard \
+      -F "ANTITHESIS MUTANT ACTIVE" 2>/dev/null)
+    substatus=$?
+    [ "$substatus" -gt 1 ] && status=$substatus
+    [ -n "$subhits" ] && hits=$(printf '%s\n%s' "$hits" "$(printf '%s\n' "$subhits" | sed "s#^#$sub/#")")
+  done <<EOF
+$(git -C "$SOURCE" config -f "$SOURCE/.gitmodules" --get-regexp '^submodule\..*\.path$' 2>/dev/null | awk '{print $2}')
+EOF
 else
   hits=$(grep -rls "ANTITHESIS MUTANT ACTIVE" "$SOURCE" \
     --exclude-dir=.git ${SKIP_DIRS[@]+"${SKIP_DIRS[@]}"} 2>/dev/null)

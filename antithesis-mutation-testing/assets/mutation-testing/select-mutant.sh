@@ -54,6 +54,16 @@ done
 [ -n "$IMAGES" ] || { echo "select-mutant.sh: --images is required" >&2; usage >&2; exit 2; }
 [ -f "$IMAGES" ] || die "missing $IMAGES; list the image names the sweep retags"
 
+# Everything below resets and cleans $WORK. On a wrong --fork -- the user's
+# source tree, say -- that deletes their untracked work, so establish that this
+# really is a fork before touching it. fork.sh writes the marker; the tag is
+# what a reset needs. Both, or nothing happens.
+[ -d "$WORK" ] || die "--fork is not a directory: $WORK"
+[ -e "$WORK/.git/antithesis-mutation-fork" ] ||
+  die "$WORK is not a mutation fork (no .git/antithesis-mutation-fork marker); refusing to reset it"
+git -C "$WORK" rev-parse -q --verify refs/tags/mutation-base >/dev/null 2>&1 ||
+  die "$WORK has no mutation-base tag; run fork.sh first"
+
 COMPOSE="$WORK/$CONFIG/docker-compose.yaml"
 [ -f "$COMPOSE" ] || die "no docker-compose.yaml at $COMPOSE"
 # rsync preserves symlinks, so a compose file that is a link to somewhere in the
@@ -93,13 +103,16 @@ SELECT_OK=0
 reset_on_fail() {
   [ "$SELECT_OK" -eq 1 ] && return 0
   git -C "$WORK" checkout -q -f mutation-base 2>/dev/null || true
-  git -C "$WORK" clean -qfd 2>/dev/null || true
+  git -C "$WORK" clean -qfdx 2>/dev/null || true
   echo "select-mutant.sh: select failed; fork reset to mutation-base" >&2
 }
 trap reset_on_fail EXIT
 
 git -C "$WORK" checkout -q -f mutation-base
-git -C "$WORK" clean -qfd
+# -x as well: a file the previous mutant *created* under a .gitignore rule is
+# untracked, so plain `clean -fd` leaves it, and it survives into the baseline
+# and every later mutant.
+git -C "$WORK" clean -qfdx
 if [ -n "$PATCH" ]; then
   git -C "$WORK" -c apply.whitespace=nowarn apply "$PATCH" 2>/dev/null ||
     git -C "$WORK" -c apply.whitespace=nowarn apply -3 "$PATCH" ||
@@ -112,6 +125,10 @@ while IFS= read -r name || [ -n "$name" ]; do
   name="$(printf '%s' "$name" | tr -d '[:space:]')"
   [ -n "$name" ] || continue
   esc=$(printf '%s' "$name" | sed 's/[.[\*^$]/\\&/g')
+  # The tag embeds the mutant id, so escape it too: an id with `.` or `+`
+  # otherwise makes the verification grep below match the wrong thing, or fail
+  # on a retag that in fact succeeded and blame images.txt for it.
+  tesc=$(printf '%s' "$TAG" | sed 's/[][\.*^$+?(){}|]/\\&/g')
   tmp=$(mktemp "${TMPDIR:-/tmp}/select-mutant.XXXXXX")
   # Anchor to a YAML `image:` key at the start of its line, so a comment, an
   # `org.opencontainers.image:` label, or a `sut_image:` env var cannot satisfy
@@ -124,7 +141,7 @@ while IFS= read -r name || [ -n "$name" ]; do
   # Anchor the check to the image: key. A bare substring test passes when one
   # listed name is a suffix of another ('app' matching inside 'myapp:baseline'),
   # reporting a retag that never happened and launching a stale image.
-  grep -Eq "^[[:space:]]*image:[[:space:]]*[\"']?${esc}:${TAG}([[:space:]\"']|\$)" "$COMPOSE" ||
+  grep -Eq "^[[:space:]]*image:[[:space:]]*[\"']?${esc}:${tesc}([[:space:]\"']|\$)" "$COMPOSE" ||
     die "could not retag '$name' in $COMPOSE: no service has 'image: $name:<tag>'. The entry must match the whole reference minus its tag (e.g. ghcr.io/org/app, not app), and that reference must carry an explicit tag"
   RETAGGED=$((RETAGGED + 1))
 done < "$IMAGES"
