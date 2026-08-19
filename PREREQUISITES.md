@@ -4,7 +4,7 @@ You need the following to use antithesis-skills:
 
 - **An AI agent** that supports skills — tested with [Claude Code](https://code.claude.com/docs) and [OpenAI Codex](https://learn.chatgpt.com/docs/codex/cli). Other agents that support skills may also work.
 - **npm** — the installer runs via `npx`, which ships with [npm](https://www.npmjs.com/).
-- **Docker Compose v2** — snouty drives either the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/) or the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/). `podman compose` and `podman-compose` are not supported. snouty 0.6.1 and earlier accept the standalone binary only, so install the standalone binary if you are unsure which snouty version you run.
+- **Docker Compose v2** — either the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/) or the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/). Antithesis runs the standalone binary against podman, so `podman compose` and `podman-compose` play no part.
 - **A container engine** — [Docker](https://github.com/docker) or [Podman](https://podman.io/), used to build and push images.
 - **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.
 - **[agent-browser](https://github.com/vercel-labs/agent-browser)** — optional, used by the triage, debug, and query-logs skills to interact with the Antithesis web UI.
@@ -33,14 +33,8 @@ sudo apt install -y npm
 
 ### Container Engine and Docker Compose v2
 
-The compose CLI and the container engine are two separate choices. Antithesis
-runs the standalone `docker-compose` binary against podman, and snouty drives
-Docker Compose v2 the same way. Neither uses `podman compose` or
-`podman-compose`. Install one of the two combinations below.
-
-snouty 0.6.1 and earlier accept the standalone `docker-compose` binary only. Add
-the standalone binary to the Docker combination as well if you run one of those
-versions.
+The compose CLI and the container engine are separate choices. Install one of
+these two combinations.
 
 **Docker with the `docker compose` CLI plugin:**
 
@@ -60,20 +54,19 @@ sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-The `docker-compose-v2` package ships the plugin only, at
-`/usr/libexec/docker/cli-plugins/docker-compose`, so it puts no `docker-compose`
-on `PATH`. Podman needs the standalone binary. See the
+The `docker-compose-v2` package ships the CLI plugin only, so it puts no
+`docker-compose` on `PATH`. The commands above fetch the x86-64 standalone
+binary; see the
 [standalone install docs](https://docs.docker.com/compose/install/standalone/)
 for other architectures.
-
-Run `snouty doctor` after installing to confirm which compose CLI and container
-engine snouty selects.
 
 ### Snouty CLI
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
+
+Run `snouty doctor` to confirm the compose CLI and container runtime snouty selects.
 
 ### agent-browser (optional)
 
@@ -118,16 +111,10 @@ brew install npm
 
 ### Container Engine and Docker Compose v2
 
-The compose CLI and the container engine are two separate choices. Antithesis
-runs the standalone `docker-compose` binary against podman, and snouty drives
-Docker Compose v2 the same way. Neither uses `podman compose` or
-`podman-compose`. Install one of the two combinations below.
+The compose CLI and the container engine are separate choices. Install one of
+these two combinations.
 
-snouty 0.6.1 and earlier accept the standalone `docker-compose` binary only. Add
-the standalone binary to the Docker combination as well if you run one of those
-versions.
-
-**Docker with Docker Compose:**
+**Docker with the `docker compose` CLI plugin:**
 
 [Docker Desktop](https://www.docker.com/products/docker-desktop/) includes Docker Engine, Docker Compose, and multi-platform build support:
 
@@ -147,14 +134,13 @@ podman machine init
 podman machine start
 ```
 
-Run `snouty doctor` after installing to confirm which compose CLI and container
-engine snouty selects.
-
 ### Snouty CLI
 
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
+
+Run `snouty doctor` to confirm the compose CLI and container runtime snouty selects.
 
 ### agent-browser (optional)
 
