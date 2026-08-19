@@ -33,6 +33,10 @@ Update `antithesis/scratchbook/property-catalog.md` whenever properties are adde
 
 When the work resolves an open question on a property (or surfaces a new one), keep the Open Questions list under the property in sync with the evidence file. See the `antithesis-research` skill, `references/property-catalog.md` ("Open Questions Conventions").
 
+## Validate the Improvements
+
+A property that passes after this loop is not yet known to be a good property — it may pass because nothing bad happened, or because it could never fail. Once a run comes back green, use the `antithesis-mutation-testing` skill to inject one realistic bug per property and confirm each property actually fires. It reports assertions that are too loose, workload gaps that leave a path unreached, and properties that cannot be falsified at all, and routes each back here or to `antithesis-research`.
+
 ## Cross-Reference
 
 Use `antithesis-research` if triage reveals a new subsystem, guarantee, or failure mode that needs fresh research.

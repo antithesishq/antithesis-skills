@@ -33,6 +33,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
 
+`antithesis-mutation-testing` validates that your property catalog can actually catch bugs. A property that passes every run tells you nothing bad was observed — not that the property would have noticed. This skill injects one realistic bug per property, runs it, and confirms the property fires, then diagnoses each survivor as a bad mutant, a bad assertion, a workload gap, or a property that can't be falsified at all. Run it once the harness is built and your baseline run is green.
+
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
 
 > [!NOTE]
@@ -55,6 +57,8 @@ We recommend that you run `antithesis-research`, `antithesis-setup`, and `antith
 If your system runs on Kubernetes, run `antithesis-setup-k8s` instead of `antithesis-setup` to help shape your Kubernetes manifests and kick off an Antithesis test that uses Kubernetes as the container orchestrator. This skill is currently in development and does not provide the same experience as `antithesis-setup` involving instrumentation and SDK usage.
 
 Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty launch` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
+
+Once a baseline run comes back green, `antithesis-mutation-testing` checks that your properties can actually fail — a green run proves nothing was observed, not that anything would have been noticed. It spends real run budget, so it asks for a ceiling up front.
 
 Don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
 
@@ -128,6 +132,19 @@ This skill implements Antithesis workloads and places all the test commands and 
 
 This skill discovers the Antithesis config, builds the harness, validates it with `snouty validate`, and only submits `snouty launch` if validation succeeds.
 
+### antithesis-mutation-testing
+
+```
+/antithesis-mutation-testing My baseline run is green. Validate the properties in @antithesis/scratchbook/property-catalog.md by mutation testing them.
+```
+
+This skill asks how autonomous you want it to be and how many runs it may spend, then works under `antithesis/scratchbook/mutation-testing/` — one patch per mutant, per-mutant evidence, a resumable `status.md`, and a `report.md` giving every property a verdict and the run that proves it. Each property's evidence file gains a `## Falsification` section recording what the sweep established. Your working tree is left unmutated.
+
+If there is no property catalog — the scratchbook was never written, or was deleted after the harness was built — the skill reconstructs one from the Antithesis assertions in your code plus the baseline run, and says so in the report. A reconstructed catalog validates the assertions you already have; run `antithesis-research` for the properties nobody has asserted yet.
+
+> [!IMPORTANT]
+> Mutation testing launches an Antithesis run per property, plus a baseline, plus a full re-sweep after each round of fixes — and it builds one image per mutant first, which is often the larger cost. It is by far the most expensive skill here. It confirms the run count with you before submitting anything, and it launches every mutant run as `--ephemeral` under a dedicated `--source` so the deliberate failures never enter your real property history.
+
 ## Compatibility
 
 **Platform**: macOS or Linux.
@@ -144,18 +161,19 @@ These skills invoke external tools (Docker, Snouty, agent-browser) that your AI 
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
-| Skill                                  | Tools used                      |
-| -------------------------------------- | ------------------------------- |
-| `antithesis-research`                  | No explicit external tools      |
-| `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
-| `antithesis-setup-k8s`                 | `docker`/`podman`, `snouty`     |
-| `antithesis-workload`                  | `snouty`                        |
-| `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
-| `antithesis-triage`                    | `snouty`, `jq`                  |
-| `antithesis-debug`                     | `agent-browser`, `jq`           |
-| `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
-| `antithesis-agent-browser`             | `agent-browser`, `jq`           |
-| `antithesis-documentation`             | `snouty docs`                   |
+| Skill                         | Tools used                                       |
+| ----------------------------- | ------------------------------------------------ |
+| `antithesis-research`         | No explicit external tools                       |
+| `antithesis-setup`            | `docker`/`podman`, `snouty`                      |
+| `antithesis-setup-k8s`        | `docker`/`podman`, `snouty`                      |
+| `antithesis-workload`         | `snouty`                                         |
+| `antithesis-launch`           | `docker`/`podman`, `snouty`                      |
+| `antithesis-triage`           | `snouty`, `jq`                                   |
+| `antithesis-debug`            | `agent-browser`, `jq`                            |
+| `antithesis-query-logs`       | `snouty`, `agent-browser`, `jq`                  |
+| `antithesis-agent-browser`    | `agent-browser`, `jq`                            |
+| `antithesis-documentation`    | `snouty docs`                                    |
+| `antithesis-mutation-testing` | `docker compose`, `snouty`, `jq`, `git`, `rsync` |
 
 ## Install
 
@@ -180,6 +198,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-query-logs`
    - `antithesis-agent-browser`
    - `antithesis-launch`
+   - `antithesis-mutation-testing`
    - `antithesis-skills-feedback`
 2. **Install scope** — choose **global**, not project.
 3. **Install method** — choose **symlink**.

@@ -44,6 +44,16 @@ Launch an Antithesis run in this order only:
 
 ## Run Arguments
 
+**Caller-supplied values win.** When the human or another skill invoking this
+one specifies a launch parameter — a config directory, `--source`,
+`--ephemeral`, `--duration`, a `--param`, or a pinned image tag — use what they
+gave you instead of the default described below, and do not "correct" it back.
+A caller that supplies a value has a reason the defaults here cannot see: a
+skill validating its own images needs a specific config directory, and a run
+that deliberately fails properties needs its own `--source` and `--ephemeral` so
+those failures never enter the user's real property history. Apply the defaults
+below only to parameters nobody specified.
+
 - Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
 
 - `snouty launch --config` requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
@@ -82,5 +92,6 @@ snouty launch \
 - The chosen config directory is the one that actually contains the Antithesis `docker-compose.yaml`.
 - The build, validate, and run steps all point at the same config.
 - `snouty validate` succeeded before `snouty launch` was invoked.
-- The run set `source`, `test-name`, `description`, and `duration` explicitly.
+- The run set `source`, `test-name`, `description`, and `duration` explicitly, using any caller-supplied values in preference to the defaults.
+- Every other parameter the caller supplied — `--ephemeral`, a `--param`, a pinned image tag — was passed through as given, not dropped or replaced by a default.
 - Missing blockers such as `duration`, `ANTITHESIS_REPOSITORY`, or an ambiguous config location caused a stop instead of a bad submission.

@@ -1,0 +1,4 @@
+# One image name per line, without a tag. These are the images the sweep
+# retags per mutant. List only services built from this repo -- never public
+# images. Each listed name's `image:` reference in docker-compose.yaml must
+# carry an explicit tag.
