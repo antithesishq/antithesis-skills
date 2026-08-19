@@ -54,8 +54,10 @@ on a coarser quantity than the one that diverges, reading a different field,
 node, or epoch, or guarded behind a condition the mutation itself disables.
 
 If the trace shows the SUT is genuinely wrong with the mutant on but the
-assertion still would not fire, **the assertion is the defect and the mutant has
-already done its job.** Record that as the mutant's **predicted verdict** and follow the rule below. Any change goes through
+assertion still would not fire, the likely defect is the assertion. That is a
+**prediction, not a finding** — record it as the mutant's **predicted verdict**,
+launch the mutant, and let the survivor confirm it before anything is rewritten.
+Follow the rule below. Any change goes through
 `antithesis-workload`'s `references/assertions.md` conventions, and record in
 the property's evidence file the gap the mutant exposed.
 

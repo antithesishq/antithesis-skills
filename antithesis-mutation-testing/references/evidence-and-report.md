@@ -141,8 +141,12 @@ whether it has ever been proven capable of failing.
 base_tree `4f1c9a2e...`
 
 The mutant drops the quorum check on the acknowledgement path. The property
-fired in 34 of 1,102 examples, each preceded by a leader partition — matching
-the predicted kill chain.
+recorded 34 counterexamples against 1,102 examples. Attributed: the marker
+`[m01-dropped-quorum-guard] ack accepted below quorum` appears in the
+counterexample history `a9f3…` at vtime `12.4` — downloaded with
+`snouty runs --json logs`, which streams that history up to the failure — and
+the sampled counterexamples all show a leader partition in `active_faults`,
+matching the predicted kill chain.
 
 **Gap this exposed:** the original assertion compared against the attempted
 write count rather than the acknowledged count, and did not fire until it was
@@ -177,11 +181,11 @@ proven.
 | Property | Class | Verdict | Mutant | Run | base_tree |
 | --- | --- | --- | --- | --- | --- |
 | acked-writes-survive | Always | falsified | m01-dropped-quorum-guard | `7b2e44...` | `4f1c9a2e...` |
-| no-split-brain | Unreachable | falsified (collateral, verified) | m01-dropped-quorum-guard | `7b2e44...` |
-| reads-see-acked-writes | Always | falsified | m02-stale-read-window | `9c1f08...` |
-| wal-fsync-before-ack | Always | not mutatable — Postgres not built here | — | — |
-| snapshot-consistent | Always | outstanding — attempt cap reached | m06-snapshot-skew | `6a4e02...` |
-| config-change-safe | Always | withdrawn — unfalsifiable | m05-config-race | `2d8b71...` |
+| no-split-brain | Unreachable | falsified (collateral, verified) | m01-dropped-quorum-guard | `7b2e44...` | `4f1c9a2e...` |
+| reads-see-acked-writes | Always | falsified | m02-stale-read-window | `9c1f08...` | `4f1c9a2e...` |
+| wal-fsync-before-ack | Always | not mutatable — Postgres not built here | — | — | — |
+| snapshot-consistent | Always | outstanding — attempt cap reached | m06-snapshot-skew | `6a4e02...` | `4f1c9a2e...` |
+| config-change-safe | Always | withdrawn — unfalsifiable | m05-config-race | `2d8b71...` | `4f1c9a2e...` |
 ```
 
 Then, per category:
@@ -190,7 +194,7 @@ Then, per category:
 - **Falsified after refinement** — properties whose assertion was rewritten during the sweep and then killed by the mutant that motivated the rewrite. Kept separate because the kill is circular: it shows the new assertion catches this bug, not that the original claim was sound
 - **Refined** — properties whose catalog entry was corrected rather than retired, with what changed
 - **Proposed fixes, not applied** — when interview question 4 said propose-only: the diff for each assertion or workload change the sweep found, and the property it leaves outstanding
-- **Unattributed properties** — run properties with no callsite that are not known platform telemetry (see `catalog-reconstruction.md`); the user needs to say whether each is theirs
+- **Properties with no callsite** — run properties that are not known platform telemetry and that no assertion in the source accounts for (see `catalog-reconstruction.md`); the user needs to say whether each is theirs. Not to be confused with *outstanding — unattributed*, which is a swept property whose kill could not be tied to its mutant's marker
 - **Not mutatable** — properties owned by components not built from source here. A fact about the harness, not a defect in the property
 - **Outstanding** — what is blocking each, and what would unblock it
 - **Withdrawn** — the reason, and where it was routed

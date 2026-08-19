@@ -31,7 +31,7 @@ Success means:
 - Each falsification is backed by a run whose evidence shows the property failed for the predicted reason, not as collateral from an unrelated cascade
 - Bad oracles and workload gaps found along the way are fixed; bad properties are routed back to `antithesis-research`
 - `antithesis/scratchbook/mutation-testing/report.md` records the outcome for every in-scope property, with the run that proves it
-- The user's working tree is untouched
+- The user's working tree carries no mutation — every mutant lives in the fork, and `clean.sh` confirms it. Fixes that interview question 4 authorized may land there; a mutation never does
 
 Use the `antithesis-research` skill to build the property catalog, the
 `antithesis-setup` skill to scaffold the harness, and the `antithesis-workload`
@@ -100,9 +100,17 @@ establish one: fork, populate `images.txt`, then **build with
 the fork's compose still names the user's own image tags, and snouty pushes
 whatever the compose references — so a build and launch from that state puts a
 baseline image into the user's real registry tag. `build-mutants.sh` runs
-`select-mutant.sh baseline` first, which is what retags it. Then
-`snouty validate "$FORK/$CONFIG"` and launch it through
-`antithesis-launch` with **exactly the arguments a mutant run gets**, except the
+`select-mutant.sh baseline` first, which is what retags it. Then validate it —
+under the same compose project the scripts use, or the stack comes up as project
+`config`, which is also what the user's own `antithesis/config` stack uses, and
+tearing it down takes their containers and volumes with it:
+
+```sh
+export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')"
+snouty validate "$FORK/$CONFIG"
+```
+
+Then launch it through `antithesis-launch` with **exactly the arguments a mutant run gets**, except the
 id:
 
 - `--config "$FORK/$CONFIG"` — without it the launch skill discovers the user's *real* config, the control is not built from `mutation-base`, and every comparison the sweep makes is invalid
@@ -126,8 +134,8 @@ ceiling, proceed without asking, however far off the rule of thumb it was.
 
 - **SUT:** System under test.
 - **Mutant:** A small, realistic source change designed to violate exactly one property, built as its own image and identified by a `mNN-<slug>` id.
-- **Falsified (killed):** The property a mutant targets failed on that mutant's run, for the predicted reason. This is the outcome mutation testing is looking for.
-- **Survived:** The mutant ran, the buggy code executed, and the targeted property still passed. Always a defect in something — the mutant, the oracle, the workload, or the property.
+- **Falsified (killed):** The property a mutant targets failed on that mutant's run, in a history that carries the mutant's marker, for a reason the log ties to the mutant's divergence. This is the outcome mutation testing is looking for. Target-red alone is not it: the property counts are run-wide totals, so "the mutant ran" and "the property failed" can describe histories that never met (see `references/sweep-and-verdicts.md`).
+- **Survived:** The mutant ran, the buggy code executed, and the targeted property still passed. Usually a defect in something — the mutant, the oracle, the workload, or the property — but a divergence rare enough that a 15-minute search never hit the case is not a defect, just an under-run search. The ladder separates the two.
 - **Baseline:** A run of the unpatched SUT built from the same source as every mutant. The control.
 - **`base_tree`:** The git tree hash of the fork's `mutation-base` commit. The fingerprint that decides whether a recorded baseline still applies.
 - **Announcement:** A startup log line carried by a mutant patch, proving the right build is deployed. Checkable locally, before any run budget is spent.
@@ -238,14 +246,14 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 11. Read `references/sweep-and-verdicts.md`; launch the sweep. Submissions are serialized — one `select-mutant.sh` → launch at a time — while the runs themselves overlap up to the agreed limit
 12. Poll, triage, and classify each run
 13. Read `references/evidence-and-report.md`; record verdicts and write the report
-14. Run `clean.sh` to remove the fork and confirm the user's tree carries no mutation — when the sweep has converged or been abandoned, and after any failure. **Not when it stopped and will be resumed**: the fork is what a resume re-forks and compares against, and removing it costs the recorded verdicts a full re-baseline
+14. Run `clean.sh` to remove the fork and confirm the user's tree carries no mutation — when the sweep has converged or been abandoned, and after any failure. **Not when it stopped and will be resumed**: the fork holds any mutant branch not yet exported to a patch, and `clean.sh` deletes it. Run `sync-patches.sh` first if you must clean a sweep you intend to resume — a resume re-forks from `--source` either way, so nothing else in the fork is load-bearing
 
 ### Iterate after a sweep
 
 1. Read `references/sweep-and-verdicts.md`
 2. Wait for every run to land, then classify every survivor before changing anything — the fix depends on which link of the kill chain broke, and a real-tree fix applied while a run is in flight moves `base_tree` out from under it
 3. Apply all diagnosed fixes for the round together, not one at a time — honoring interview question 4 for anything that touches the user's tree
-4. Export every revised mutant with `sync-patches.sh` **before** re-forking — this round is the one that re-authors mutants, and a re-fork replays patches, so an unexported revision is silently replaced by the version it was meant to fix
+4. Export every revised mutant with `sync-patches.sh` **before** re-forking — this round is the one that re-authors mutants, and a re-fork replays patches, so an unexported revision would be replaced by the version it was meant to fix. `fork.sh` refuses to run in that state rather than doing it silently — but its `--force` escape hatch discards the revision, so sync first and never reach for `--force` to clear that message
 5. Re-run under the two-branch rule: mutant-patch-only changes re-run just the changed mutants; any change to the SUT, workload, or assertions invalidates the baseline and requires a fresh baseline plus a full sweep. Rebuild and re-verify every mutant before launching it — the tags are stable across forks, so a stale image would otherwise go out silently
 6. Update the report, and run `clean.sh` when the sweep is finished
 
@@ -257,10 +265,10 @@ is absent this is a first sweep**: run the opening interview instead.
 
 1. Read `interview.md` for the paths, limits, permissions, and scope; `status.md` for the baseline record, run ids, verdicts, attempts per property, and runs spent
 2. **Restate that configuration with what it has already spent, and ask whether to keep or change it** — one confirmation before anything launches, not a re-interview. A ceiling already reached needs a new one; a ceiling with room left carries over. Record any change back to `interview.md`
-3. Reconcile against the platform before trusting `status.md`: `snouty runs list --json` and match on the `mutation-testing:` source and the mutant ids. A run launched just before the session died was never recorded, and relaunching it spends the budget twice and exceeds the agreed concurrency. Then poll every run still in flight rather than relaunching it, and record its verdict
-4. Export any un-exported mutant branches with `sync-patches.sh`, then **re-materialize the fork whether or not it still exists**, and compare the `base_tree` it prints against `status.md`. A surviving fork is a snapshot of the tree as it was, so its `base_tree` cannot have changed and comparing it would always agree — re-forking is what makes the check mean anything. **Same:** the recorded baseline and verdicts stand. **Different:** the SUT, workload, or assertions changed since, so all of them are stale — re-baseline and re-sweep under the two-branch rule (`references/sweep-and-verdicts.md`)
+3. Reconcile against the platform before trusting `status.md`: `snouty runs list --json -n 200` and match on the `mutation-testing:` source and the mutant ids. **Pass `-n 200`** — the default page size is 10 (`antithesis-triage`, `references/run-discovery.md`), and on a busy tenant or a sweep of more than ten mutants the run you are looking for falls off the first page and gets relaunched, which is the double-spend this step exists to prevent. The `--source` carries no round, so where a mutant has been swept more than once, take the most recent run by creation time and ignore earlier rounds — their verdicts were measured against a superseded oracle. A run launched just before the session died was never recorded, and relaunching it spends the budget twice and exceeds the agreed concurrency. Then poll every run still in flight rather than relaunching it, and record its verdict
+4. If the fork still exists **and** carries `mut/*` branches, export them with `sync-patches.sh`; skip that when the fork is gone or holds no branches, where it exits non-zero by design and there is nothing to export. Then **re-materialize the fork whether or not it still existed**, and compare the `base_tree` it prints against `status.md`. A surviving fork is a snapshot of the tree as it was, so its `base_tree` cannot have changed and comparing it would always agree — re-forking is what makes the check mean anything. **Same:** the recorded baseline and verdicts stand. **Different:** the SUT, workload, or assertions changed since, so all of them are stale — re-baseline and re-sweep under the two-branch rule (`references/sweep-and-verdicts.md`)
 5. **Rebuild and re-verify every mutant still to be launched.** Tags are stable across forks and local images may have been pruned, so an absent or stale image would otherwise be launched silently
-6. Then resume where the sweep stopped — the first-sweep workflow if any mutant is still unlaunched, **Iterate after a sweep** if every mutant has a verdict and survivors remain — and run `clean.sh` when it finishes
+6. Then resume where the sweep stopped — **re-entering the first-sweep workflow at step 6** if any mutant is still unlaunched or unmutated, **Iterate after a sweep** if every mutant has a verdict and survivors remain — and run `clean.sh` when it finishes. Steps 1-5 of the first sweep are already done: the interview was restated in step 2 above, not re-run, and the recorded baseline stands unless step 4 found `base_tree` changed
 
 ## Scope
 
@@ -315,7 +323,7 @@ output.
 
 - `interview.md` records the paths, the five answers, and the agreed scope, and matches what the user actually authorized — including any change made on resume
 - A green baseline was established at the reported `base_tree` before any mutant was designed, and its run id is recorded in `status.md`
-- Every in-scope property carries exactly one of the five verdicts — *falsified*, *not mutatable*, *outstanding*, *withdrawn*, *refined* — and the last four carry a reason
+- Every in-scope property carries exactly one of the five verdicts — *falsified*, *not mutatable*, *outstanding*, *withdrawn*, *refined* — and the last four carry a reason. A verdict may be **qualified** with how it was reached: *falsified after refinement*, *falsified (collateral, verified)*, *outstanding — attempt cap reached*, *outstanding — unattributed*. The qualifier is part of the verdict, never a sixth one, and it never upgrades what the base verdict claims
 - Each falsification cites the run and the evidence tying the mutant's marker to the history the targeted property's counterexample came from — not two run-wide counts that could belong to different histories
 - No property is reported as falsified on the strength of collateral damage alone, and no collateral was credited on the strength of firing first
 - Every launched run used the fork's config directory, so what ran was the mutant and not the user's unmutated system

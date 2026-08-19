@@ -92,10 +92,12 @@ Each run re-creates the fork from scratch rather than updating one in place —
 which is what makes `--exclude` worth setting on a large repo.
 
 The cost is that **un-exported work in the fork is destroyed**. Always run
-`sync-patches.sh` before re-forking. `fork.sh` refuses to start while any `mut/*`
-branch has no patch at all (`--force` overrides), but it cannot detect a branch
-whose commits are *newer* than its exported patch — that revision is replaced by
-the stale patch with no warning. Note also
+`sync-patches.sh` before re-forking. `fork.sh` refuses to start when a `mut/*`
+branch has no patch at all, and equally when a branch's commits differ from its
+exported patch — it names the branches and exits non-zero rather than reverting
+them. `--force` overrides both, and on the second it **discards the revision**,
+so treat that message as "run `sync-patches.sh`", never as "pass `--force`".
+Note also
 that a patch which no longer applies is reported as `STALE:` on stderr while the
 exit status stays 0 — read the output, do not just check the status.
 
@@ -212,9 +214,10 @@ must exist locally at launch time, which is why the whole set is built up front.
 **snouty requires the `docker-compose` binary** (Docker Compose v2) and execs
 it directly — `docker-compose config`, `up --detach`, `ps` — refusing to start
 without it. `build-mutants.sh` and `verify-mutant.sh` therefore prefer the same
-binary, so the images this builds are the images the validate and launch find,
-and the launch skill's pre-submit rebuild is a cache hit rather than a second
-full build. They accept the `docker compose` plugin as a fallback for their own
+binary, so the images this builds are the images the validate and launch find.
+Both Compose v2 front-ends talk to the same daemon and the same image store, so
+the launch skill's pre-submit rebuild is normally a cache hit either way; using
+the binary snouty itself execs is what removes the doubt. They accept the `docker compose` plugin as a fallback for their own
 local operations and warn when they use it, but a host without `docker-compose`
 cannot run snouty at all. `podman compose` is not an option.
 

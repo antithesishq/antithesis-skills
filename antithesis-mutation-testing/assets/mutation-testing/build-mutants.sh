@@ -90,7 +90,10 @@ fi
 # antithesis/config stack uses, so a teardown here would destroy their running
 # containers and volumes. snouty passes no -p, so exporting this covers the
 # stack `snouty validate` brings up as well as our own calls.
-export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$WORK" | cksum | awk '{print $1}')"
+# Hash the canonical path, so "$FORK" and "$FORK/" name the same project and a
+# teardown cannot miss the stack an earlier call brought up.
+WORK_CANON=$(cd -P "$WORK" && pwd) || die "--fork is not a usable directory: $WORK"
+export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$WORK_CANON" | cksum | awk '{print $1}')"
 
 # A typo in --only must not look like a successful rebuild: the launch that
 # follows would use whatever stale image the previous round left under that tag.

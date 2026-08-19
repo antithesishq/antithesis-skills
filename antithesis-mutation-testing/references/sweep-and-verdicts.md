@@ -115,6 +115,7 @@ Check these before judging any individual mutant.
 | --- | --- | --- |
 | Announcement missing in local validate | Wrong or unpatched build | Caught **pre-launch**; no run budget spent. Rebuild and re-verify |
 | Baseline red on a safety property | — | **Stop.** The batch cannot be interpreted: a property that was already failing tells you nothing about your mutant. Report the failures and route to `antithesis-workload` or `antithesis-research` |
+| Run did not finish normally — `status` is `incomplete`, `cancelled`, or `unknown`, or `links.triage_report` is null in `snouty runs --json show` | **No result** | Not a survivor. The properties and logs endpoints return 404 for these runs (`antithesis-triage`, `SKILL.md`), so the target's silence is missing data, not evidence. Re-launch the mutant. If it fails the same way twice, diagnose it with the incomplete-run workflow — `failure_moment` plus `build-logs` — before spending another run, and record *outstanding* if it cannot be resolved |
 
 A baseline that goes red after a round of fixes stops the loop the same way, in
 both workflows.
@@ -131,25 +132,42 @@ verdict is what `report.md` records for the property once the round settles:
 | Diagnosis | Verdict it becomes |
 | --- | --- |
 | falsified | *falsified* |
-| bad oracle, bad workload, bad mutant, rarity, off-target, too blatant | not terminal — fix and re-run. Becomes *falsified* once a re-sweep kills it, or *outstanding* if the round ends or the attempt cap is reached first |
+| bad oracle, bad workload, bad mutant, rarity, off-target, too broad, too blatant | not terminal — fix and re-run. Becomes *falsified* once a re-sweep kills it, or *outstanding* if the round ends or the attempt cap is reached first |
+| dominated | *outstanding — dominated*, with the dominating property named. Domination makes the target redundant, not validated; retiring it is a catalog decision for `antithesis-research`, not one this sweep makes |
+| pre-existing failure | not a verdict — the mutant got no result. Report the failure, then re-run the mutant; *outstanding* if it cannot be separated from the bug |
 | unattributed | not terminal — attribute it, or re-run. Becomes *outstanding — unattributed* if neither succeeds |
 | bad property | *withdrawn*, or *refined* if the entry is corrected and kept |
 | wrong image launched, uncataloged marker | not a verdict — re-run, or record *outstanding — not cataloged* if it cannot be resolved |
 
 | Evidence | Diagnosis | Action |
 | --- | --- | --- |
-| Announcement missing from the run's events | Wrong image launched | **Check this first, on every run**: `snouty runs events "$RUN_ID" "ANTITHESIS MUTANT ACTIVE: {id}"`. Pre-launch verification says nothing about what the launch's own rebuild produced, or about anything that touched the fork since. One cheap call, and the only row that catches a run of unmutated or wrong-mutant code — every verdict below is meaningless without it. Not a verdict; check the launch used the fork's config, then re-run |
+| Announcement missing from the run's events | Wrong image launched | **Check this first, on every run**: `snouty runs events "$RUN_ID" "ANTITHESIS MUTANT ACTIVE: {id}"`. Pre-launch verification says nothing about what the launch's own rebuild produced, or about anything that touched the fork since. One cheap call, and the only row that catches a run of unmutated or wrong-mutant code — every verdict below is meaningless without it. Events are a sample rather than the whole stream, so a missing announcement is not proof the image was wrong; the error direction is safe, since it costs a re-run rather than a false falsification. Not a verdict; check the launch used the fork's config, then re-run |
 | Marker absent from the property list entirely | Uncataloged marker | Not a verdict. The assertion was never cataloged (fallback SDK, or an artifact outside the catalog set). Read the marker straight from the run's events instead: `snouty runs events "$RUN_ID" "<marker text>"` — see `mutant-design.md` |
-| Marker red, and the targeted property had **no** examples on the baseline | **bad workload** | Confirm before editing anything: no examples in one 15-minute run is a sample, not proof of unreachability. Re-run the baseline longer first — the same bar the rarity row above gets, and this is the row that edits the user's tree. If it stays at zero, extend the workload with the action or fault that reaches it, per interview question 4; re-baseline and re-sweep |
-| Marker red, but the targeted property **had** examples on the baseline | rarity, not a gap | The path is reachable — the mutant's divergence condition just didn't occur in 15 minutes. Re-run this mutant alone at 30 or 60 minutes before concluding anything. `base_tree` is unchanged, so the source is identical — but a longer run is a *larger search*, and finding a pre-existing rare bug is exactly what more search buys. A kill that appears only at the longer duration must be checked against a baseline re-run at that same duration before it is credited |
+| Marker red, but the target went red anyway | **pre-existing failure** | The divergence never happened, so the mutant did not cause this — it is a real bug the baseline's search missed, or a fault-induced failure. **Do not read it as reach evidence and do not touch the workload.** Triage it as a genuine finding and report it to the user; the mutant itself has no result yet. Re-run the mutant once the failure is understood, and record *outstanding* if the two cannot be separated |
+| Marker red, and nothing reaches the **mutated site** — the mutant's kill-chain trace names no workload action that drives execution there, or a site-entry marker is red too | **bad workload** | Confirm before editing anything: no reach in one 15-minute randomized run is a sample, not proof of unreachability. Re-run the baseline longer first — the same bar the rarity row below gets, and this is the row that edits the user's tree. If nothing reaches the site, extend the workload with the action or fault that does, per interview question 4; re-baseline and re-sweep |
+| Marker red, but the mutated site **is** reached — the workload drives execution there and only the divergence condition failed to occur | rarity, not a gap | The path is reachable, so the search simply didn't hit the case in 15 minutes. Re-run this mutant alone at 30 or 60 minutes before concluding anything. `base_tree` is unchanged, so the source is identical — but a longer run is a *larger search*, and finding a pre-existing rare bug is exactly what more search buys. A kill that appears only at the longer duration must be checked against a baseline re-run at that same duration before it is credited |
+| The mutant reddened much of the catalog at once | too broad | The target's failure is not attributable: one root cause tripped everything downstream. Narrow the mutant and re-run; do not credit the target or the collateral |
 | Marker green, target red, **the marker fired in the history the target's counterexample came from**, and the evidence matches the predicted reason | **falsified** | Record it. Credit any incidental falsification that passes the collateral test below |
+| Marker green, target red, the marker is in the counterexample's history, but the log shows a **different mechanism** than the trace predicted | re-read before crediting | A prediction is a hypothesis, not a gate. If the log shows the mutant's divergence caused the failure by a route the trace got wrong, it is a **falsified** — credit it and correct the chain in the mutant's evidence file, since the same wrong assumption is probably in the other traces too. If the mechanism has nothing to do with the divergence, the marker's presence is a coincidence: treat it as **unattributed** |
 | Marker green, target red, but no counterexample history carries the marker | **unattributed** | Both counts are run-wide totals, so these may be different histories. Not a falsification — see "Attributing a falsification" below |
 | Marker green, target green, another property red | off-target or dominated | Either the mutant is too broad — narrow it — or the target is genuinely dominated by the property that fired — which needs an argument that the target cannot be violated without the other firing, recorded in `property-relationships.md`. Domination makes the target redundant, not validated, and never yields *falsified* |
 | Marker green, divergence masked or converged before observation | **bad mutant** | The bug ran but was erased before anything could see it. Choose a different mistake for the same property |
 | Marker green, divergence reaches the assertion but the predicate tolerates it | **bad oracle** | The catalog has a hole and the mutant found it. Tighten, re-key, or relocate the assertion per `antithesis-workload`'s `references/assertions.md` and interview question 4; re-baseline and re-sweep |
 | No observation point could ever distinguish a violation | **bad property** | Per the interview: stop and route to `antithesis-research`, or refine/withdraw and continue |
-| The mutant reddened much of the catalog at once | too broad | The target's failure is not attributable: one root cause tripped everything downstream. Narrow the mutant and re-run; do not credit the target or the collateral |
-| Container exited, or `setup_complete` never reached | too blatant | The mutant broke the system rather than the property. Narrow it to produce the targeted divergence without the crash |
+| `setup_complete` never reached, or a container crashes deterministically on startup | too blatant | The mutant broke the system rather than the property. Narrow it to produce the targeted divergence without the crash. **A container exiting mid-run is not this row** — Antithesis injects container kill and stop faults and restarts the container afterwards (`antithesis-triage`, `references/logs.md`), so exits are routine and say nothing about the mutant |
+
+**Reach is a fact about the mutated site, not about the target.** The two
+marker-red rows above ask whether execution got to the *mutation*, which is a
+different location from the assertion it targets. Do not substitute the target's
+`example_count` for that: an assertion can be evaluated constantly while the
+branch the mutant edits is never taken, and for an `Unreachable` property
+`example_count` 0 is its *healthy* state (see SKILL.md, "Scope"), so reading
+zero examples as a workload gap would send you to rewrite the user's workload
+until an `Unreachable` becomes reachable — the opposite of what that property
+asserts. Where the divergence marker cannot be placed conditionally, the mutant's
+evidence file already records that it proves reach but not divergence
+(`mutant-design.md`); a marker-red result there means the *site* was never
+entered, which is the `bad workload` row.
 
 ## Attributing a falsification
 
@@ -162,9 +180,25 @@ nothing about the two counts distinguishes it from one.
 
 So the target gets the same test the collateral properties get: **take the
 target's counterexample moment and confirm the mutant's marker fired in that
-history, before it.** `snouty runs events "$RUN_ID" "<marker text>"` and the
-counterexample moments from `antithesis-triage` are enough. If they cannot be
-tied together, the diagnosis is *unattributed*, not *falsified*.
+history, before it.**
+
+The check that settles it is the counterexample's own log. `snouty runs --json
+logs` streams *the history up to that moment* (`antithesis-triage`,
+`references/logs.md`), so a marker inside that stream is by construction in the
+same history and earlier than the failure:
+
+```sh
+# INPUT_HASH and VTIME come verbatim from the property's counterexamples array
+snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
+grep -c "<marker text>" "$LOG"
+```
+
+Do not try to establish this by comparing moment identifiers between a
+`snouty runs events` hit and a counterexample: what makes two moments the same
+history is not something the ladder should be guessing at. Download the log.
+
+If the marker is absent from the counterexample's own history, the diagnosis is
+*unattributed*, not *falsified*.
 
 This matters because the mutant is not the only thing that can redden a
 property. Every run injects faults, and the baseline is a different random
@@ -187,8 +221,9 @@ many runs the catalog needs — but the bar is evidence, not convenience.
 
 The test, in order:
 
-1. Ask whether the collateral property ever fails **in a timeline where the target does not**. That is the only question separating an independent violation from one root cause cascading downstream. The `antithesis-query-logs` skill answers it, but it needs an authenticated `agent-browser`; where that is unavailable, `snouty runs events` and the counterexample moments are what you have.
-2. If yes, credit it. If no, or if you cannot establish it either way, do not — an unanswerable question is not a yes. Record it as expected collateral and leave the property needing its own mutant.
+1. **Attribute it to the mutant, exactly as the target is attributed.** Download the collateral property's counterexample log and confirm the mutant's marker is in that history, before the failure. Skipping this credits a fault-induced or pre-existing failure as a kill — and collateral is where that is most likely, since it is the property nobody predicted would fail. No marker in that history, no credit.
+2. Ask whether the collateral property ever fails **in a timeline where the target holds** — evaluated, and not violated. That is the only question separating an independent violation from one root cause cascading downstream, and "the target didn't fail" is not enough: a timeline where the target was never evaluated is the cascade case, not evidence against it. The `antithesis-query-logs` skill answers this, but it needs an authenticated `agent-browser`; where that is unavailable, the counterexample logs are what you have.
+3. If both hold, credit it. If either fails, or you cannot establish it either way, do not — an unanswerable question is not a yes. Record it as expected collateral and leave the property needing its own mutant.
 
 **Firing first is not evidence.** In a cascade the downstream property is often
 observed *earlier* than the target — corrupted state trips a cheap invariant at

@@ -173,7 +173,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-query-logs`       | `snouty`, `agent-browser`, `jq`                  |
 | `antithesis-agent-browser`    | `agent-browser`, `jq`                            |
 | `antithesis-documentation`    | `snouty docs`                                    |
-| `antithesis-mutation-testing` | `docker compose`, `snouty`, `jq`, `git`, `rsync` |
+| `antithesis-mutation-testing` | `docker-compose`, `snouty`, `jq`, `git`, `rsync` |
 
 ## Install
 
