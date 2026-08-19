@@ -53,9 +53,57 @@ services:
     image: docker.io/library/postgres:17.2
 ```
 
-## Podman Compose Compatibility
+## Compose CLI and Container Engine
 
-Antithesis uses `podman compose` behind the scenes. For compatibility, prefer `podman compose` over `docker compose` when testing locally. Use `podman compose` if available; otherwise fall back to `docker compose`.
+The compose CLI and the container engine are two separate choices. Antithesis
+runs the standalone `docker-compose` binary against podman. Antithesis never
+runs `podman compose`. snouty drives Docker Compose v2 the same way.
+
+Use one of these two local setups:
+
+- **Docker** with the built-in `docker compose` CLI plugin. Use the standalone
+  `docker-compose` binary if this Docker engine has no plugin.
+- **Podman** with the standalone `docker-compose` binary. snouty points compose
+  at podman's API socket, so podman backs compose.
+
+Do not use `podman compose` or `podman-compose`. snouty does not drive them, and
+Antithesis does not run them.
+
+snouty 0.6.1 and earlier accept the standalone `docker-compose` binary only. The
+`docker compose` CLI plugin works from snouty 0.7.0.
+
+Run `snouty doctor` to see the compose CLI and the container engine that snouty
+selects on this machine. Report both to the user before you build.
+
+### Build commands
+
+Build with the same compose CLI and container engine that snouty selects. snouty
+never builds images and never pulls them. Every image the compose file references
+must already be in the local image store of the engine snouty selects.
+
+With a Docker engine:
+
+```sh
+docker compose -f antithesis/config/docker-compose.yaml build
+# If this Docker engine has no compose plugin:
+docker-compose -f antithesis/config/docker-compose.yaml build
+```
+
+With a podman engine, point the standalone binary at podman's API socket:
+
+```sh
+# Linux
+export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"
+# macOS, where podman runs in a VM
+export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
+
+docker-compose -f antithesis/config/docker-compose.yaml build
+```
+
+podman and docker keep separate image stores. snouty prefers podman when both
+engines are installed. Set `SNOUTY_CONTAINER_ENGINE=docker` when you build with
+docker and podman is also installed. Otherwise snouty selects podman and reports
+the images as missing.
 
 ## Hermetic Execution
 

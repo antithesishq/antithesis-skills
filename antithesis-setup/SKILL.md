@@ -4,7 +4,7 @@ description: >
   Scaffold the Antithesis harness with docker-compose: initialize the working directory, write
   Dockerfiles and docker-compose.yaml with build directives, and prepare
   to submit your first Antithesis test run. If the desired setup is Kubernetes, defer to the antithesis-setup-k8s skill.
-compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
+compatibility: Requires Docker Compose v2 (the `docker compose` plugin or the standalone `docker-compose` binary), a container engine (docker or podman), and snouty (https://github.com/antithesishq/snouty).
 metadata:
   version: "2026-08-19 d07de7b"
 ---
@@ -77,7 +77,9 @@ This skill is broken out into multiple steps, each in a different reference file
 ## General Guidance
 
 - Merge with existing `antithesis/` content instead of overwriting it.
-- Prefer `podman compose` for local testing; fall back to `docker compose`.
+- Drive Docker Compose v2 for local testing, either through the `docker compose`
+  CLI plugin or through the standalone `docker-compose` binary. Do not use
+  `podman compose` or `podman-compose`. See `references/docker-compose.md`.
 - Keep Antithesis-only scaffolding under `antithesis/` when practical.
 - Focus this skill on infrastructure and readiness, not on defining the workload
   itself.
@@ -117,7 +119,8 @@ Review criteria:
 - `/opt/antithesis/catalog/` or `/symbols/` is exposed correctly for each service's language
 - The `setup_complete` signal is wired in at least one entrypoint
 - `snouty validate` on `antithesis/config/` succeeds
-- All built images target `amd64` (verified via `podman image inspect` or `docker image inspect`)
+- All built images target `amd64` (verified via `image inspect` on the container engine snouty selects)
+- Images were built with the compose CLI and container engine that `snouty doctor` reports, so they land in the image store snouty reads
 - Every service has `NO_COLOR=1` set in its environment (via docker-compose.yaml and/or Dockerfile) to prevent ANSI escape codes in container output
 - The harness is ready for the `antithesis-workload` skill — test template directories exist or are wired for later use
 - If the user asks to launch a run, the `antithesis-launch` skill is used instead of running `snouty launch` directly

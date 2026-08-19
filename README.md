@@ -54,7 +54,7 @@ We recommend that you run `antithesis-research`, `antithesis-setup`, and `antith
 
 If your system runs on Kubernetes, run `antithesis-setup-k8s` instead of `antithesis-setup` to help shape your Kubernetes manifests and kick off an Antithesis test that uses Kubernetes as the container orchestrator. This skill is currently in development and does not provide the same experience as `antithesis-setup` involving instrumentation and SDK usage.
 
-Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty launch` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
+Once the harness is in place, use `antithesis-launch` to run `compose build`, `snouty validate`, and `snouty launch` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
 
 Don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
 
@@ -136,26 +136,28 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 
 ## Prerequisites
 
-You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
+You'll need an AI agent, npm, Docker Compose v2, a container engine (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
+
+The compose CLI and the container engine are two separate choices. Antithesis runs the standalone `docker-compose` binary against podman, and snouty drives Docker Compose v2 the same way, so `podman compose` and `podman-compose` are not supported. Use Docker with the `docker compose` CLI plugin, or Podman with the standalone `docker-compose` binary.
 
 ## Permissions
 
-These skills invoke external tools (Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
+These skills invoke external tools (Docker Compose, Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
-| Skill                                  | Tools used                      |
-| -------------------------------------- | ------------------------------- |
-| `antithesis-research`                  | No explicit external tools      |
-| `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
-| `antithesis-setup-k8s`                 | `docker`/`podman`, `snouty`     |
-| `antithesis-workload`                  | `snouty`                        |
-| `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
-| `antithesis-triage`                    | `snouty`, `jq`                  |
-| `antithesis-debug`                     | `agent-browser`, `jq`           |
-| `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
-| `antithesis-agent-browser`             | `agent-browser`, `jq`           |
-| `antithesis-documentation`             | `snouty docs`                   |
+| Skill                      | Tools used                                                     |
+| -------------------------- | -------------------------------------------------------------- |
+| `antithesis-research`      | No explicit external tools                                     |
+| `antithesis-setup`         | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
+| `antithesis-setup-k8s`     | `docker`/`podman`, `snouty`                                    |
+| `antithesis-workload`      | `snouty`                                                       |
+| `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
+| `antithesis-triage`        | `snouty`, `jq`                                                 |
+| `antithesis-debug`         | `agent-browser`, `jq`                                          |
+| `antithesis-query-logs`    | `snouty`, `agent-browser`, `jq`                                |
+| `antithesis-agent-browser` | `agent-browser`, `jq`                                          |
+| `antithesis-documentation` | `snouty docs`                                                  |
 
 ## Install
 
