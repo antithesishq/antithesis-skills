@@ -93,6 +93,16 @@ Don't write `Always(observed_delta == 100, ...)` for the same property — that 
 - Good: `Unreachable("redirect emitted with missing leader address")`
 - Bad: reusing `"client eventually completed useful operation"` across several unrelated callsites
 
+## Sometimes Assertions as Workload Reach Claims
+
+Sometimes assertions have a second use beyond liveness and semantic-state properties: empirical proof that the workload reaches the states it is designed to exercise.
+
+For each behavior the workload is designed to drive the system toward, write one or more `Sometimes(cond, ...)` assertions that fire when that behavior actually occurs. Run a test. After the run, check which of these assertions fired and which did not. A Sometimes assertion that never fires is concrete evidence that the workload is not reaching where you believe it should — and the set of unfired assertions is a prioritized list of what to fix in the workload.
+
+This is workload development, not evaluation. The assertions are claims about what the workload should reach; the test results are the evidence. The unfired assertions become the iteration signal — see `iteration.md` for how to act on them.
+
+The correspondence between behaviors and assertions is not necessarily one-to-one. A single behavior might warrant several Sometimes assertions at different points in the path, or one assertion might cover the essential signal for a behavior. Use as many as it takes to know whether the workload is reaching a behavior, and no more.
+
 ## Assertion Placement
 
 - **Workload-level assertions:** Use for request/response invariants and client-visible guarantees.
