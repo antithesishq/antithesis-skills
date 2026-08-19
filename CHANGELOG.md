@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-08-19
+
+- Use Sometimes assertions to verify workload reach ([PR #189](https://github.com/antithesishq/antithesis-skills/pull/189))
+
 ## 2026-08-15
 
 - fix: pass pasted moment values to snouty as flags ([PR #188](https://github.com/antithesishq/antithesis-skills/pull/188))
