@@ -1,6 +1,22 @@
 #!/usr/bin/env bash
-# Put the fork into one mutant's state: reset to mutation-base, apply that
-# mutant's patch, and point the compose images at that mutant's tag.
+# Put the fork into one mutant's state.
+#
+# INTENT
+#   Leave the fork holding exactly mutation-base plus one mutant's patch, with
+#   every image in --images pointing at that mutant's tag.
+#
+# ASSUMES
+#   - --fork was made by fork.sh: it carries the marker and a mutation-base tag.
+#   - $FORK/$CONFIG/docker-compose.yaml exists and resolves inside the fork.
+#   - Every name in --images appears there as an `image:` value carrying an
+#     explicit tag, matching the whole reference minus that tag.
+#   - <mutant-id> has a patch in --patches that still applies to mutation-base.
+#
+# GUARANTEES
+#   - Nothing outside --fork is written to.
+#   - On success every listed image is retagged; on any failure the fork is
+#     reset to mutation-base rather than left holding mutated source under the
+#     user's own image tags.
 #
 # Run this before building the mutant AND again before launching it, so the
 # tree the launch skill builds from is the tree the mutant was verified in.

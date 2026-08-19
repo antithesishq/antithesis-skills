@@ -91,6 +91,21 @@ non-empty directory it did not create.
 Each run re-creates the fork from scratch rather than updating one in place —
 which is what makes `--exclude` worth setting on a large repo.
 
+## When a script stops on an assumption
+
+Each script opens with `INTENT` / `ASSUMES` / `GUARANTEES` and validates its own
+assumptions before doing anything. They describe one conventional layout — a
+compose file at `antithesis/config/docker-compose.yaml`, services with explicit
+`image:` tags, a git source tree — and a repo that differs will stop them with a
+message naming the assumption rather than half-doing the work.
+
+**That is the intended behavior, and the fix is usually to edit the script.**
+Read its header, change what it assumes to match this repo, and update the
+`ASSUMES` block to say so. Leave `INTENT` and `GUARANTEES` as they are: the rest
+of the skill is written against them, and the guarantees about never writing
+outside the fork are what make the harness safe to run against a real tree. Note
+the edit in `status.md` so a later session knows the script is no longer stock.
+
 The cost is that **un-exported work in the fork is destroyed**. Always run
 `sync-patches.sh` before re-forking. `fork.sh` refuses to start when a `mut/*`
 branch has no patch at all, and equally when a branch's commits differ from its

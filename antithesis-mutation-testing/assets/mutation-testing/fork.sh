@@ -1,6 +1,24 @@
 #!/usr/bin/env bash
 # Materialize an ephemeral copy of the source tree for mutation testing.
 #
+# INTENT
+#   Produce a throwaway git repo mirroring --source, tagged `mutation-base`,
+#   carrying one `mut/<id>` branch per patch in --patches.
+#
+# ASSUMES
+#   - git and rsync are on PATH.
+#   - --source is a directory; --fork is outside it; --patches is outside --fork.
+#   - --fork is either absent, empty, or a fork of this same --source.
+#   - Each --patches/<id>.patch is a diff against mutation-base.
+#
+# GUARANTEES
+#   - --source is never written to.
+#   - The fork exists, carries .git/antithesis-mutation-fork, and has a
+#     `mutation-base` tag whose tree depends only on the source's contents.
+#   - Gitignored files are committed, so a mutant may touch them.
+#   - Exits non-zero rather than discarding a `mut/*` branch that has no patch,
+#     or one revised beyond its exported patch.
+#
 # The copy excludes .git and gets a fresh `git init`, so every git command the
 # harness runs is confined to the fork. Nothing here can reach the user's real
 # repository, whatever shape it is in (worktree, submodule, or not git at all).

@@ -1,5 +1,18 @@
 #!/usr/bin/env bash
 # Remove the fork and confirm the user's source tree carries no mutation.
+#
+# INTENT
+#   End a sweep with no fork on disk and positive evidence that no mutation was
+#   left behind in --source.
+#
+# ASSUMES
+#   - --fork, if it exists, was created by fork.sh (it carries the marker).
+#   - Mutations are identifiable by the string `ANTITHESIS MUTANT ACTIVE`.
+#
+# GUARANTEES
+#   - Refuses to remove anything fork.sh did not create.
+#   - Searches tracked, untracked, gitignored, and submodule files.
+#   - Exits non-zero if a marker is found, or if the search could not run.
 set -euo pipefail
 
 # `git -C DIR` only changes directory: GIT_DIR, GIT_WORK_TREE and friends take

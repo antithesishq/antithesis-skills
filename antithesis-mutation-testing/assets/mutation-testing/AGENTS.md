@@ -5,6 +5,11 @@ Use the `antithesis-mutation-testing` skill to work in here. Use the `antithesis
 **Paths**
 Every script takes its paths as arguments and derives nothing from where it sits, so this directory can be moved or renamed as long as the scripts stay together. Resolve four values once — `--source` (root of the source tree), `--patches` (the `patches/` directory below), `--images` (`images.txt` below), and `--fork` (a scratch directory outside the source tree) — and pass each script **only the flags its own signature lists below**. Every script rejects an unknown flag with exit 2, so `--images` on `fork.sh` or `--source` on `sync-patches.sh` is a hard failure, not a harmless extra. `--config` is the compose directory relative to the fork, defaulting to `antithesis/config`.
 
+**Intent, assumptions, and when to edit a script**
+Every script opens with an `INTENT` / `ASSUMES` / `GUARANTEES` block and checks its own assumptions before acting, so a setup these scripts did not anticipate stops with a message naming the assumption that failed rather than doing half the work. That is a normal outcome, not a defect — these assume one conventional layout, and a real repo may be arranged differently.
+
+When a script stops on a violated assumption, read its header first. If the assumption is genuinely wrong for this repo — the compose file is somewhere else, the images are tagged another way, the tree has a shape the check did not expect — **edit the script to fit, and update its `ASSUMES` block to say what it now assumes.** What must not change is `INTENT` and `GUARANTEES`: those are the contract the rest of the skill relies on, and the guarantees about never writing outside the fork are what keep the user's tree safe. Record any edit in `status.md`, since the next session inherits the changed script.
+
 **patches**
 One patch per mutant, named `mNN-<slug>.patch`. The patch set is the list of wired mutants — there is no separate id list to drift out of sync. Each patch is a diff against `mutation-base`, so every patch applies independently of the others. Each carries a startup announcement, a marker at the point of divergence, and the buggy change itself. Mutations exist only here — never in the working tree.
 

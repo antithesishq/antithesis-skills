@@ -1,6 +1,19 @@
 #!/usr/bin/env bash
 # Regenerate the patch directory from the fork's mut/* branches.
 #
+# INTENT
+#   Make --patches match the fork's mut/* branch tips, so a re-fork replays the
+#   mutants as they are now rather than as they were exported.
+#
+# ASSUMES
+#   - --fork was made by fork.sh and has at least one mut/* branch.
+#   - Each branch is named mut/<mutant-id> and is committed; uncommitted work
+#     is not exported.
+#
+# GUARANTEES
+#   - The old patch set is never removed before the new one is written.
+#   - Refuses to shrink the set substantially without --force.
+#
 # Each patch is a diff against mutation-base, so every patch applies
 # independently. Mutants are siblings, never a stack.
 set -euo pipefail
@@ -57,6 +70,9 @@ done
 [ -n "$WORK" ] || { echo "sync-patches.sh: --fork is required" >&2; usage >&2; exit 2; }
 [ -n "$PATCHES" ] || { echo "sync-patches.sh: --patches is required" >&2; usage >&2; exit 2; }
 
+# ASSUMES: --fork was made by fork.sh.
+[ -e "$WORK/.git/antithesis-mutation-fork" ] ||
+  die "$WORK is not a mutation fork (no .git/antithesis-mutation-fork marker); run fork.sh first"
 git -C "$WORK" rev-parse mutation-base >/dev/null 2>&1 ||
   die "$WORK has no mutation-base tag; is it a fork?"
 

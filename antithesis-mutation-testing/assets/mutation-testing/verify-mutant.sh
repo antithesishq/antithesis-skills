@@ -1,9 +1,22 @@
 #!/usr/bin/env bash
 # Prove a built mutant image actually carries its patch, before a run is spent.
 #
-# Brings the fork's compose up locally, waits for setup_complete, and greps the
-# container output for that mutant's announcement. This is the one check between
-# a silently-unpatched build and a survivor that gets misread as a catalog gap.
+# INTENT
+#   Exit 0 only when this mutant's announcement is observed in the running
+#   containers, so an unpatched build cannot reach a launch.
+#
+# ASSUMES
+#   - The image for <mutant-id> has already been built by build-mutants.sh.
+#   - snouty and a Compose v2 front-end are on PATH.
+#   - The mutant's patch carries a startup announcement reading
+#     `ANTITHESIS MUTANT ACTIVE: <mutant-id>` and emits it before setup_complete.
+#
+# GUARANTEES
+#   - The stack comes up in its own compose project and is torn down either way.
+#   - A failed or empty log read is reported as unverified, never as a pass.
+#
+# This is the one check between a silently-unpatched build and a survivor that
+# gets misread as a catalog gap.
 set -euo pipefail
 
 # `git -C DIR` only changes directory: GIT_DIR, GIT_WORK_TREE and friends take
@@ -62,6 +75,14 @@ done
 [ -n "$WORK" ] || { echo "verify-mutant.sh: --fork is required" >&2; usage >&2; exit 2; }
 [ -n "$PATCHES" ] || { echo "verify-mutant.sh: --patches is required" >&2; usage >&2; exit 2; }
 [ -n "$IMAGES" ] || { echo "verify-mutant.sh: --images is required" >&2; usage >&2; exit 2; }
+
+# ASSUMES: --fork was made by fork.sh. Check it here rather than relying on a
+# later call to notice, so a wrong --fork stops before anything acts on it.
+[ -d "$WORK" ] || die "--fork is not a directory: $WORK"
+[ -e "$WORK/.git/antithesis-mutation-fork" ] ||
+  die "$WORK is not a mutation fork (no .git/antithesis-mutation-fork marker); run fork.sh first"
+git -C "$WORK" rev-parse -q --verify refs/tags/mutation-base >/dev/null 2>&1 ||
+  die "$WORK has no mutation-base tag; run fork.sh first"
 command -v snouty >/dev/null || die "snouty is required"
 
 # Peer scripts are looked up next to this one, then on PATH. That is the only

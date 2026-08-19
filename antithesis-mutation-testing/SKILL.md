@@ -234,7 +234,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 ### First sweep
 
 1. Scan the source for SDK assertion callsites, run the opening interview, and record its answers in `interview.md`
-2. Read `references/mutation-harness.md`; copy the harness into `antithesis/scratchbook/mutation-testing/`, resolve the four paths every script takes (`--source`, `--patches`, `--images`, `--fork`), and materialize the fork
+2. Read `references/mutation-harness.md`; copy the harness into `antithesis/scratchbook/mutation-testing/`, resolve the paths each script takes (`--source`, `--patches`, `--images`, `--fork`), and materialize the fork. Each script states its `INTENT` / `ASSUMES` / `GUARANTEES` and stops when an assumption fails; if one is wrong for this repo, edit the script and its `ASSUMES` to match, leaving `INTENT` and `GUARANTEES` alone
 3. Populate `antithesis/scratchbook/mutation-testing/images.txt` with the compose image names built from this repo. Nothing works until this is right, and an empty file is a hard error
 4. Satisfy the baseline gate (above)
 5. If the scratchbook has no catalog, read `references/catalog-reconstruction.md` and reconstruct one from the assertions and the baseline run

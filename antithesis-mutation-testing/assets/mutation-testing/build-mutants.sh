@@ -1,5 +1,21 @@
 #!/usr/bin/env bash
 # Build the baseline and one image set per mutant, each under its own tag.
+#
+# INTENT
+#   Leave one locally-built image set per mutant, tagged mut-<id>, plus the
+#   baseline, so a launch can select any of them without rebuilding.
+#
+# ASSUMES
+#   - --fork was made by fork.sh, and select-mutant.sh sits beside this script.
+#   - A Compose v2 front-end is on PATH; `docker-compose` is the one snouty
+#     itself execs.
+#   - --images is non-empty and every entry is retaggable (see select-mutant.sh).
+#
+# GUARANTEES
+#   - Every build runs in its own compose project, never the user's.
+#   - The fork is left on the baseline.
+#   - Exits non-zero, naming them, if any mutant failed to build.
+#
 # Does not push: snouty pushes the images the compose references at launch.
 set -euo pipefail
 
@@ -56,6 +72,14 @@ done
 [ -n "$WORK" ] || { echo "build-mutants.sh: --fork is required" >&2; usage >&2; exit 2; }
 [ -n "$PATCHES" ] || { echo "build-mutants.sh: --patches is required" >&2; usage >&2; exit 2; }
 [ -n "$IMAGES" ] || { echo "build-mutants.sh: --images is required" >&2; usage >&2; exit 2; }
+
+# ASSUMES: --fork was made by fork.sh. Check it here rather than relying on a
+# later call to notice, so a wrong --fork stops before anything acts on it.
+[ -d "$WORK" ] || die "--fork is not a directory: $WORK"
+[ -e "$WORK/.git/antithesis-mutation-fork" ] ||
+  die "$WORK is not a mutation fork (no .git/antithesis-mutation-fork marker); run fork.sh first"
+git -C "$WORK" rev-parse -q --verify refs/tags/mutation-base >/dev/null 2>&1 ||
+  die "$WORK has no mutation-base tag; run fork.sh first"
 
 # Peer scripts are looked up next to this one, then on PATH. That is the only
 # thing this script's own location is used for.
