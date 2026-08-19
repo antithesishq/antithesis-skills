@@ -121,6 +121,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 6. Read `references/interesting-values.md`
 7. Identify the property's value menu — boundary values plus configured-limit families. See `interesting-values.md` for the discovery process and worked examples
 8. Implement the chosen property: assertions, test commands, and supporting code
+9. Write Sometimes assertions as reach claims for the behaviors the workload is designed to drive (see `references/assertions.md`, "Sometimes Assertions as Workload Reach Claims"). Use `antithesis-launch` to run a test, then `antithesis-triage` to check which assertions fired — unfired ones are evidence the workload isn't reaching its targets and the starting point for iteration
 
 ### Post-triage iteration
 
@@ -167,5 +168,6 @@ Review criteria:
 - Helper files or directories are prefixed with `helper_` so Antithesis ignores them
 - Whatever provenance frontmatter was present in the catalog was displayed when presenting status, so the user could spot a mismatch with the system they're working on
 - `antithesis/scratchbook/property-catalog.md` is updated to reflect the implementation status of every property in scope, with provenance frontmatter reflecting the current codebase state (refresh `commit` and `updated`; preserve `sut_path` and `external_references` from the existing catalog). The frontmatter format is defined in the `antithesis-research` skill, `references/scratchbook-setup.md`.
+- Sometimes assertions exist as reach claims for the behaviors the workload is designed to drive, and unfired reach claims from a test run have been used as the iteration signal (see `references/assertions.md`, "Sometimes Assertions as Workload Reach Claims")
 - Assertions are in workload code or surgical SUT locations — not scattered across production paths
 - Use `snouty validate` on `antithesis/config` to ensure that the compose setup can reach setup complete and any configured test-templates work. Make sure to build the latest images before running validate.
