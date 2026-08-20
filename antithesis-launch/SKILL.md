@@ -44,7 +44,7 @@ Launch an Antithesis run in this order only:
 - Build against that exact file: `docker compose -f <CONFIG>/docker-compose.yaml build`.
 - snouty never builds or pulls images, so every image must already be in the store of the engine snouty selects. snouty prefers podman when both engines are installed.
   - With a docker engine while podman is also installed, export `SNOUTY_CONTAINER_ENGINE=docker` so snouty reads docker's store.
-  - With a podman engine, build with `podman compose -f <CONFIG>/docker-compose.yaml build`. That wrapper execs Docker Compose v2 against podman's API socket, so the image lands in podman's store. podman must listen on that socket: confirm `podman info --format '{{.Host.RemoteSocket.Exists}}'` prints true, since a fresh install does not start it and `snouty doctor` still passes.
+  - With a podman engine, build with `podman compose -f <CONFIG>/docker-compose.yaml build`. That wrapper execs Docker Compose v2 against podman's API socket, so the image lands in podman's store. Run two checks first: `podman compose version` must print `Docker Compose version ...`, because podman falls back to the `podman-compose` Python tool when it finds no Compose v2 binary; and `podman info --format '{{.Host.RemoteSocket.Exists}}'` must print true, because a fresh install does not start the socket and `snouty doctor` still passes.
 
 ## Run Arguments
 

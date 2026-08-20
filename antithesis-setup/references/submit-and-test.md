@@ -30,11 +30,17 @@ podman compose -f antithesis/config/docker-compose.yaml build
 ```
 
 `podman compose` is a wrapper, not `podman-compose`. It execs the Docker Compose
-v2 binary against podman's API socket, so the image lands in podman's store. It
-prints the provider it runs; confirm that line names `docker-compose`.
+v2 binary against podman's API socket, so the image lands in podman's store. Run
+both checks before the build:
 
-podman must listen on its API socket for either build to work. Check with
-`podman info --format '{{.Host.RemoteSocket.Exists}}'` and start it with
+```sh
+podman compose version                                 # must print "Docker Compose version ..."
+podman info --format '{{.Host.RemoteSocket.Exists}}'   # must print true
+```
+
+podman falls back to the `podman-compose` Python tool when it finds no Compose v2
+binary; that tool is not Docker Compose and reports `podman-compose version` here
+instead. podman also does not start its own API socket — start it with
 `systemctl --user enable --now podman.socket`.
 
 snouty prefers podman when both engines are installed, and the two keep separate
