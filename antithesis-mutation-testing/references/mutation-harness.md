@@ -44,8 +44,13 @@ SRC=/path/to/repo                                  # --source: root of the sourc
 PATCHES=$SRC/antithesis/scratchbook/mutation-testing/patches   # --patches
 IMAGES=$SRC/antithesis/scratchbook/mutation-testing/images.txt # --images
 FORK=/path/to/scratch/mutation-fork                # --fork: outside $SRC
+MT=$SRC/antithesis/scratchbook/mutation-testing    # where the scripts live
 CONFIG=antithesis/config                           # --config: compose dir, relative to $FORK
 ```
+
+The scripts are not on `PATH` — they sit in `$MT` alongside the patches — so
+invoke them as `"$MT/fork.sh"`, `"$MT/select-mutant.sh"`, and so on. The
+examples below drop the `$MT/` prefix for readability only.
 
 `--config` is the compose directory *relative to the fork*, so it is the one
 value here that is not an absolute path. It defaults to `antithesis/config`;
@@ -90,6 +95,16 @@ non-empty directory it did not create.
 
 Each run re-creates the fork from scratch rather than updating one in place —
 which is what makes `--exclude` worth setting on a large repo.
+
+## Bringing the fork's stack up beside the user's own
+
+`antithesis-setup` requires every service to set `container_name:`, and
+container names are global rather than project-scoped. So while
+`COMPOSE_PROJECT_NAME` keeps the fork's volumes, networks, and teardown away
+from the user's stack, it cannot separate container names: `verify-mutant.sh`
+and any `snouty validate` against the fork will collide with the user's own
+stack if that stack is running. Bring theirs down first. This is a local
+concern only — it says nothing about runs on the platform.
 
 ## When a script stops on an assumption
 

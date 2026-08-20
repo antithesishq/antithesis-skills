@@ -21,8 +21,13 @@ discover.
 Verdicts are keyed by catalog slug (`acked-writes-survive`), but
 `snouty runs --json properties` reports the assertion's **message string** as
 `name`. Build the mapping once, before the sweep, from the catalog's
-**Invariant** field and `antithesis/scratchbook/existing-assertions.md`, and
-record it in `status.md` next to each mutant. A reconstructed catalog produces
+**Invariant** field and **the assertion scan this skill runs on every sweep**
+(`SKILL.md`, prerequisites), and record it in `status.md` next to each mutant.
+Take the message literals from that scan, not from
+`antithesis/scratchbook/existing-assertions.md` alone: `antithesis-research`
+writes that file from a scan of what existed *before* the workload was written,
+and `antithesis-workload` never refreshes it — so on a repo that went research →
+setup → workload it typically reports no assertions at all. A reconstructed catalog produces
 this mapping as a byproduct of its join (`catalog-reconstruction.md`) — record it
 there rather than rebuilding it here.
 
@@ -50,6 +55,24 @@ user's real `antithesis/config` and launch the unmutated system.
 `select-mutant.sh <id> --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"`
 (see `mutation-harness.md`, "Paths" and "Select before building and before
 launching").
+
+**Isolate the compose project on every launch.** `antithesis-launch` builds and
+runs `snouty validate` before submitting, and snouty brings the stack up with no
+`-p`, so the project name falls through to the environment and then to the
+compose file's top-level `name:` — which `antithesis-setup` sets to the user's
+own project. Without this the fork's *mutated* stack comes up as the user's
+project and snouty's teardown takes their containers and volumes with it, once
+per mutant. Set it in the **same command** as the launch, not as a standalone
+`export` in an earlier step — each step typically runs in a fresh shell, and an
+export does not survive:
+
+```sh
+COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')" \
+  <the antithesis-launch invocation>
+```
+
+This is the same name `build-mutants.sh` and `verify-mutant.sh` compute, so all
+three act on one stack.
 
 Then, per run — all five are required:
 

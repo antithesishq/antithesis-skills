@@ -58,7 +58,11 @@ property that fired because of your mutant from one that was already failing.
 `Unreachable`) passes.
 
 Separately, check which of the properties you intend to mutate actually appear
-in the run's property list. An assertion Antithesis never cataloged cannot be
+in the run's property list. **This needs the catalog-slug to property-name
+mapping** — a run reports the assertion's *message string* as `name`, not your
+slug — so build it now, per `references/sweep-and-verdicts.md`, "Map slugs to
+property names first". Both this check and the scoping step below are guesswork
+without it. An assertion Antithesis never cataloged cannot be
 falsified, so a mutant aimed at it would spend a run to learn nothing — but this
 does **not** fail the gate. Scope each missing one out as *outstanding — not
 cataloged* and continue with the rest (`references/catalog-reconstruction.md`
@@ -94,16 +98,21 @@ not report it to the user as one. Record it, route it to `antithesis-workload`,
 and carry it into scoping below, which decides what to do with it.
 
 Read `status.md` for a recorded baseline; it is valid only while its
-`base_tree` fingerprint matches the current one. If there is no valid baseline,
-establish one: fork, populate `images.txt`, then **build with
+`base_tree` fingerprint matches the current one. On a first sweep the file does
+not exist yet — **create it here, in the shape `references/evidence-and-report.md`
+defines**, and write to it from this point on: the baseline row, then each run id
+before the next launch, then verdicts. It is what a later session resumes from,
+so a sweep that only writes it at the end has nothing to resume. If there is no
+valid baseline, establish one: fork, populate `images.txt`, then **build with
 `build-mutants.sh`, never a bare `compose build`**. Straight out of `fork.sh`
 the fork's compose still names the user's own image tags, and snouty pushes
 whatever the compose references — so a build and launch from that state puts a
 baseline image into the user's real registry tag. `build-mutants.sh` runs
 `select-mutant.sh baseline` first, which is what retags it. Then validate it —
-under the same compose project the scripts use, or the stack comes up as project
-`config`, which is also what the user's own `antithesis/config` stack uses, and
-tearing it down takes their containers and volumes with it:
+under the same compose project the scripts use. Otherwise the name falls through
+to the compose file's top-level `name:`, which `antithesis-setup` sets to the
+user's own project — so tearing this stack down takes their containers and
+volumes with it:
 
 ```sh
 export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')"
@@ -116,6 +125,7 @@ id:
 - `--config "$FORK/$CONFIG"` — without it the launch skill discovers the user's *real* config, the control is not built from `mutation-base`, and every comparison the sweep makes is invalid
 - `--source mutation-testing:baseline` and `--ephemeral` — a baseline launched into the user's real property history is a run they did not ask for
 - `--duration 15`
+- `COMPOSE_PROJECT_NAME` set **on the launch command itself**, exactly as every mutant launch sets it (`references/sweep-and-verdicts.md`, "Launching"). `antithesis-launch` validates before submitting, and that brings the fork's stack up under the user's own compose project unless this is set. An `export` in an earlier step does not carry: each step generally runs in its own shell
 
 When the catalog is being reconstructed, this run comes first and supplies the
 property list. The gate itself is unchanged — a red safety property still stops

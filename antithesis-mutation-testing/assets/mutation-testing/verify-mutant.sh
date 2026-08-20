@@ -114,11 +114,12 @@ else
 fi
 
 
-# Isolate the compose project. Without this, the project name is the basename of
-# the compose file's directory -- "config" -- which is also what the user's own
-# antithesis/config stack uses, so a teardown here would destroy their running
-# containers and volumes. snouty passes no -p, so exporting this covers the
-# stack `snouty validate` brings up as well as our own calls.
+# Isolate the compose project. Without this the name falls through to the compose
+# file's top-level `name:`, which antithesis-setup sets to the user's own project
+# -- so a teardown here would destroy their running containers and volumes.
+# snouty passes no -p, so exporting this covers the stack `snouty validate`
+# brings up as well as our own calls. Note container_name: is global rather than
+# project-scoped, so this isolates volumes and networks, not container names.
 # Hash the canonical path, so "$FORK" and "$FORK/" name the same project and a
 # teardown cannot miss the stack an earlier call brought up.
 WORK_CANON=$(cd -P "$WORK" && pwd) || die "--fork is not a usable directory: $WORK"
