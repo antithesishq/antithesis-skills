@@ -44,7 +44,7 @@ Launch an Antithesis run in this order only:
 - Build against that exact file: `docker compose -f <CONFIG>/docker-compose.yaml build`.
 - snouty never builds or pulls images, so every image must already be in the store of the engine snouty selects. snouty prefers podman when both engines are installed.
   - With a docker engine while podman is also installed, export `SNOUTY_CONTAINER_ENGINE=docker` so snouty reads docker's store.
-  - With a podman engine, export `DOCKER_HOST` to podman's API socket before the build. Compose looks for a Docker daemon otherwise. Confirm `podman info --format '{{.Host.RemoteSocket.Exists}}'` prints true first — a fresh podman install reports a path but does not listen on it, and `snouty doctor` still passes. On macOS podman runs in a VM, so take the host-forwarded socket from `podman machine inspect` rather than the in-VM path `podman info` reports.
+  - With a podman engine, build with `podman compose -f <CONFIG>/docker-compose.yaml build`. That wrapper execs Docker Compose v2 against podman's API socket, so the image lands in podman's store. podman must listen on that socket: confirm `podman info --format '{{.Host.RemoteSocket.Exists}}'` prints true, since a fresh install does not start it and `snouty doctor` still passes.
 
 ## Run Arguments
 

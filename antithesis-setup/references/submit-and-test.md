@@ -9,12 +9,11 @@ Use the `antithesis-launch` skill to kick off a run. That skill should handle al
 ## Build the Images
 
 Run `snouty doctor` first. It checks the container runtime and the compose CLI.
-Report both to the user, then build with that same pair. This file writes
-`docker compose`; use `docker-compose` instead when that is the CLI snouty names.
+Report both to the user, then build with the engine it names.
 
 snouty never builds or pulls images. Every image the compose file references must
-already be in the image store of the engine snouty selects. Use
-`run_in_background: true` for the build to avoid timeouts.
+already be in the image store of that engine. Use `run_in_background: true` for
+the build to avoid timeouts.
 
 With a Docker engine:
 
@@ -22,21 +21,21 @@ With a Docker engine:
 docker compose -f antithesis/config/docker-compose.yaml build
 ```
 
-With a podman engine, export `DOCKER_HOST` to podman's API socket first. Compose
-looks for a Docker daemon otherwise, and `podman compose` is not a substitute.
+Write `docker-compose` instead when that is the CLI snouty names.
+
+With a podman engine:
 
 ```sh
-podman info --format '{{.Host.RemoteSocket.Exists}}'   # must print true
-export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"
-docker compose -f antithesis/config/docker-compose.yaml build
+podman compose -f antithesis/config/docker-compose.yaml build
 ```
 
-A fresh podman install reports a socket path but does not listen on it, and
-`snouty doctor` still passes. Start the socket with `systemctl --user enable
---now podman.socket` when `RemoteSocket.Exists` prints false.
+`podman compose` is a wrapper, not `podman-compose`. It execs the Docker Compose
+v2 binary against podman's API socket, so the image lands in podman's store. It
+prints the provider it runs; confirm that line names `docker-compose`.
 
-On macOS podman runs in a VM, so take the host-forwarded socket from `podman
-machine inspect` rather than the in-VM path `podman info` reports.
+podman must listen on its API socket for either build to work. Check with
+`podman info --format '{{.Host.RemoteSocket.Exists}}'` and start it with
+`systemctl --user enable --now podman.socket`.
 
 snouty prefers podman when both engines are installed, and the two keep separate
 image stores. Export `SNOUTY_CONTAINER_ENGINE=docker` when you build with docker
