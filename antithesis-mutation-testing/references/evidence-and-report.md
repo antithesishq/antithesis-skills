@@ -105,11 +105,6 @@ updated: 2026-08-20
 | runs spent | 9 |
 | harness scripts edited | none |
 
-**stopped because** is what the next session needs and cannot re-derive: a
-declined checkpoint, an exhausted ceiling, and a session that simply ended lead
-to different resumes. **harness scripts edited** names any script whose `ASSUMES`
-block was changed for this repo, so a resume knows it is not running stock ones.
-
 ## Baseline
 
 | run_id | base_tree | verdict | wall clock | date |
@@ -126,11 +121,18 @@ block was changed for this repo, so a resume knows it is not running stock ones.
 | m04-commit-skew | commit-total-order | `commits are totally ordered` | planned | — | 0 | — | — | — |
 ```
 
+**stopped because** is what the next session needs and cannot re-derive: a
+declined checkpoint, an exhausted ceiling, and a session that simply ended lead
+to different resumes. **harness scripts edited** names any script whose `ASSUMES`
+block was changed for this repo, so a resume knows it is not running stock ones.
+
 The **state** column is what a resume branches on, so it has a fixed
 vocabulary and only these four values: **planned** (designed, not yet authored
 or built), **built** (image built and verified, never launched), **launched**
-(run submitted, no verdict yet — the id is in `run_id`), **landed** (the run
-finished and `verdict` holds the ladder's result). Nothing else belongs in this
+(run submitted, no result from this attempt yet — the id is in `run_id`; on a
+re-run the `verdict` column keeps the previous attempt's diagnosis, as `m02`
+above shows), **landed** (the run finished and `verdict` holds the ladder's
+result). Nothing else belongs in this
 column. Without it a resume has to infer "was this launched?" from free text a
 previous session wrote freehand, and the cost of guessing wrong is a relaunch.
 

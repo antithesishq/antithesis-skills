@@ -20,7 +20,7 @@ Per-mutant evidence, one file per mutant id: the target property, the mistake, w
 The image names the sweep retags, one per line without a tag. List every service built from this repo, including the workload image if it shares code with the SUT; omitting one means it keeps its previous mutant's build. Never list public images. Each entry must match the whole `image:` reference minus its tag — `ghcr.io/org/app`, not `app` — and that reference must carry an explicit tag.
 
 **interview.md**
-What the user agreed to: the four paths, the five interview answers, and the property scope. Written before any run is spent and updated whenever an answer changes. A later session reads this plus `status.md` to resume without re-asking, and it is the only record of what the user authorized.
+What the user agreed to: the paths, the five interview answers, and the property scope. Written before any run is spent and updated whenever an answer changes. A later session reads this plus `status.md` to resume without re-asking, and it is the only record of what the user authorized.
 
 **status.md**
 Sweep state — the baseline record, the catalog-slug-to-assertion-name mapping, run ids, and verdicts, each stamped with the `base_tree` it was obtained at. Written continuously so an interrupted sweep can be resumed by polling rather than relaunching.

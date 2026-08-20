@@ -55,9 +55,10 @@ Usage: fork.sh --source DIR --patches DIR --fork DIR
   --patches   Directory of <mutant-id>.patch files. Need not exist yet.
   --fork      Where the fork goes. Must be outside --source. An existing
               directory is reused only if a previous fork.sh created it.
-  --exclude   Extra rsync exclude pattern, relative to --source; repeatable.
-              For large build directories the image does not need, and for a
-              scratchbook somewhere other than antithesis/scratchbook.
+  --exclude   Extra rsync exclude pattern; repeatable. An unanchored pattern
+              matches at any depth; a leading / anchors it to the root of
+              --source. For large build directories the image does not need,
+              and for a scratchbook somewhere other than antithesis/scratchbook.
   --no-apply  Leave the fork at mutation-base without replaying existing patches.
   --force     Re-fork even though mut/* branches would be lost (see sync-patches.sh).
 

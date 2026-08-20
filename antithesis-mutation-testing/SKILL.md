@@ -155,7 +155,8 @@ they are still here to correct it.
    excluded from the copy (see `references/mutation-harness.md`).
 2. **Budget and concurrency.** Quote a **range**, not the first sweep. *N
    mutants plus a baseline is N+1 runs at minimum, but most properties need more
-   than one attempt: budget around 5N runs, plus about T of image builds.* Builds
+   than one attempt: budget around 5N runs, plus about N × T of image builds,
+   where T is the time one full image-set build takes.* Builds
    are often the larger number, and a budget that counts only runs will mislead.
    T is not measurable yet — the fork does not exist — so quote an estimate from
    the number of services and say the baseline build will measure it before the
@@ -185,7 +186,7 @@ Answering *autonomous* plus *refine* plus *apply* gives a workflow that runs
 until it converges or exhausts its budget.
 
 **Write the answers to `antithesis/scratchbook/mutation-testing/interview.md`
-before spending anything** — the four paths, the five answers, and the agreed
+before spending anything** — the paths, the five answers, and the agreed
 scope (`references/evidence-and-report.md` has the shape), updated whenever an
 answer changes. It is the only record of what the user authorized, and what a
 stopped sweep resumes from.
@@ -235,7 +236,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 11. Read `references/sweep-and-verdicts.md`; launch the sweep. Submissions are serialized — one `select-mutant.sh` → launch at a time — while the runs themselves overlap up to the agreed limit
 12. Poll, triage, and classify each run
 13. Read `references/evidence-and-report.md`; record verdicts and write the report
-14. Run `clean.sh` to remove the fork and confirm the user's tree carries no mutation — when the sweep has converged or been abandoned, and after any failure. **Not when it stopped and will be resumed**: the fork holds any mutant branch not yet exported to a patch, and `clean.sh` deletes it. Run `sync-patches.sh` first if you must clean a sweep you intend to resume — a resume re-forks from `--source` either way, so nothing else in the fork is load-bearing
+14. Run `clean.sh` to remove the fork and confirm the user's tree carries no mutation — when the sweep has converged or been abandoned, and after any failure. **Not when it stopped and will be resumed**: the fork holds any mutant branch not yet exported to a patch, and `clean.sh` deletes it. Run `sync-patches.sh` first if you must clean a sweep you intend to resume — a resume re-forks from `--source` either way. One thing is still lost with the fork: the `base_tree` diff a resume uses to tell excludable build churn from a real source change (`references/resume.md`), so a resume after a clean treats any fingerprint drift as real and re-baselines
 
 ### Iterate after a sweep
 
