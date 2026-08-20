@@ -18,14 +18,13 @@ metadata:
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- Run `snouty doctor`. Its checks name the container runtime and the compose CLI. Report both to the user and build with that same pair.
-- DO NOT PROCEED if `snouty doctor` reports no `docker compose` plugin and no standalone `docker-compose` binary.
+- Run `snouty doctor`. It checks the container runtime and the compose CLI. Report both to the user and build with that same pair.
 
 ## Goal
 
 Launch an Antithesis run in this order only:
 
-1. `docker compose build` (or `docker-compose build`, per `snouty doctor`)
+1. `docker compose build` (or `docker-compose build`)
 2. `snouty validate`
 3. if validation fails, stop and report the error
 4. `snouty launch`
