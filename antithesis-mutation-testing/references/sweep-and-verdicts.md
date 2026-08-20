@@ -16,6 +16,39 @@ Every mutant image must have been verified locally first
 build produces a survivor that means nothing and costs a full duration to
 discover.
 
+### Establishing the baseline
+
+When the gate finds no valid baseline, this is how one is established: fork,
+populate `images.txt`, then **build with `build-mutants.sh`, never a bare
+`compose build`**. Straight out of `fork.sh` the fork's compose still names the
+user's own image tags, and snouty pushes whatever the compose references — so a
+build and launch from that state puts a baseline image into the user's real
+registry tag. `build-mutants.sh` runs `select-mutant.sh baseline` first, which
+is what retags it. Then validate it — under the same compose project the
+scripts use, for the reason "Launching" below gives:
+
+```sh
+export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')"
+snouty validate "$FORK/$CONFIG"
+```
+
+Then launch it through `antithesis-launch` exactly as "Launching" below
+prescribes — the fork's config, the isolated compose project on the launch
+command itself, `--duration 15`, `--ephemeral` — with
+`--source mutation-testing:baseline` in place of a mutant id. The fork's config
+and `--ephemeral` are as load-bearing here as on a mutant run: without the
+first, the control is not built from `mutation-base` and every comparison the
+sweep makes is invalid; without the second, a baseline lands in the user's real
+property history as a run they did not ask for.
+
+When the catalog is being reconstructed, this run comes first and supplies the
+property list (`catalog-reconstruction.md`, "Ordering").
+
+**Take two measurements** and record both in `status.md`:
+
+- **Wall clock**, launch to completion. The interview's per-run figure was a rule of thumb; this is the number the sweep's schedule is projected from
+- **Local setup time** — how long `snouty validate` took to reach `setup_complete`; `verify-mutant.sh --timeout` derives from it (`mutation-harness.md`, "Verify before launching")
+
 ## Map slugs to property names first
 
 Verdicts are keyed by catalog slug (`acked-writes-survive`), but

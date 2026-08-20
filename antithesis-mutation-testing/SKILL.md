@@ -103,41 +103,19 @@ not exist yet — **create it here, in the shape `references/evidence-and-report
 defines**, and write to it from this point on: the baseline row, then each run id
 before the next launch, then verdicts. It is what a later session resumes from,
 so a sweep that only writes it at the end has nothing to resume. If there is no
-valid baseline, establish one: fork, populate `images.txt`, then **build with
-`build-mutants.sh`, never a bare `compose build`**. Straight out of `fork.sh`
-the fork's compose still names the user's own image tags, and snouty pushes
-whatever the compose references — so a build and launch from that state puts a
-baseline image into the user's real registry tag. `build-mutants.sh` runs
-`select-mutant.sh baseline` first, which is what retags it. Then validate it —
-under the same compose project the scripts use. Otherwise the name falls through
-to the compose file's top-level `name:`, which `antithesis-setup` sets to the
-user's own project — so tearing this stack down takes their containers and
-volumes with it:
-
-```sh
-export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')"
-snouty validate "$FORK/$CONFIG"
-```
-
-Then launch it through `antithesis-launch` with **exactly the arguments a mutant run gets**, except the
-id:
-
-- `--config "$FORK/$CONFIG"` — without it the launch skill discovers the user's *real* config, the control is not built from `mutation-base`, and every comparison the sweep makes is invalid
-- `--source mutation-testing:baseline` and `--ephemeral` — a baseline launched into the user's real property history is a run they did not ask for
-- `--duration 15`
-- `COMPOSE_PROJECT_NAME` set **on the launch command itself**, exactly as every mutant launch sets it (`references/sweep-and-verdicts.md`, "Launching"). `antithesis-launch` validates before submitting, and that brings the fork's stack up under the user's own compose project unless this is set. An `export` in an earlier step does not carry: each step generally runs in its own shell
+valid baseline, establish one per `references/sweep-and-verdicts.md`,
+"Establishing the baseline": build and validate with the harness scripts —
+never a bare `compose build`, which would push a baseline image to the user's
+real registry tag — then launch through `antithesis-launch` as an `--ephemeral`
+run under `--source mutation-testing:baseline`, and record the two measurements
+it takes (per-run wall clock and local setup time) in `status.md`.
 
 When the catalog is being reconstructed, this run comes first and supplies the
 property list. The gate itself is unchanged — a red safety property still stops
 the skill, whether or not there was a catalog naming it.
 
-**Take two measurements from the baseline** and record both in `status.md`:
-
-- **Wall clock**, launch to completion. The interview's per-run figure was a rule of thumb; this is the number the sweep's schedule is projected from
-- **Local setup time** — how long `snouty validate` took to reach `setup_complete`; `verify-mutant.sh --timeout` derives from it (`references/mutation-harness.md`)
-
-If the measured wall clock puts the sweep over the ceiling agreed in the
-interview, that is the budget rule below, not a new question. If it fits the
+If the baseline's measured wall clock puts the sweep over the ceiling agreed in
+the interview, that is the budget rule below, not a new question. If it fits the
 ceiling, proceed without asking, however far off the rule of thumb it was.
 
 ## Definitions and Concepts
