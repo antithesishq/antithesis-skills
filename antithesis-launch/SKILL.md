@@ -18,13 +18,13 @@ metadata:
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- Run `snouty doctor`. It checks the container runtime and the compose CLI. Report both to the user and build with that same pair.
+- Run `snouty doctor`. It checks the container runtime and the compose CLI. Report both to the user and build with that same pair. This skill writes `docker compose`; use `docker-compose` instead when that is the CLI snouty names.
 
 ## Goal
 
 Launch an Antithesis run in this order only:
 
-1. `docker compose build` (or `docker-compose build`)
+1. `docker compose build`
 2. `snouty validate`
 3. if validation fails, stop and report the error
 4. `snouty launch`
@@ -41,10 +41,10 @@ Launch an Antithesis run in this order only:
 - Treat these as strong Antithesis signals: nearby `scratchbook/` or `test/` directories, compose content mentioning `/opt/antithesis`, `ANTITHESIS_` env vars, `setup_complete`, or existing `snouty` examples.
 - If multiple compose files look plausible, prefer the one referenced by repo docs or existing `snouty launch` examples. If the choice is still ambiguous, ask the user instead of guessing.
 - Use the directory containing `docker-compose.yaml` as the `snouty validate <CONFIG>` and `snouty launch --config <CONFIG>` argument.
-- Build against that exact file: `docker compose -f <CONFIG>/docker-compose.yaml build`, or `docker-compose -f ... build` when `snouty doctor` names the standalone binary.
+- Build against that exact file: `docker compose -f <CONFIG>/docker-compose.yaml build`.
 - snouty never builds or pulls images, so every image must already be in the store of the engine snouty selects. snouty prefers podman when both engines are installed.
   - With a docker engine while podman is also installed, export `SNOUTY_CONTAINER_ENGINE=docker` so snouty reads docker's store.
-  - With a podman engine, point the standalone `docker-compose` binary at podman's API socket before the build. On Linux, `export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"`. On macOS, where podman runs in a VM, `export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"`.
+  - With a podman engine, point the compose CLI at podman's API socket before the build. On Linux, `export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"`. On macOS, where podman runs in a VM, `export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"`.
 
 ## Run Arguments
 
@@ -63,7 +63,6 @@ Launch an Antithesis run in this order only:
 - Do not run `snouty launch` unless the build succeeded and `snouty validate` exited successfully.
 
 ```sh
-# Use `docker-compose` when `snouty doctor` names the standalone binary.
 docker compose -f "$CONFIG_DIR/docker-compose.yaml" build
 snouty validate "$CONFIG_DIR"
 snouty launch \

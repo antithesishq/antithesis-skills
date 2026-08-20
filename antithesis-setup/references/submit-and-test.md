@@ -8,29 +8,22 @@ Use the `antithesis-launch` skill to kick off a run. That skill should handle al
 
 ## Build the Images
 
-Run `snouty doctor` first. Its checks name the container runtime and the compose
-CLI. Report both to the user, then build with that same pair.
-
-The compose CLI and the container engine are separate choices. Use one of these
-two setups:
-
-- **Docker** with the `docker compose` CLI plugin, or with the standalone
-  `docker-compose` binary if this engine has no plugin.
-- **Podman** with the standalone `docker-compose` binary, pointed at podman's
-  API socket. `podman compose` and `podman-compose` do not work here.
+Run `snouty doctor` first. It checks the container runtime and the compose CLI.
+Report both to the user, then build with that same pair. This file writes
+`docker compose`; use `docker-compose` instead when that is the CLI snouty names.
 
 snouty never builds or pulls images. Every image the compose file references must
-already be in the image store of the engine snouty selects.
+already be in the image store of the engine snouty selects. Use
+`run_in_background: true` for the build to avoid timeouts.
 
 With a Docker engine:
 
 ```sh
 docker compose -f antithesis/config/docker-compose.yaml build
-# If this engine has no compose plugin:
-docker-compose -f antithesis/config/docker-compose.yaml build
 ```
 
-With a podman engine, point the standalone binary at podman's API socket:
+With a podman engine, point the compose CLI at podman's API socket first.
+`podman compose` is not a substitute.
 
 ```sh
 # Linux
@@ -38,14 +31,12 @@ export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')
 # macOS, where podman runs in a VM
 export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
 
-docker-compose -f antithesis/config/docker-compose.yaml build
+docker compose -f antithesis/config/docker-compose.yaml build
 ```
 
 snouty prefers podman when both engines are installed, and the two keep separate
 image stores. Export `SNOUTY_CONTAINER_ENGINE=docker` when you build with docker
 on a machine that also has podman.
-
-Use `run_in_background: true` for the build to avoid timeouts.
 
 ## Local Testing First
 
