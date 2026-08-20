@@ -22,17 +22,18 @@ With a Docker engine:
 docker compose -f antithesis/config/docker-compose.yaml build
 ```
 
-With a podman engine, point the compose CLI at podman's API socket first.
-`podman compose` is not a substitute.
+With a podman engine, export `DOCKER_HOST` to podman's API socket first. Compose
+looks for a Docker daemon otherwise, and `podman compose` is not a substitute.
 
 ```sh
-# Linux
 export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"
-# macOS, where podman runs in a VM
-export DOCKER_HOST="unix://$(podman machine inspect --format '{{.ConnectionInfo.PodmanSocket.Path}}')"
-
 docker compose -f antithesis/config/docker-compose.yaml build
 ```
+
+On macOS podman runs in a VM, so take the host-forwarded socket from `podman
+machine inspect` rather than the in-VM path `podman info` reports. Verify the
+socket exists before you build; podman derives the path from the current
+`TMPDIR` and can report one that does not.
 
 snouty prefers podman when both engines are installed, and the two keep separate
 image stores. Export `SNOUTY_CONTAINER_ENGINE=docker` when you build with docker
