@@ -234,11 +234,9 @@ build-mutants.sh --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"
 build-mutants.sh --fork "$FORK" --patches "$PATCHES" --images "$IMAGES" --only m04-duplicate-term-ge
 ```
 
-Per target it resets the fork to `mutation-base`, applies that mutant's patch
-(none for the baseline), rewrites the `--images` tags to `mut-{id}` (or
-`baseline`), and runs `compose build`. A mutant whose patch no longer applies is
-reported and skipped rather than aborting the whole set; the script exits
-non-zero if anything failed, and those mutants must not be launched.
+A mutant whose patch no longer applies is reported and skipped rather than
+aborting the whole set; the script exits non-zero if anything failed, and those
+mutants must not be launched.
 
 The baseline is built from the same `mutation-base` as every mutant, so the
 control cannot be stale relative to what it is controlling for.
@@ -279,8 +277,7 @@ select-mutant.sh m04-duplicate-term-ge --fork "$FORK" --patches "$PATCHES" --ima
 select-mutant.sh baseline --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"
 ```
 
-It resets the fork to `mutation-base`, applies that mutant's patch, and rewrites
-the tags. `build-mutants.sh` calls it before each build.
+`build-mutants.sh` calls it before each build.
 
 **Call it again immediately before each launch.** `antithesis-launch` runs
 `docker compose build` before submitting, so the fork's working tree at launch
@@ -304,14 +301,10 @@ verify-mutant.sh m04-duplicate-term-ge --fork "$FORK" --patches "$PATCHES" \
   --images "$IMAGES" --timeout 180
 ```
 
-`verify-mutant.sh` selects the mutant, runs `snouty validate --keep-running`,
-greps the container logs for `ANTITHESIS MUTANT ACTIVE: {id}`, and tears the
-containers down. It exits non-zero when the announcement is absent — that build
-does not carry the patch, so rebuild and re-verify rather than launching it.
-
-`--keep-running` is what leaves the containers up to read the announcement from;
-without it `snouty validate` tears them down and the check has no command behind
-it.
+It exits non-zero when the announcement is absent — that build does not carry
+the patch, so rebuild and re-verify rather than launching it. (What the script
+does step by step is in `AGENTS.md` beside it; `--keep-running` is the part
+that leaves containers up to read the announcement from.)
 
 **Pass `--timeout` derived from the baseline's observed setup time.** `snouty
 validate` defaults to 60 seconds; a SUT with database migrations or a multi-node
