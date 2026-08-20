@@ -79,6 +79,19 @@ fork: /path/to/fork
 budget: 9 runs spent (ceiling in interview.md) · 41m measured per run · 95s local setup
 updated: 2026-08-20
 
+## Session
+
+| field | value |
+| --- | --- |
+| stopped because | budget ceiling reached after m02 |
+| runs spent | 9 |
+| harness scripts edited | none |
+
+**stopped because** is what the next session needs and cannot re-derive: a
+declined checkpoint, an exhausted ceiling, and a session that simply ended lead
+to different resumes. **harness scripts edited** names any script whose `ASSUMES`
+block was changed for this repo, so a resume knows it is not running stock ones.
+
 ## Baseline
 
 | run_id | base_tree | verdict | wall clock | date |
@@ -87,12 +100,21 @@ updated: 2026-08-20
 
 ## Mutants
 
-| mutant | target property | assertion name | marker | attempts | run_id | base_tree | verdict |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| m01-dropped-quorum-guard | acked-writes-survive | `acked write survives failover` | green | 1 | 7b2e44... | 4f1c9a2e... | falsified |
-| m02-stale-read-window | reads-see-acked-writes | `read returns acked value` | red | 2 | 9c1f08... | 4f1c9a2e... | rarity — re-running at 30m |
-| m03-index-regression | index-monotonic | `fsm index never regresses` | — | 0 | — | — | queued |
+| mutant | target property | assertion name | state | marker | attempts | run_id | base_tree | verdict |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| m01-dropped-quorum-guard | acked-writes-survive | `acked write survives failover` | landed | green | 1 | 7b2e44... | 4f1c9a2e... | falsified |
+| m02-stale-read-window | reads-see-acked-writes | `read returns acked value` | launched | red | 2 | 9c1f08... | 4f1c9a2e... | rarity — re-running at 30m |
+| m03-index-regression | index-monotonic | `fsm index never regresses` | built | — | 0 | — | — | — |
+| m04-commit-skew | commit-total-order | `commits are totally ordered` | planned | — | 0 | — | — | — |
 ```
+
+The **state** column is what a resume branches on, so it has a fixed
+vocabulary and only these four values: **planned** (designed, not yet authored
+or built), **built** (image built and verified, never launched), **launched**
+(run submitted, no verdict yet — the id is in `run_id`), **landed** (the run
+finished and `verdict` holds the ladder's result). Nothing else belongs in this
+column. Without it a resume has to infer "was this launched?" from free text a
+previous session wrote freehand, and the cost of guessing wrong is a relaunch.
 
 The **assertion name** column is the mapping from catalog slug to the `name`
 `snouty runs --json properties` reports. Fill it in before the sweep; without
