@@ -27,7 +27,7 @@ and confirm the property fires.
 
 Success means:
 
-- Every in-scope property is falsified by a mutant, or carries one of the other four verdicts: *not mutatable*, *outstanding*, *withdrawn*, or *refined* (see `references/sweep-and-verdicts.md`)
+- Every in-scope property is falsified by a mutant, or carries one of the other four verdicts: *not mutatable*, *outstanding*, *withdrawn*, or *refined* (see `references/evidence-and-report.md`, "Verdicts and qualifiers")
 - Each falsification is backed by a run whose evidence shows the property failed for the predicted reason, not as collateral from an unrelated cascade
 - Bad oracles and workload gaps found along the way are fixed; bad properties are routed back to `antithesis-research`
 - `antithesis/scratchbook/mutation-testing/report.md` records the outcome for every in-scope property, with the run that proves it
@@ -122,8 +122,8 @@ ceiling, proceed without asking, however far off the rule of thumb it was.
 
 - **SUT:** System under test.
 - **Mutant:** A small, realistic source change designed to violate exactly one property, built as its own image and identified by a `mNN-<slug>` id.
-- **Falsified (killed):** The property a mutant targets failed on that mutant's run, in a history that carries the mutant's marker, for a reason the log ties to the mutant's divergence. This is the outcome mutation testing is looking for. Target-red alone is not it: the property counts are run-wide totals, so "the mutant ran" and "the property failed" can describe histories that never met (see `references/sweep-and-verdicts.md`).
-- **Survived:** The mutant ran, the buggy code executed, and the targeted property still passed. Usually a defect in something — the mutant, the oracle, the workload, or the property — but a divergence rare enough that a 15-minute search never hit the case is not a defect, just an under-run search. The ladder separates the two.
+- **Falsified (killed):** The targeted property failed on that mutant's run, in a history carrying the mutant's marker, for a reason the log ties to the divergence — never merely marker-green and target-red as two run-wide counts (`references/sweep-and-verdicts.md`, "Attributing a falsification").
+- **Survived:** The mutant ran, the buggy code executed, and the targeted property still passed. Usually a defect in the mutant, oracle, workload, or property — the verdict ladder separates those from a search that simply never hit the case.
 - **Baseline:** A run of the unpatched SUT built from the same source as every mutant. The control.
 - **`base_tree`:** The git tree hash of the fork's `mutation-base` commit. The fingerprint that decides whether a recorded baseline still applies.
 - **Announcement:** A startup log line carried by a mutant patch, proving the right build is deployed. Checkable locally, before any run budget is spent.
@@ -310,23 +310,15 @@ output.
 
 - `interview.md` records the paths, the five answers, and the agreed scope, and matches what the user actually authorized — including any change made on resume
 - A green baseline was established at the reported `base_tree` before any mutant was designed, and its run id is recorded in `status.md`
-- Every in-scope property carries exactly one of the five verdicts — *falsified*, *not mutatable*, *outstanding*, *withdrawn*, *refined* — and the last four carry a reason. A verdict may be **qualified** with how it was reached: *falsified after refinement*, *falsified (collateral, verified)*, *outstanding — attempt cap reached*, *outstanding — unattributed*. The qualifier is part of the verdict, never a sixth one, and it never upgrades what the base verdict claims
-- Each falsification cites the run and the evidence tying the mutant's marker to the history the targeted property's counterexample came from — not two run-wide counts that could belong to different histories
-- No property is reported as falsified on the strength of collateral damage alone, and no collateral was credited on the strength of firing first
+- Every in-scope property carries exactly one verdict from `references/evidence-and-report.md`, "Verdicts and qualifiers" — a reason on everything but *falsified*, and the `base_tree` it was obtained at
+- Each falsification cites the run and the evidence tying the mutant's marker to the history the targeted property's counterexample came from — never two run-wide counts, never collateral damage alone, and no collateral credited on the strength of firing first
 - Every launched run used the fork's config directory, so what ran was the mutant and not the user's unmutated system
-- Each mutant models a realistic developer mistake and targets exactly one property; none was coarsened into obvious vandalism to force a kill
-- No workload was narrowed or weakened to make a kill easier
-- Verdicts record the `base_tree` they were obtained at, so a reader can see whether any predates a change to the oracle it measured
+- Each mutant models a realistic developer mistake targeting exactly one property; none was coarsened into vandalism, and no workload was narrowed, to force a kill
 - Survivors were classified by which link of the kill chain broke — not filed generically as "the property missed it"
-- A red marker was checked against the baseline's evidence for that property before being diagnosed as a workload gap
-- Fixes to assertions and workload code landed in the user's real tree, and were followed by a fresh baseline plus a full sweep
-- Fixes to mutants alone did not trigger an unnecessary re-baseline
-- No property was withdrawn because its component could not be mutated
-- Withdrawn properties are marked in the catalog with a reason, their evidence files are annotated rather than deleted, and the report lists any SDK assertion left behind with no validated property
-- The sweep stayed within the concurrency limit and the budget agreed in the interview
-- The fork is deleted and the user's working tree carries no mutation
-- A reconstructed catalog is marked as reconstructed in its provenance, the assertion scan behind it was shown to the user during the interview, and the report says the sweep validated only the assertions that already existed
-- No two mutants were ever in flight through `select-mutant.sh` and launch at the same time, so no run was built from another mutant's tree
-- Every mutant's announcement was confirmed present in local container logs, not assumed from a validate that exited zero
-- Source fixes were applied or proposed according to the answer to interview question 4, and no assertion was rewritten on the strength of a static trace alone
+- Real-tree fixes were applied or proposed per interview question 4, never on the strength of a static trace alone, and were followed by a fresh baseline plus a full sweep; mutant-only fixes did not trigger one
+- No property was withdrawn for being *not mutatable*; withdrawn entries carry a reason, their evidence files are annotated rather than deleted, and the report lists any SDK assertion left with no validated property
+- The sweep stayed within the agreed budget and concurrency limit, and never had two mutants in flight through `select-mutant.sh` → launch at once
+- Every launched mutant's announcement was verified locally before its launch and confirmed in the run's own events
+- A reconstructed catalog is marked as reconstructed in its provenance, its assertion scan was shown to the user during the interview, and the report says the sweep validated only the assertions that already existed
 - `report.md` names every in-scope property with its verdict and, where falsified, the run id that proves it
+- The fork is deleted and the user's working tree carries no mutation

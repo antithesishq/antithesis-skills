@@ -13,6 +13,24 @@ user. The first three are working state for this sweep; the `## Falsification`
 section in the property's evidence file is what a later reader finds, so
 anything that should outlive the sweep goes there.
 
+## Verdicts and qualifiers
+
+Every in-scope property ends the sweep with exactly one of five verdicts, and
+the last four always carry a reason:
+
+- **falsified** — a run killed it, with the evidence "Attributing a falsification" in `sweep-and-verdicts.md` requires
+- **not mutatable** — owned by a component not built from source here; a fact about the harness, never grounds for withdrawal
+- **outstanding** — the sweep could not obtain or attribute a result; the reason says what is blocking it
+- **withdrawn** — the catalog claim was retired as conceptually unfalsifiable, never silently
+- **refined** — the catalog entry was corrected and kept
+
+A verdict may be **qualified** with how it was reached. The qualifiers in use —
+*falsified after refinement*, *falsified (collateral, verified)*, and
+*outstanding — attempt cap reached / unattributed / dominated / workload gap /
+not cataloged* — are part of the verdict, never a sixth one, and a qualifier
+never upgrades what the base verdict claims. The verdict ladder in
+`sweep-and-verdicts.md` maps each diagnosis to the verdict it becomes.
+
 ## `interview.md`
 
 What the user agreed to. Written once at the end of the opening interview,
