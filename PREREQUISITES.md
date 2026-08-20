@@ -49,10 +49,15 @@ Log out and back in for the group change to take effect.
 
 ```bash
 sudo apt install -y podman
+systemctl --user enable --now podman.socket
 sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-compose-linux-x86_64 \
   -o /usr/local/bin/docker-compose
 sudo chmod +x /usr/local/bin/docker-compose
 ```
+
+Compose reaches podman through its API socket, which a fresh install does not
+start. Confirm `podman info --format '{{.Host.RemoteSocket.Exists}}'` prints
+`true`.
 
 The `docker-compose-v2` package ships the CLI plugin only, so it puts no
 `docker-compose` on `PATH`. The commands above fetch the x86-64 standalone

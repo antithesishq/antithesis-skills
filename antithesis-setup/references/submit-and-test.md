@@ -26,14 +26,17 @@ With a podman engine, export `DOCKER_HOST` to podman's API socket first. Compose
 looks for a Docker daemon otherwise, and `podman compose` is not a substitute.
 
 ```sh
+podman info --format '{{.Host.RemoteSocket.Exists}}'   # must print true
 export DOCKER_HOST="unix://$(podman info --format '{{.Host.RemoteSocket.Path}}')"
 docker compose -f antithesis/config/docker-compose.yaml build
 ```
 
+A fresh podman install reports a socket path but does not listen on it, and
+`snouty doctor` still passes. Start the socket with `systemctl --user enable
+--now podman.socket` when `RemoteSocket.Exists` prints false.
+
 On macOS podman runs in a VM, so take the host-forwarded socket from `podman
-machine inspect` rather than the in-VM path `podman info` reports. Verify the
-socket exists before you build; podman derives the path from the current
-`TMPDIR` and can report one that does not.
+machine inspect` rather than the in-VM path `podman info` reports.
 
 snouty prefers podman when both engines are installed, and the two keep separate
 image stores. Export `SNOUTY_CONTAINER_ENGINE=docker` when you build with docker
