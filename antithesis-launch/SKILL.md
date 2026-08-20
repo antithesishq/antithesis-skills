@@ -6,7 +6,7 @@ description: >
   bailing on validation failure, and then submitting `snouty launch` with sane
   metadata. Use when the user wants to send, submit, or launch an Antithesis
   run. This skill takes duration in minutes as input.
-compatibility: Requires docker (or podman) with compose and snouty (https://github.com/antithesishq/snouty).
+compatibility: Requires Docker Compose v2, a container engine (docker or podman), and snouty (https://github.com/antithesishq/snouty).
 metadata:
   version: "2026-08-19 d07de7b"
 ---
@@ -18,6 +18,7 @@ metadata:
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- Run `snouty doctor`. It checks the container runtime and the compose CLI. Report both to the user and build with that same pair. This skill writes `docker compose`; use `docker-compose` instead when that is the CLI snouty names.
 
 ## Goal
 
@@ -40,7 +41,10 @@ Launch an Antithesis run in this order only:
 - Treat these as strong Antithesis signals: nearby `scratchbook/` or `test/` directories, compose content mentioning `/opt/antithesis`, `ANTITHESIS_` env vars, `setup_complete`, or existing `snouty` examples.
 - If multiple compose files look plausible, prefer the one referenced by repo docs or existing `snouty launch` examples. If the choice is still ambiguous, ask the user instead of guessing.
 - Use the directory containing `docker-compose.yaml` as the `snouty validate <CONFIG>` and `snouty launch --config <CONFIG>` argument.
-- Build against that exact file with `docker compose -f <CONFIG>/docker-compose.yaml build`. If `docker compose` is unavailable, fall back to `docker-compose -f ... build`.
+- Build against that exact file: `docker compose -f <CONFIG>/docker-compose.yaml build`.
+- snouty never builds or pulls images, so every image must already be in the store of the engine snouty selects. snouty prefers podman when both engines are installed.
+  - Use `SNOUTY_CONTAINER_ENGINE=docker` to force snouty to use docker's store.
+- When using podman, build with `podman compose -f <CONFIG>/docker-compose.yaml build`. That wrapper execs Docker Compose v2 against podman's API socket, so the image lands in podman's store. Check the provider first: `podman compose version` must print `Docker Compose version ...`, because podman falls back to the `podman-compose` Python tool when it finds no Compose v2 binary.
 
 ## Run Arguments
 
@@ -83,4 +87,5 @@ snouty launch \
 - The build, validate, and run steps all point at the same config.
 - `snouty validate` succeeded before `snouty launch` was invoked.
 - The run set `source`, `test-name`, `description`, and `duration` explicitly.
+- The build used the compose CLI and container engine `snouty doctor` reported.
 - Missing blockers such as `duration`, `ANTITHESIS_REPOSITORY`, or an ambiguous config location caused a stop instead of a bad submission.
