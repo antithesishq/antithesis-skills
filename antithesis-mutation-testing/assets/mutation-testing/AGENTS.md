@@ -41,7 +41,7 @@ Puts the fork into one mutant's state: resets to `mutation-base`, applies that p
 Proves a built image actually carries its patch, before a run is spent on it. Brings the compose up with `snouty validate --keep-running`, greps the container logs for that mutant's announcement, and tears it down. Pass `--timeout` derived from the baseline's setup time; the default is 60s. A mutant that fails this must not be launched.
 
 **build-mutants.sh** `--fork DIR --patches DIR --images FILE [--config REL] [--only ID,...] [--no-baseline]`
-Builds the baseline and one image set per mutant, tagging each `baseline` or `mut-<id>`. Does not push — snouty pushes the images the compose references when the run is launched. Compose runs through the `docker-compose` binary — the one snouty itself execs, so the images this builds are the ones the validate and launch find, and the launch's pre-submit rebuild is a cache hit rather than a second full build. The `docker compose` plugin is a fallback for local operations only; snouty needs `docker-compose`. `podman compose` is not supported; podman as the runtime, via `DOCKER_HOST`, is fine.
+Builds the baseline and one image set per mutant, tagging each `baseline` or `mut-<id>`. Does not push — snouty pushes the images the compose references when the run is launched. Compose runs through the `docker-compose` binary — the one snouty itself execs — with the `docker compose` plugin as a warned fallback for local operations only; `podman compose` is not supported, though podman as the runtime behind `DOCKER_HOST` is fine.
 
 **clean.sh** `--source DIR --fork DIR --patches DIR`
 Removes the fork and searches your source tree for a mutant announcement, so a patch applied there by mistake is caught. Run it even when a sweep fails.

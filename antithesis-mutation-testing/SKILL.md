@@ -242,7 +242,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 1. Read `references/sweep-and-verdicts.md`
 2. Wait for every run to land, then classify every survivor before changing anything — the fix depends on which link of the kill chain broke, and a real-tree fix applied while a run is in flight moves `base_tree` out from under it
 3. Apply all diagnosed fixes for the round together, not one at a time — honoring interview question 4 for anything that touches the user's tree
-4. Export every revised mutant with `sync-patches.sh` **before** re-forking — this round is the one that re-authors mutants, and a re-fork replays patches, so an unexported revision would be replaced by the version it was meant to fix. `fork.sh` refuses to run in that state rather than doing it silently — but its `--force` escape hatch discards the revision, so sync first and never reach for `--force` to clear that message
+4. Export every revised mutant with `sync-patches.sh` **before** re-forking — a re-fork replays patches, so an unexported revision would be replaced by the version it was meant to fix. `fork.sh` refuses to run in that state; never clear that message with `--force` (`references/mutation-harness.md`, "When a script stops on an assumption")
 5. Re-run under the two-branch rule: mutant-patch-only changes re-run just the changed mutants; any change to the SUT, workload, or assertions invalidates the baseline and requires a fresh baseline plus a full sweep. Rebuild and re-verify every mutant before launching it — the tags are stable across forks, so a stale image would otherwise go out silently
 6. Update the report, and run `clean.sh` when the sweep is finished
 
