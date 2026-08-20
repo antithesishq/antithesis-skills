@@ -4,7 +4,7 @@ You need the following to use antithesis-skills:
 
 - **An AI agent** that supports skills — tested with [Claude Code](https://code.claude.com/docs) and [OpenAI Codex](https://learn.chatgpt.com/docs/codex/cli). Other agents that support skills may also work.
 - **npm** — the installer runs via `npx`, which ships with [npm](https://www.npmjs.com/).
-- **Docker Compose v2** — either the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/) or the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/). Antithesis runs the standalone binary against podman. The `podman-compose` Python tool is a different program and plays no part.
+- **Docker Compose v2** — either the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/) or the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/). Antithesis runs the standalone binary against podman.
 - **A container engine** — [Docker](https://github.com/docker) or [Podman](https://podman.io/), used to build and push images.
 - **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.
 - **[agent-browser](https://github.com/vercel-labs/agent-browser)** — optional, used by the triage, debug, and query-logs skills to interact with the Antithesis web UI.
@@ -55,11 +55,6 @@ sudo curl -SL https://github.com/docker/compose/releases/latest/download/docker-
 sudo chmod +x /usr/local/bin/docker-compose
 ```
 
-Compose reaches podman through its API socket, which a fresh install does not
-start. Confirm `podman info --format '{{.Host.RemoteSocket.Exists}}'` prints
-`true`. snouty needs the standalone binary on `PATH`; `podman compose` finds it
-there too and runs it against podman.
-
 The `docker-compose-v2` package ships the CLI plugin only, so it puts no
 `docker-compose` on `PATH`. The commands above fetch the x86-64 standalone
 binary; see the
@@ -71,8 +66,6 @@ for other architectures.
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
-
-Run `snouty doctor` to confirm the compose CLI and container runtime snouty selects.
 
 ### agent-browser (optional)
 
@@ -145,8 +138,6 @@ podman machine start
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
-
-Run `snouty doctor` to confirm the compose CLI and container runtime snouty selects.
 
 ### agent-browser (optional)
 

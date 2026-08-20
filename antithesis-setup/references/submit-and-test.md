@@ -29,19 +29,17 @@ With a podman engine:
 podman compose -f antithesis/config/docker-compose.yaml build
 ```
 
-`podman compose` is a wrapper, not `podman-compose`. It execs the Docker Compose
-v2 binary against podman's API socket, so the image lands in podman's store. Run
-both checks before the build:
+`podman compose` is a wrapper. It execs the Docker Compose v2 binary against
+podman's API socket, so the image lands in podman's store. Check the provider
+before the build:
 
 ```sh
-podman compose version                                 # must print "Docker Compose version ..."
-podman info --format '{{.Host.RemoteSocket.Exists}}'   # must print true
+podman compose version   # must print "Docker Compose version ..."
 ```
 
 podman falls back to the `podman-compose` Python tool when it finds no Compose v2
-binary; that tool is not Docker Compose and reports `podman-compose version` here
-instead. podman also does not start its own API socket — start it with
-`systemctl --user enable --now podman.socket`.
+binary. The `podman-compose` Python tool is incompatible with all of the required
+features of `docker-compose` and should not be used.
 
 snouty prefers podman when both engines are installed, and the two keep separate
 image stores. Export `SNOUTY_CONTAINER_ENGINE=docker` when you build with docker
