@@ -188,17 +188,16 @@ intact (see `mutation-harness.md`).
 
 ## `report.md`
 
-The deliverable. Lead with the table; the reader wants the whole catalog's
-status at a glance.
+The deliverable. Open with the falsified count, then the table — a table of
+mixed verdicts reads as "accounted for" at a glance whether or not much was
+proven, so the count is what keeps the headline honest.
 
 ```markdown
 # Mutation testing report
 
 base_tree: 4f1c9a2e... · baseline run `f3a9c1...` (green) · 2026-08-20
 
-**3 of 12 in-scope properties were falsified.** Lead with that count — a table of
-mixed verdicts reads as "accounted for" at a glance whether or not much was
-proven.
+**4 of 12 in-scope properties were falsified.**
 
 | Property | Class | Verdict | Mutant | Run | base_tree |
 | --- | --- | --- | --- | --- | --- |

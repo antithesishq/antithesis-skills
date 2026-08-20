@@ -12,7 +12,7 @@
 #
 # GUARANTEES
 #   - The old patch set is never removed before the new one is written.
-#   - Refuses to shrink the set substantially without --force.
+#   - Refuses to shrink the set without --force.
 #
 # Each patch is a diff against mutation-base, so every patch applies
 # independently. Mutants are siblings, never a stack.
@@ -50,7 +50,7 @@ warn_dirty() {
   local branch dirty
   branch=$(git -C "$WORK" symbolic-ref -q --short HEAD 2>/dev/null) || return 0
   case "$branch" in mut/*) ;; *) return 0 ;; esac
-  dirty=$(git -C "$WORK" status --porcelain -- . ":(exclude)*/docker-compose.yaml" 2>/dev/null)
+  dirty=$(git -C "$WORK" status --porcelain -- . ":(exclude)*/docker-compose.yaml" ":(exclude)docker-compose.yaml" 2>/dev/null)
   [ -n "$dirty" ] || return 0
   echo "warning: $branch has uncommitted changes, which are NOT exported:" >&2
   printf '%s\n' "$dirty" >&2

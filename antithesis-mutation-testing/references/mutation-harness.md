@@ -219,7 +219,10 @@ Do not list public images (`docker.io/library/postgres:17.2`). Each listed
 service's compose `image:` must carry an explicit tag — `select-mutant.sh`
 rewrites the tag portion and fails loudly if there is none to rewrite. An
 interpolated reference (`image: myapp:${TAG}`) must be resolved to a literal
-first.
+first — in the user's real compose, not the fork's copy, which a re-fork
+regenerates from the source. That is a real-tree change: it is governed by
+interview question 4, and it moves `base_tree`, so make it before the baseline
+is established rather than mid-sweep.
 
 ## Build
 
