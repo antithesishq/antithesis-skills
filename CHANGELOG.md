@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-08-24
+
+- fix: reach claims must assert the precondition, not the violation ([PR #194](https://github.com/antithesishq/antithesis-skills/pull/194))
+
 ## 2026-08-20
 
 - BREAKING CHANGE: fix: replace podman compose guidance with Docker Compose v2 ([PR #191](https://github.com/antithesishq/antithesis-skills/pull/191))
