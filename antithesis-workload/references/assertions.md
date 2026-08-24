@@ -113,9 +113,9 @@ Do not write `Sometimes(X)` next to `Always(!X)`. The `Sometimes` fires only whe
 Test each reach claim with one question: does it still fire when the system is correct? If it does not, assert the precondition that makes the violation possible.
 
 - Bad: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(gate_says_flushed && !on_disk)`
-- Good: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(!on_disk)`
+- Good: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(!on_disk)` and `Sometimes(gate_says_flushed)`
 
-The good `Sometimes` fires when the system is correct. It shows that the workload reaches the window where the gate can lie.
+Assert each part of the precondition on its own. Both good claims fire when the system is correct. Together they show that the workload reaches the window where the gate can lie.
 
 This rule also applies to a harness that reproduces a known bug.
 
