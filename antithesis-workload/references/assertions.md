@@ -83,6 +83,7 @@ Don't write `Always(observed_delta == 100, ...)` for the same property — that 
 - Do not construct assertion property names at runtime or pass them through variables. The name must be an inline constant string literal at the callsite — see "Naming" for why static analysis requires this.
 - Do not stack broad early `Reachable(...)` markers on a straight-line flow when a later, more specific outcome marker already proves the path was exercised.
 - Do not assert exact equality on values affected by transient errors. Use bounded assertions (see "Assert Bounds, Not Exact Values").
+- Do not write `Sometimes(X, ...)` next to `Always(!X, ...)` at the same site. A reach claim asserts the precondition, never the violation — see "A Reach Claim Asserts The Precondition, Never The Violation".
 
 ## Good and Bad Uses
 
@@ -92,6 +93,8 @@ Don't write `Always(observed_delta == 100, ...)` for the same property — that 
 - Bad: `Reachable("entered queue processing function")` when later success/failure markers already distinguish the useful outcomes
 - Good: `Unreachable("redirect emitted with missing leader address")`
 - Bad: reusing `"client eventually completed useful operation"` across several unrelated callsites
+- Good: `Sometimes(!on_disk, "rename observed before the file is on disk")` beside `Always(!(gate_says_flushed && !on_disk), ...)`
+- Bad: `Sometimes(gate_says_flushed && !on_disk, ...)` beside the same `Always` — the reach claim is the negation of the safety claim
 
 ## Sometimes Assertions as Workload Reach Claims
 
@@ -102,6 +105,21 @@ For each behavior the workload is designed to drive the system toward, write one
 This is workload development, not evaluation. The assertions are claims about what the workload should reach; the test results are the evidence. The unfired assertions become the iteration signal — see `iteration.md` for how to act on them.
 
 The correspondence between behaviors and assertions is not necessarily one-to-one. A single behavior might warrant several Sometimes assertions at different points in the path, or one assertion might cover the essential signal for a behavior. Use as many as it takes to know whether the workload is reaching a behavior, and no more.
+
+### A Reach Claim Asserts The Precondition, Never The Violation
+
+A reach claim states that the workload arrives at the state where a bug can appear. It does not state that the bug appears.
+
+Never write `Sometimes(X)` next to `Always(!X)`. The pair carries no information. The `Sometimes` fires only when the `Always` fails, so the two counts always mirror each other. On a build with the bug fixed, the `Sometimes` never fires, and Antithesis reports an unfired `Sometimes` as a failure. A correct system therefore fails the test.
+
+Test every reach claim with one question: does this still fire after someone fixes every bug? If the answer is no, move the condition back to the precondition that makes the violation possible.
+
+- Bad: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(gate_says_flushed && !on_disk)`
+- Good: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(!on_disk)`
+
+The good pair says two separate things. The `Always` says the gate never lies. The `Sometimes` says the workload reaches the window where a lie is possible — the file is not yet on disk. Both hold on a fixed build.
+
+This rule applies to a harness that reproduces a known bug as well. The behavior such a harness drives toward is the precondition, not the violation. Write the reach claim on the precondition, and let the `Always` report the violation.
 
 ## Assertion Placement
 
