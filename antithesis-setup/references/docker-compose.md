@@ -53,10 +53,6 @@ services:
     image: docker.io/library/postgres:17.2
 ```
 
-## Podman Compose Compatibility
-
-Antithesis uses `podman compose` behind the scenes. For compatibility, prefer `podman compose` over `docker compose` when testing locally. Use `podman compose` if available; otherwise fall back to `docker compose`.
-
 ## Hermetic Execution
 
 The compose config must run without internet access. All images must be pre-built or available in the Antithesis registry.

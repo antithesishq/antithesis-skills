@@ -83,6 +83,7 @@ Don't write `Always(observed_delta == 100, ...)` for the same property — that 
 - Do not construct assertion property names at runtime or pass them through variables. The name must be an inline constant string literal at the callsite — see "Naming" for why static analysis requires this.
 - Do not stack broad early `Reachable(...)` markers on a straight-line flow when a later, more specific outcome marker already proves the path was exercised.
 - Do not assert exact equality on values affected by transient errors. Use bounded assertions (see "Assert Bounds, Not Exact Values").
+- Do not write `Sometimes(X, ...)` next to `Always(!X, ...)`. Assert the precondition, not the violation — see "A Reach Claim Asserts The Precondition, Never The Violation".
 
 ## Good and Bad Uses
 
@@ -102,6 +103,21 @@ For each behavior the workload is designed to drive the system toward, write one
 This is workload development, not evaluation. The assertions are claims about what the workload should reach; the test results are the evidence. The unfired assertions become the iteration signal — see `iteration.md` for how to act on them.
 
 The correspondence between behaviors and assertions is not necessarily one-to-one. A single behavior might warrant several Sometimes assertions at different points in the path, or one assertion might cover the essential signal for a behavior. Use as many as it takes to know whether the workload is reaching a behavior, and no more.
+
+### A Reach Claim Asserts The Precondition, Never The Violation
+
+A reach claim says that the workload reaches the state where a bug can occur. It does not say that the bug occurs.
+
+Do not write `Sometimes(X)` next to `Always(!X)`. The `Sometimes` fires only when the `Always` fails. On a build with no bug, the `Sometimes` never fires, and Antithesis reports an unfired `Sometimes` as a failure.
+
+Test each reach claim with one question: does it still fire when the system is correct? If it does not, assert the precondition that makes the violation possible.
+
+- Bad: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(gate_says_flushed && !on_disk)`
+- Good: `Always(!(gate_says_flushed && !on_disk))` with `Sometimes(!on_disk)` and `Sometimes(gate_says_flushed)`
+
+Assert each part of the precondition on its own. Both good claims fire when the system is correct. Together they show that the workload reaches the window where the gate can lie.
+
+This rule also applies to a harness that reproduces a known bug.
 
 ## Assertion Placement
 

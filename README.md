@@ -136,26 +136,26 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 
 ## Prerequisites
 
-You'll need an AI agent, npm, a container runtime (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
+You'll need an AI agent, npm, Docker Compose v2, a container engine (Docker or Podman), and the Snouty CLI. See [PREREQUISITES.md](PREREQUISITES.md) for the full list and platform-specific installation instructions.
 
 ## Permissions
 
-These skills invoke external tools (Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
+These skills invoke external tools (Docker Compose, Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
-| Skill                                  | Tools used                      |
-| -------------------------------------- | ------------------------------- |
-| `antithesis-research`                  | No explicit external tools      |
-| `antithesis-setup`                     | `docker`/`podman`, `snouty`     |
-| `antithesis-setup-k8s`                 | `docker`/`podman`, `snouty`     |
-| `antithesis-workload`                  | `snouty`                        |
-| `antithesis-launch`                    | `docker`/`podman`, `snouty`     |
-| `antithesis-triage`                    | `snouty`, `jq`                  |
-| `antithesis-debug`                     | `agent-browser`, `jq`           |
-| `antithesis-query-logs`                | `snouty`, `agent-browser`, `jq` |
-| `antithesis-agent-browser`             | `agent-browser`, `jq`           |
-| `antithesis-documentation`             | `snouty docs`                   |
+| Skill                      | Tools used                                                     |
+| -------------------------- | ------------------------------------------------------------ |
+| `antithesis-research`      | No explicit external tools                                     |
+| `antithesis-setup`         | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
+| `antithesis-setup-k8s`     | `docker`/`podman`, `snouty`                                    |
+| `antithesis-workload`      | `snouty`                                                       |
+| `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
+| `antithesis-triage`        | `snouty`, `jq`                                                 |
+| `antithesis-debug`         | `agent-browser`, `jq`                                          |
+| `antithesis-query-logs`    | `snouty`, `agent-browser`, `jq`                                |
+| `antithesis-agent-browser` | `agent-browser`, `jq`                                          |
+| `antithesis-documentation` | `snouty docs`                                                  |
 
 ## Install
 
