@@ -3,7 +3,7 @@
 Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
 
 > Table of contents:  
-> **[Working with LLM agents](#working-with-llm-agents)** · **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
+> **[Working with LLM agents](#working-with-llm-agents)** · **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Choosing a model](#choosing-a-model)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
 
 ## Skills overview
 
@@ -133,6 +133,12 @@ This skill discovers the Antithesis config, builds the harness, validates it wit
 **Platform**: macOS or Linux.
 
 **AI agent**: Tested with [Claude Code](https://code.claude.com/docs) and [OpenAI Codex](https://learn.chatgpt.com/docs/codex/cli). These skills work best with agents that can spawn sub-agents for self-review. Other agents that support skills may also work.
+
+## Choosing a model
+
+These skills work well with mid-tier models. They were designed and tested with Claude Opus 4.6, and models at that level — older Sonnets, or similar from other providers — are a good starting point. If you think a particular skill isn't performing well enough, try a more capable model for that skill before upgrading across the board.
+
+Some skills are heavy on input tokens — `antithesis-research` in particular. Using a frontier model where a mid-tier one performs just as well has a real impact on spend and quota usage for minimal to no gain.
 
 ## Prerequisites
 
