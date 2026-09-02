@@ -49,6 +49,33 @@ After an Antithesis run, `antithesis-triage` reports property status:
 Frame triage with a focused lens: "I'm hunting for [specific bug]. Did it
 trigger? Are the reach claims firing?"
 
+### Narrowing
+
+Reach claims are firing but the bug isn't triggering. The workload is in the
+right neighborhood — it reaches the preconditions — but the specific
+conditions that cause the bug aren't aligning. This is the hardest iteration
+state because the workload is doing the right thing and the remaining gap is
+subtle.
+
+- **Tighten the state space.** Reduce buffer sizes, shorten timeouts, fewer
+  replicas — make the system operate closer to its limits so the bug's
+  conditions are more likely to align.
+- **Increase concurrency pressure.** More concurrent clients, tighter
+  interleaving. The bug may need a specific interleaving that wider
+  concurrency produces more often.
+- **Bias toward the trigger sequence.** If the hypothesis involves a specific
+  operation ordering, use swarm parameters to heavily bias toward that
+  sequence in some runs.
+- **Add deeper reach claims.** The current claims show you reach the
+  preconditions, but there may be intermediate states between the
+  preconditions and the bug that you haven't verified. Add claims further
+  along the trigger path to find where the gap is.
+- **Extend run duration.** If the bug requires a rare alignment, longer runs
+  give more chances. Move from 30-minute runs to 2-4 hour runs.
+- **Consider missing faults.** The bug may need a fault type that isn't
+  enabled. Check `references/faults.md` and confirm the relevant faults are
+  active for the tenant.
+
 ## Iteration Moves
 
 There is no fixed order. Use what you observe to decide what to adjust.
