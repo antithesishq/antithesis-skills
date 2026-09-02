@@ -8,12 +8,12 @@ description: >
   run. This skill takes duration in minutes as input.
 compatibility: Requires Docker Compose v2, a container engine (docker or podman), and snouty (https://github.com/antithesishq/snouty).
 metadata:
-  version: "2026-08-24 d6b507d"
+  version: "2026-09-02 85a6c04"
 ---
 
 # Antithesis Launch
 
-**Skill version:** `2026-08-24 d6b507d`
+**Skill version:** `2026-09-02 85a6c04`
 
 ## Prerequisites
 
