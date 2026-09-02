@@ -16,6 +16,10 @@ When a property's Open Questions list contains a question that affects what the 
 
 A question that doesn't affect the assertion logic doesn't block mapping — proceed.
 
+## Assertions Do Not End the Timeline
+
+Antithesis SDK assertions are not traditional crash-on-failure assertions. A failed assertion does not terminate the program, stop the timeline, or alter control flow. It records the property outcome and continues execution. This means assertions are safe to place liberally in both workload and SUT code — a failing `Always` is reported as a property violation, not a crash.
+
 ## Match the Assertion to the Property Type
 
 - **`Always`**: Use for safety and correctness invariants that must hold every time the check runs. Example: a balance never goes negative.
