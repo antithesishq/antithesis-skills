@@ -1,13 +1,13 @@
 # antithesis-skills
 
-Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, launch Antithesis runs, and triage the results.
+Enable AI agents to incorporate Antithesis into how you build and test software.
 
 > Table of contents:  
 > **[Working with LLM agents](#working-with-llm-agents)** · **[Recommended workflow](#recommended-workflow)** · **[Starter prompts](#starter-prompts)** · **[Choosing a model](#choosing-a-model)** · **[Prerequisites](#prerequisites)** · **[Install](#install)**
 
 ## Skills overview
 
-`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's used by the research, setup, and workload skills. You can also use it to ask questions about how to use Antithesis.
+`antithesis-documentation` is a foundational skill that enables agents to work with [our docs](https://antithesis.com/docs/) more efficiently. It's used by several of our other skills. You can also use it to ask questions about how to use Antithesis.
 
 `antithesis-research`, `antithesis-setup`, and `antithesis-workload` work together to bootstrap a new system into Antithesis. Together, they will:
 
@@ -20,6 +20,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 > [!IMPORTANT]
 > `antithesis-research` is thorough by design. It fans out across sub-agents to study your system from several angles — reading source, comments, docs, commit history, and issues — then runs multiple evaluation passes over the properties it discovers. That depth is what makes the artifacts valuable, but it also means the run is not quick: on most codebases, expect it to work for > _30 minutes to an hour_* and to use a meaningful amount of tokens along the way.
+
+`antithesis-bug-hunt` hunts for a specific known or suspected bug. It performs targeted codebase analysis around the bug, builds a self-driving reproduction workload, and iterates locally and in Antithesis until the bug is found. It handles open bug reports, closed bugs you want to verify the fix holds for, and suspected weaknesses in a system area.
 
 `antithesis-setup-k8s` enables agents to adapt Kubernetes manifests to run inside Antithesis. Given Kubernetes manifests in any form (helm charts, kustomize, raw YAML), the skill drives an interview-based workflow to adapt, convert, and validate manifests to work in Antithesis. This skill is still in development and does not provide all the same tools as `antithesis-setup`, specifically regarding instrumentation and SDK usage.
 
@@ -50,11 +52,27 @@ If you're new to agentic tools, or you've been using them for a while and want t
   <img src="assets/skills-flowchart.png" alt="Antithesis skills workflow" width=600 />
 </p>
 
-We recommend that you run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
+Pick a starting point based on what you're trying to do: build broad test coverage for a system, or hunt for a specific bug.
+
+### Broad coverage
+
+Start here when you're bringing a new system into Antithesis or want to build out general test coverage.
+
+Run `antithesis-research`, `antithesis-setup`, and `antithesis-workload` in order and in separate fresh contexts. After running each skill review all of the changes made so far, and iterate on them before continuing to the next skill.
 
 If your system runs on Kubernetes, run `antithesis-setup-k8s` instead of `antithesis-setup` to help shape your Kubernetes manifests and kick off an Antithesis test that uses Kubernetes as the container orchestrator. This skill is currently in development and does not provide the same experience as `antithesis-setup` involving instrumentation and SDK usage.
 
 Once the harness is in place, use `antithesis-launch` to run `docker compose build`, `snouty validate`, and `snouty launch` in the right order. We recommend running this after the setup and workload skills to ensure everything is working well.
+
+### Targeted bug hunting
+
+Start here when you have a specific known or suspected bug to reproduce.
+
+Run `antithesis-bug-hunt` with a bug report, issue, or description of the suspected weakness. The skill handles system orientation, targeted codebase analysis, workload building, and iteration — you don't need to run `antithesis-research` or `antithesis-workload` separately.
+
+Bug-hunt starts locally by default: it builds a docker-compose environment and iterates there first. When the trigger hypothesis requires Antithesis capabilities (fault injection, scheduling control), it delegates to `antithesis-setup` and `antithesis-launch` to move to Antithesis runs. After each run, use `antithesis-triage` to check whether the specific bug triggered, and `antithesis-debug` if deeper investigation is needed.
+
+### General advice
 
 Don't hesitate to run short 15-30 minute Antithesis test runs as smoke tests to ensure that the harness is working as expected.
 
@@ -83,6 +101,19 @@ This skill outputs the following research materials, relative to the project dir
 - `antithesis/scratchbook/property-relationships.md` maps suspected clusters and connections between properties.
 - `antithesis/scratchbook/evaluation/synthesis.md` records categorized evaluation findings and actions taken.
 - `antithesis/scratchbook/evaluation/{lens}.md` one per evaluation lens used during property evaluation.
+
+### antithesis-bug-hunt
+
+```
+/antithesis-bug-hunt Hunt for this bug: [paste bug report or describe the bug]. The codebase is at /path/to/codebase.
+```
+
+This skill produces:
+
+- `antithesis/bug-hunt/<bug-slug>/analysis.md` — trigger hypothesis, codebase findings, classification.
+- `antithesis/bug-hunt/<bug-slug>/reproduction.md` — verified reproduction details (when the bug is found).
+- A self-driving workload with dual-mode assertions (SDK assertions in Antithesis, local checks otherwise).
+- `docker-compose.yml` for local reproduction.
 
 ### antithesis-setup (for docker-compose)
 
@@ -152,6 +183,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 
 | Skill                      | Tools used                                                     |
 | -------------------------- | ------------------------------------------------------------ |
+| `antithesis-bug-hunt`      | `docker compose`/`docker-compose`, `docker`/`podman`           |
 | `antithesis-research`      | No explicit external tools                                     |
 | `antithesis-setup`         | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-setup-k8s`     | `docker`/`podman`, `snouty`                                    |
@@ -176,6 +208,7 @@ npx skills add antithesishq/antithesis-skills
 The installer presents an interactive menu. Choose the following options:
 
 1. **Skills** — select the skills you need:
+   - `antithesis-bug-hunt`
    - `antithesis-documentation`
    - `antithesis-research`
    - `antithesis-setup`
