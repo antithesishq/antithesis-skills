@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-09-02
+
+- Clarify that Antithesis assertions do not end the timeline ([PR #199](https://github.com/antithesishq/antithesis-skills/pull/199))
+
 ## 2026-08-24
 
 - fix: reach claims must assert the precondition, not the violation ([PR #194](https://github.com/antithesishq/antithesis-skills/pull/194))
