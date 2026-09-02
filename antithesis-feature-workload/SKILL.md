@@ -188,7 +188,8 @@ For when the feature evolves and the workload needs to keep up:
 2. Check which properties still hold, which are new, which are obsolete
 3. Update workload, assertions, and reach claims — TDD-style stubs for new
    unbuilt parts, remove stubs for parts that are now built and passing
-4. Re-validate locally
+4. Re-validate locally — check reach claims, iterate as in the main
+   workflow's step 13 if results show gaps
 
 ## General Guidance
 
