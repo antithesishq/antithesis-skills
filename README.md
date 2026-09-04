@@ -187,9 +187,10 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-agent-browser`
    - `antithesis-launch`
    - `antithesis-skills-feedback`
-2. **Install scope** — choose **global**, not project.
-3. **Install method** — choose **symlink**.
-4. **Install find-skills skill** — choose **No**.
+2. **Pick agents** - make sure to select **Claude Code** if you want to use our skills with Claude, as it's not enabled by default.
+3. **Install scope** — choose **global**, not project.
+4. **Install method** — choose **symlink**.
+5. **Install find-skills skill** — choose **No**.
 
 Restart any open agent sessions after installing so the new skills are discovered.
 
