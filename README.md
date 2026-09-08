@@ -33,6 +33,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
 
+`antithesis-feature-workload` is a focused entry point for testing a specific feature with Antithesis. Bring a feature — done or still in development — and this skill analyzes it, discovers testable properties, and builds a self-driving workload that runs locally and in Antithesis. For in-development features, the workload includes TDD-style stubs that go green as code lands. Unlike the broad research → setup → workload pipeline, this skill goes straight from feature analysis to a targeted workload.
+
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
 
 > [!NOTE]
@@ -120,6 +122,18 @@ Here's an example:
 
 This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT.
 
+### antithesis-feature-workload
+
+```
+/antithesis-feature-workload I'm building a new batch processing feature in src/batch/. Help me design an Antithesis workload to test it.
+```
+
+```
+/antithesis-feature-workload We just shipped the new replication feature. Build a workload that exercises it and checks its invariants.
+```
+
+This skill analyzes the feature, discovers testable properties, and builds a self-driving workload with dual-mode assertions (SDK in Antithesis, local checks outside). Outputs go to `antithesis/feature-workloads/<feature-slug>/`.
+
 ### antithesis-launch
 
 ```
@@ -156,6 +170,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-setup`         | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-setup-k8s`     | `docker`/`podman`, `snouty`                                    |
 | `antithesis-workload`      | `snouty`                                                       |
+| `antithesis-feature-workload` | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-triage`        | `snouty`, `jq`                                                 |
 | `antithesis-debug`         | `agent-browser`, `jq`                                          |
@@ -186,6 +201,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-query-logs`
    - `antithesis-agent-browser`
    - `antithesis-launch`
+   - `antithesis-feature-workload`
    - `antithesis-skills-feedback`
 2. **Pick agents** - make sure to select **Claude Code** if you want to use our skills with Claude, as it's not enabled by default.
 3. **Install scope** — choose **global**, not project.
