@@ -24,7 +24,7 @@ metadata:
 
 Launch an Antithesis run in this order only:
 
-1. `docker compose build`
+1. `docker compose build` (skip if directed to use pre-built images)
 2. `snouty validate`
 3. if validation fails, stop and report the error
 4. `snouty launch`
@@ -49,13 +49,16 @@ Launch an Antithesis run in this order only:
 ## Run Arguments
 
 - Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
-
-- `snouty launch --config` requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
+- If explicitly directed to launch a run against a pre-built image, run `snouty launch --config-image <CONFIG_IMAGE>` with the user-supplied image reference.
+- Otherwise, use `snouty launch --config <CONFIG>`, which requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
 - Always set all of these explicitly:
   - `--duration`: the user-provided duration
   - `--source`: repo name
   - `--test-name`: repo name plus branch or config name
-  - `--description`: short, readable description of the run, including details such as the branch name, currently goal, or what you changed since the last run.
+  - `--description`: short, readable description of the run, including details such as the branch name, current goal, or what you changed since the last run.
+
+- Allow overrides: When the user or another skill invoking this one specifies a launch parameter, use what they
+gave you instead of the defaults described above.
 
 ## Execution
 
@@ -86,6 +89,6 @@ snouty launch \
 - The chosen config directory is the one that actually contains the Antithesis `docker-compose.yaml`.
 - The build, validate, and run steps all point at the same config.
 - `snouty validate` succeeded before `snouty launch` was invoked.
-- The run set `source`, `test-name`, `description`, and `duration` explicitly.
+- The run set `source`, `test-name`, `description`, and `duration` explicitly, using any caller-supplied values in preference to the defaults as well as any caller-supplied additional parameters.
 - The build used the compose CLI and container engine `snouty doctor` reported.
 - Missing blockers such as `duration`, `ANTITHESIS_REPOSITORY`, or an ambiguous config location caused a stop instead of a bad submission.
