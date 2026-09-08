@@ -1,0 +1,50 @@
+This directory holds everything for validating the property catalog with mutation testing.
+
+Use the `antithesis-mutation-testing` skill to work in here. Use the `antithesis-launch` skill to submit runs — do not run `snouty launch` directly.
+
+**Paths**
+Every script takes its paths as arguments and derives nothing from where it sits, so this directory can be moved or renamed as long as the scripts stay together. Resolve four values once — `--source` (root of the source tree), `--patches` (the `patches/` directory below), `--images` (`images.txt` below), and `--fork` (a scratch directory outside the source tree) — and pass each script **only the flags its own signature lists below**. Every script rejects an unknown flag rather than ignoring it, so `--images` on `fork.sh` or `--source` on `sync-patches.sh` is a hard failure, not a harmless extra. `--config` is the compose directory relative to the fork, defaulting to `antithesis/config`.
+
+**Intent, assumptions, and when to edit a script**
+Every script opens with an `INTENT` / `ASSUMES` / `GUARANTEES` block and checks its own assumptions before acting, so a setup these scripts did not anticipate stops with a message naming the assumption that failed rather than doing half the work. That is a normal outcome, not a defect — these assume one conventional layout, and a real repo may be arranged differently.
+
+When a script stops on a violated assumption, read its header first. If the assumption is genuinely wrong for this repo — the compose file is somewhere else, the images are tagged another way, the tree has a shape the check did not expect — **edit the script to fit, and update its `ASSUMES` block to say what it now assumes.** What must not change is `INTENT` and `GUARANTEES`: those are the contract the rest of the skill relies on, and the guarantees about never writing outside the fork are what keep the user's tree safe. Record any edit in `status.md`, since the next session inherits the changed script.
+
+**patches**
+One patch per mutant, named `mNN-<slug>.patch`. The patch set is the list of wired mutants — there is no separate id list to drift out of sync. Each patch is a diff against `mutation-base`, so every patch applies independently of the others. Each carries a startup announcement, a marker at the point of divergence, and the buggy change itself. Mutations exist only here — never in the working tree.
+
+**mutants**
+Per-mutant evidence, one file per mutant id: the target property, the mistake, why it is subtle, the kill chain, the predicted verdict, and what the run actually showed.
+
+**images.txt**
+The image names the sweep retags, one per line without a tag. List every service built from this repo, including the workload image if it shares code with the SUT; omitting one means it keeps its previous mutant's build. Never list public images. Each entry must match the whole `image:` reference minus its tag — `ghcr.io/org/app`, not `app` — and that reference must carry an explicit tag.
+
+**interview.md**
+What the user agreed to: the paths, the five interview answers, and the property scope. Written before any run is spent and updated whenever an answer changes. A later session reads this plus `status.md` to resume without re-asking, and it is the only record of what the user authorized.
+
+**status.md**
+Sweep state — the baseline record, the catalog-slug-to-assertion-name mapping, run ids, and verdicts, each stamped with the `base_tree` it was obtained at. Written continuously so an interrupted sweep can be resumed by polling rather than relaunching.
+
+**history.md**
+Append-only run log — one row per completed run: run id, mutant, target property, attempt number, the ladder's diagnosis, and the action taken. `status.md` says where each mutant stands now; this traces every run it took to get there, across rounds and sessions. A row is appended when a run is classified and never edited afterwards.
+
+**report.md**
+The outcome for every in-scope property, with the run that proves it. What the sweep establishes about each property also goes into that property's `## Falsification` section in the scratchbook.
+
+**fork.sh** `--source DIR --patches DIR --fork DIR [--exclude PATTERN]... [--no-apply] [--force]`
+Copies the source tree — excluding `.git`, the patch directory, and the scratchbook — into a throwaway directory, committing gitignored files too so a mutant can touch them and the baseline stays clean (use `--exclude` for large build directories), runs a fresh `git init` there, tags the base commit `mutation-base`, and replays each patch onto its own `mut/<id>` branch. Every git command the harness runs is confined to that copy, so nothing here can reach your real repository. Give each project its own `--fork` path. Each run re-creates the fork from scratch, which destroys whatever is in the old one. It refuses to re-fork over `mut/*` branches that are unexported or revised beyond their patches, naming them instead of reverting them — **run `sync-patches.sh` before re-forking**; `--force` discards the revisions.
+
+**sync-patches.sh** `--fork DIR --patches DIR [--force]`
+Regenerates the patch directory from the fork's `mut/*` branches. Author each mutant on its own branch off `mutation-base`, then run this.
+
+**select-mutant.sh** `<mutant-id|baseline> --fork DIR --patches DIR --images FILE [--config REL]`
+Puts the fork into one mutant's state: resets to `mutation-base`, applies that patch, and points the compose images at that mutant's tag. Run it before building a mutant and again immediately before launching it. Because it mutates the one shared fork in place, select-and-launch is a critical section: never overlap it with another mutant's.
+
+**verify-mutant.sh** `<mutant-id> --fork DIR --patches DIR --images FILE [--config REL] [--timeout SECS]`
+Proves a built image actually carries its patch, before a run is spent on it. Brings the compose up with `snouty validate --keep-running`, greps the container logs for that mutant's announcement, and tears it down. Pass `--timeout` derived from the baseline's setup time; the default is 60s. A mutant that fails this must not be launched.
+
+**build-mutants.sh** `--fork DIR --patches DIR --images FILE [--config REL] [--only ID,...] [--no-baseline]`
+Builds the baseline and one image set per mutant, tagging each `baseline` or `mut-<id>`. Does not push — snouty pushes the images the compose references when the run is launched. Compose runs through the `docker-compose` binary — the one snouty itself execs — with the `docker compose` plugin as a warned fallback for local operations only; `podman compose` is not supported, though podman as the runtime behind `DOCKER_HOST` is fine.
+
+**clean.sh** `--source DIR --fork DIR --patches DIR`
+Removes the fork and searches your source tree for a mutant announcement, so a patch applied there by mistake is caught. Run it even when a sweep fails — but not when the sweep will be resumed; run `sync-patches.sh` first if you must clean, since the fork holds any unexported mutant branches.
