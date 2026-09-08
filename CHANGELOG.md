@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-09-08
+
+- launch skill: honor caller-supplied launch parameters over defaults ([PR #195](https://github.com/antithesishq/antithesis-skills/pull/195))
+
 ## 2026-09-02
 
 - Clarify that Antithesis assertions do not end the timeline ([PR #199](https://github.com/antithesishq/antithesis-skills/pull/199))
