@@ -48,7 +48,7 @@ crosses a boundary the assertion cannot see is state the assertion cannot check.
 Read the actual predicate, not the property's prose. Confirm the divergent value
 makes it evaluate false.
 
-This is where mis-implemented oracles surface: a predicate that is too loose
+This is where incorrectly implemented oracles surface: a predicate that is too loose
 (`<=` where the invariant says `<`, a tolerance that swallows the error), keyed
 on a coarser quantity than the one that diverges, reading a different field,
 node, or epoch, or guarded behind a condition the mutation itself disables.
@@ -71,7 +71,7 @@ Every static rejection reduces to one of these.
 - *Convergent behavior* — the divergence is erased before observation. Choose a different mistake for the same property, or move the observation point to where the transient divergence is visible.
 - *Self-masking* — the mutation also disables the code that would have reported it. Narrow the mutation to the buggy behavior alone, leaving the reporting path intact.
 
-**Mis-implemented oracle.** The SUT is wrong, but the assertion does not notice.
+**Incorrectly implemented oracle.** The SUT is wrong, but the assertion does not notice.
 Tighten it, re-key it to the diverging state, or relocate it to where that state
 is visible. This is a real finding about the catalog, not a detour.
 
