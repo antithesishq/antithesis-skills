@@ -36,7 +36,7 @@ When the work resolves an open question on a property (or surfaces a new one), k
 
 ## Validate the Improvements
 
-A property that passes after this loop is not yet known to be a good property — it may pass because nothing bad happened, or because it could never fail. Once a run comes back green, use the `antithesis-mutation-testing` skill to inject one realistic bug per property and confirm each property actually fires. It reports assertions that are too loose, workload gaps that leave a path unreached, and properties that cannot be falsified at all, and routes each back here or to `antithesis-research`.
+A property that passes after this loop is not yet known to be a good property — it may pass because nothing bad happened, or because it could never fail. Once a run comes back green, use the `antithesis-mutation-testing` skill to verify that each property actually catches relevant bugs.
 
 ## Cross-Reference
 
