@@ -143,7 +143,7 @@ This skill asks how autonomous you want it to be and how many runs it may spend,
 If there is no property catalog — the scratchbook was never written, or was deleted after the harness was built — the skill reconstructs one from the Antithesis assertions in your code plus the baseline run, and says so in the report. A reconstructed catalog validates the assertions you already have; run `antithesis-research` for the properties nobody has asserted yet.
 
 > [!IMPORTANT]
-> Mutation testing launches an Antithesis run per property, plus a baseline, plus a full re-sweep after each round of fixes — and it builds one image per mutant first, which is often the larger cost. It is by far the most expensive skill here. It confirms the run count with you before submitting anything, and it launches every mutant run as `--ephemeral` under a dedicated `--source` so the deliberate failures never enter your real property history.
+> Mutation testing requires launching and analyzing many test runs, so make sure to be prepared of the cost in terms of compute, tokens, and time. The skill requires building an image and launching an Antithesis run per property, plus a baseline run, plus a full re-sweep after each round of fixes. It confirms the maximum run budget as well as the maximum number of concurrent runs allowed with you before submitting any job, and it launches every mutant run as `--ephemeral` under a dedicated `--source` so the deliberate failures never enter your real property history.
 
 ## Compatibility
 
