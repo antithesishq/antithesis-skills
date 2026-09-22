@@ -31,6 +31,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-agent-browser` is a helper skill that handles interactive browser authentication to your Antithesis tenant and reads Antithesis web pages. Other skills (e.g. `antithesis-debug`, `antithesis-query-logs`) delegate to it when they need authenticated web access; you usually won't invoke it directly.
 
+`antithesis-review-inputs` reviews a workload's input generation for state space exploration — how well it uses randomness to drive the system under test into diverse regions of behavior. Useful when a workload isn't finding bugs and you want to understand whether its input generation is limiting what Antithesis can explore, or as a periodic health check on existing workloads.
+
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
 
 `antithesis-mutation-testing` validates that your property catalog can actually catch bugs. A property that passes every run tells you nothing bad was observed — not that the property would have noticed. This skill injects one realistic bug per property, runs it, and confirms the property fires, then diagnoses each survivor as a bad mutant, a bad assertion, a workload gap, or a property that can't be falsified at all. Run it once the harness is built and your baseline run is green.
@@ -145,6 +147,14 @@ If there is no property catalog — the scratchbook was never written, or was de
 > [!IMPORTANT]
 > Mutation testing requires launching and analyzing many test runs, so make sure to be prepared of the cost in terms of compute, tokens, and time. The skill requires building an image and launching an Antithesis run per property, plus a baseline run, plus a full re-sweep after each round of fixes. It confirms the maximum run budget as well as the maximum number of concurrent runs allowed with you before submitting any job, and it launches every mutant run as `--ephemeral` under a dedicated `--source` so the deliberate failures never enter your real property history.
 
+### antithesis-review-inputs
+
+```
+/antithesis-review-inputs Review the workload in this repo.
+```
+
+This skill reads the workload code and produces a report of findings — structural patterns in input generation that limit what Antithesis can explore. It does not modify the workload or suggest specific code changes.
+
 ## Compatibility
 
 **Platform**: macOS or Linux.
@@ -178,6 +188,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-debug`         | `agent-browser`, `jq`                                          |
 | `antithesis-query-logs`    | `snouty`, `agent-browser`, `jq`                                |
 | `antithesis-agent-browser` | `agent-browser`, `jq`                                          |
+| `antithesis-review-inputs` | No explicit external tools                                     |
 | `antithesis-documentation` | `snouty docs`                                                  |
 | `antithesis-mutation-testing` | `docker-compose`, `snouty`, `jq`, `git`, `rsync`            |
 
@@ -205,6 +216,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-agent-browser`
    - `antithesis-launch`
    - `antithesis-mutation-testing`
+   - `antithesis-review-inputs`
    - `antithesis-skills-feedback`
 2. **Pick agents** - make sure to select **Claude Code** if you want to use our skills with Claude, as it's not enabled by default.
 3. **Install scope** — choose **global**, not project.
