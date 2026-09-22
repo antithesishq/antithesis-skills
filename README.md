@@ -147,6 +147,14 @@ If there is no property catalog — the scratchbook was never written, or was de
 > [!IMPORTANT]
 > Mutation testing requires launching and analyzing many test runs, so make sure to be prepared of the cost in terms of compute, tokens, and time. The skill requires building an image and launching an Antithesis run per property, plus a baseline run, plus a full re-sweep after each round of fixes. It confirms the maximum run budget as well as the maximum number of concurrent runs allowed with you before submitting any job, and it launches every mutant run as `--ephemeral` under a dedicated `--source` so the deliberate failures never enter your real property history.
 
+### antithesis-review-inputs
+
+```
+/antithesis-review-inputs Review the workload in this repo.
+```
+
+This skill reads the workload code and produces a report of findings — structural patterns in input generation that limit what Antithesis can explore. It does not modify the workload or suggest specific code changes.
+
 ## Compatibility
 
 **Platform**: macOS or Linux.
