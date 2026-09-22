@@ -37,6 +37,8 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-mutation-testing` validates that your property catalog can actually catch bugs. A property that passes every run tells you nothing bad was observed — not that the property would have noticed. This skill injects one realistic bug per property, runs it, and confirms the property fires, then diagnoses each survivor as a bad mutant, a bad assertion, a workload gap, or a property that can't be falsified at all. Run it once the harness is built and your baseline run is green.
 
+`antithesis-feature-workload` is a focused entry point for testing a specific feature with Antithesis. Bring a feature — done or still in development — and this skill analyzes it, discovers testable properties, and builds a self-driving workload that runs locally and in Antithesis. For in-development features, the workload includes TDD-style stubs that go green as code lands. Unlike the broad research → setup → workload pipeline, this skill goes straight from feature analysis to a targeted workload.
+
 `antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue.
 
 > [!NOTE]
@@ -126,6 +128,18 @@ Here's an example:
 
 This skill implements Antithesis workloads and places all the test commands and supporting files under `antithesis/test/`, adds assertions to carefully chosen locations in the SUT.
 
+### antithesis-feature-workload
+
+```
+/antithesis-feature-workload I'm building a new batch processing feature in src/batch/. Help me design an Antithesis workload to test it.
+```
+
+```
+/antithesis-feature-workload We just shipped the new replication feature. Build a workload that exercises it and checks its invariants.
+```
+
+This skill analyzes the feature, discovers testable properties, and builds a self-driving workload with dual-mode assertions (SDK in Antithesis, local checks outside). Outputs go to `antithesis/feature-workloads/<feature-slug>/`.
+
 ### antithesis-launch
 
 ```
@@ -183,6 +197,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-setup`         | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-setup-k8s`     | `docker`/`podman`, `snouty`                                    |
 | `antithesis-workload`      | `snouty`                                                       |
+| `antithesis-feature-workload` | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-triage`        | `snouty`, `jq`                                                 |
 | `antithesis-debug`         | `agent-browser`, `jq`                                          |
@@ -217,6 +232,7 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-launch`
    - `antithesis-mutation-testing`
    - `antithesis-review-inputs`
+   - `antithesis-feature-workload`
    - `antithesis-skills-feedback`
 2. **Pick agents** - make sure to select **Claude Code** if you want to use our skills with Claude, as it's not enabled by default.
 3. **Install scope** — choose **global**, not project.
