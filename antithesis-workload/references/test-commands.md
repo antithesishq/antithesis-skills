@@ -8,7 +8,7 @@ Create test templates whose commands exercise the SUT in useful, diverse ways.
 
 A test template is a directory at `/opt/antithesis/test/v1/{name}/` containing test command files. A timeline runs commands from one test template. If you are unsure how to split coverage, start with one template.
 
-A template must contain at least one of: `parallel_driver_`, `serial_driver_`, `singleton_driver_`, or `anytime_` commands. The other command types (`first_`, `eventually_`, `finally_`) only run relative to drivers or anytime commands, so a template with none of the four has nothing for Antithesis to schedule.
+A template can contain any subset of command types. Most templates include at least one driver (`parallel_driver_`, `serial_driver_`, or `singleton_driver_`) or `anytime_` command, because these commands generate most of the load during a timeline. A driver is not required, though. For example, a template with only a `first_` command is valid. Do not add placeholder or no-op commands just to have a driver in the template.
 
 Files and subdirectories prefixed with `helper_` are ignored by Antithesis, so use that prefix for shared helpers that need to live inside the template. Any non-helper executable placed directly in a template should be a real test command with a valid prefix.
 
