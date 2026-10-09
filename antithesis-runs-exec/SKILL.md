@@ -53,8 +53,8 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
     --description "why you are here"
   ```
 
-  - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --source-run-id <run> --until running`, then `exec` against it.
-  - Use `--source-run-id` for this first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
+  - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
+  - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
   - Expect about 10 minutes from snouty debug to the first successful exec. After that, the moment is warm and later commands don't need the source. 
   - If exec answers 404 or "Moment not warm", the session is still loading. Retry. Look at get a moment to find the right input-hash and vtime for your users request.
 
@@ -80,7 +80,7 @@ To find a moment (input hash + vtime) from a failing property, use the
 
 - `--timeout DURATION` takes units: `90s`, `5m`, `1h`. A bare number means seconds. The default is 10m (as of release 64.0). Any rewarm counts against it, so a cold moment may need more.
 - `--container NAME` runs the script inside that container. Without it, the script runs on the host. 
-- `--source-run-id ID` names the run a cold moment comes from. When the target is a debugging session, this is the run you opened the session from, not the session id.
+- `--source-run-id ID` names the run a cold moment comes from. When the target is a debugging session, this is the run you opened the session from, not the session id. Use this flag on your first command after starting a debugging session.
 - `--source-session-id ID` is the session alternative to `--source-run-id`. You can't use both.
 - `--events` streams every event on the timeline while the script runs, not just the script's output.
 - `--json` prints machine-readable json output.
