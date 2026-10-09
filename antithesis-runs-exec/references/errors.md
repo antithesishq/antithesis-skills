@@ -4,7 +4,7 @@
 
 | Error | Meaning | Fix |
 |---|---|---|
-| 400 `unknown_moment`: "Moment not warm in the live run and no source_run_id provided" | The moment is real but isn't warm in the target, and the request named no source. | Add `--source-run-id` with the run the moment comes from. |
+| 400 `unknown_moment`: "Moment not warm in the live run and no source_run_id provided" | The moment is real but isn't warm in the target, and the request named no source. On a new session, this also appears for the session's own launch moment while it loads. Passing `--source-run-id` turns the wait into a rewarm with progress, which is the recommended first call. | Add `--source-run-id` with the run the moment comes from. |
 | 400 `invalid_vtime` | The hash and vtime are not a real moment. Each hash covers only a short span of vtime, and this vtime is outside it. | Take the hash and vtime together, as a pair, from the run's events, logs or properties. |
 | 400 "This run is not currently active or reachable" | The target run has finished and its live window has closed. A run stays reachable for only minutes after it ends. | Open a session with `snouty debug`, then exec against the session's run id. |
 | 400 "Invalid root end" | The source run is not the run the moment comes from. | Set `--source-run-id` to the moment's own run. |
