@@ -15,3 +15,11 @@
   polling. Long or repeated probes shift the timing you are trying to observe.
 - If a bug disappears when you probe closely, the probe may be perturbing it.
   That points to a timing-sensitive race.
+- To carry state from one exec to the next (a file written, a process started,
+  time passed), exec from the previous call's end moment: the `end moment:
+  HASH VTIME` line on stderr, or `end_moment` in the `--json` result.
+- To let the system run forward, put `sleep N` in the script, then exec from
+  its end moment.
+- Branches from the same moment replay identically, so PIDs and addresses
+  match across calls. A PID found in one probe works in the next, though
+  `pgrep` inside the script is simpler.
