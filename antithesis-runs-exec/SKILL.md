@@ -53,9 +53,10 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
     --description "why you are here"
   ```
 
-  This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`,
-  then `exec` against it. If exec answers 404 or "Moment not warm", the session is still loading. Retry.
-  Look at get a moment to find the right input-hash and vtime for your users request.
+  - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --source-run-id <run> --until running`, then `exec` against it.
+  - Use `--source-run-id` for this first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
+  - Expect about 10 minutes from snouty debug to the first successful exec. After that, the moment is warm and later commands don't need the source. 
+  - If exec answers 404 or "Moment not warm", the session is still loading. Retry. Look at get a moment to find the right input-hash and vtime for your users request.
 
 ## Get a moment (input hash and vtime)
 
@@ -152,6 +153,7 @@ A cold moment shows progress while it rewarms. By default the command prints `re
 - No progress means the moment was warm. Progress means a rewarm ran.
 - A rising percentage means the rewarm is working. Don't retry or cancel while it climbs.
 - On a timeout, the last percentage shows how far the rewarm got. Progress can jump, so treat this as a rough estimate.
+- The percentage can stay at 0% for several minutes and then jump to near 100%. A stall at 0% is not a failure. Leave the call running until --timeout.
 
 ## Cancel when done
 
@@ -197,6 +199,7 @@ read HASH VTIME <<< "$(snouty runs events "$RUN" --json -m "<error text>" -n 1 \
 ```
 
 ### 4. Exec
+Use `--source-run-id` for the first command after starting a session because the moment is still warming up. After that, the moment is warm and later commands don't need the source unless you change the moment.
 
 ```bash
 cat > probe.sh <<'EOF'
@@ -204,7 +207,7 @@ hostname
 ps aux | head -20
 EOF
 
-snouty runs exec "$TARGET" "$HASH" "$VTIME" < probe.sh > out.txt
+snouty runs exec "$TARGET" "$HASH" "$VTIME" --source-run-id "$RUN" < probe.sh > out.txt
 ```
 
 ### 5. Use the results
