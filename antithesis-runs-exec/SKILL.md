@@ -86,8 +86,7 @@ To find a moment (input hash + vtime) from a failing property, use the
 
 ## Execution
 
-- This command can take some time depending on the situation. See the picking a timeout section to select a good timeout.
-- You can specify the bash command as a file or string of text.
+This command can take some time depending on the situation. See the picking a timeout section to select a good timeout.
 
 ```bash
 snouty runs exec \
@@ -104,7 +103,6 @@ snouty runs exec \
 
 ### Execution Tips
 
-- For anything longer than one line, write the script to a file. See run a script from a file for more information
 - Use `--container` over podman exec inside the script to run a command on a single container.
 - `--container` needs a container name. To list them, run the following once without `--container`, so the script runs on the host:
 
