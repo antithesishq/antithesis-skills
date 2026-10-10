@@ -67,13 +67,14 @@ If the user didn't give you a moment, read `references/moments.md` for where to 
 If you can't pin down both an input hash and a vtime from a clear source, ask
 the user rather than guessing.
 
-To find a moment (input hash + vtime) from a failing property, use the
-`antithesis-triage` skill.
+To find a moment (input hash + vtime) from a failing or passing property, or
+from a log line, query for it with `snouty runs search` (see step 3 of the
+example workflow).
 
 ## Required input
 
 - `RUN_ID` is a live run, or a debugging session's run id.
-- `INPUT_HASH` and `VTIME` are a moment from that run, taken together as a pair from its events, logs or properties.
+- `INPUT_HASH` and `VTIME` are a moment from that run, taken together as a pair from one event that `snouty runs search` returns.
 - `INPUT_HASH` is often negative, for example `-1520695250096255483`. Pass it as-is: snouty reads it as the hash, not as a flag, so you don't need `--`. Adding `--` turns every flag after it into a positional argument and breaks the command.
 
   ```bash
@@ -146,7 +147,7 @@ snouty runs exec \
 ## Picking a Timeout and Timing
 
 - A cold moment must be rewarmed first, and the rewarm counts against `--timeout`. The default is 10m, but a rewarm can take longer. Raise it with units, for example `--timeout 30m`.
-- A timeout doesn't mean the script didn't run. Check the run's events for its output before re-running anything that changes state.
+- A timeout doesn't mean the script didn't run. Search the run for its output (`snouty runs search`) before re-running anything that changes state.
 - Your script advances virtual time. Keep snapshots short. Take one query at the right moment rather than polling, because polling can change the timing you're trying to observe.
 - The same command from the same moment gives the same branch. Repeating it doesn't sample new timings.
 - After one exec with a source succeeds, that moment stays warm in the session. Later commands there need no source and return quickly.
@@ -198,10 +199,17 @@ snouty runs show "$RUN" --json | jq -r .status
 
 ### 3. Pick a moment
 
+Find moments with `snouty runs search`, and query for exactly the events you want. For example, the failing evaluations of one property:
+
 ```bash
-read HASH VTIME <<< "$(snouty runs events "$RUN" --json -m "<error text>" -n 1 \
-  | jq -r '.moment | "\(.input_hash) \(.vtime)"')"
+snouty --json runs search "$RUN" \
+  'filter(ev => ev.antithesis_assert?.hit
+    && ev.antithesis_assert.id == "<property name>"
+    && !ev.antithesis_assert.condition)' \
+  | jq -r '.moment | "\(.input_hash) \(.vtime)"'
 ```
+
+Drop the `!` for passing evaluations. Use `contains({output_text: "<error text>"})` for a log line. See `references/moments.md`.
 
 ### 4. Exec
 Use `--source-run-id` for the first command after starting a session because the moment is still warming up. After that, the moment is warm and later commands don't need the source unless you change the moment.
