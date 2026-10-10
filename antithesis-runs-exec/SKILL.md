@@ -176,7 +176,7 @@ A cold moment shows progress while it rewarms. By default the command prints `re
 
 ## Cancel when done
 
-Runs and debugging sessions use core hours until they end. When you are done, cancel any session you opened:
+Runs and debugging sessions use core hours until they end. A debugging session doesn't end when you stop using it: by default it expires only after 6 hours. Cancel any session you opened as soon as you no longer need it, or won't need it soon:
 
 ```bash
 snouty runs cancel "$TARGET"
@@ -246,7 +246,7 @@ If necessary give the user the moment, the script, and the relevant output, so t
 
 ### 6. Cancel
 
-If you opened a session, cancel it once you are completely done running commands:
+If you opened a session, cancel it once you are done running commands. Otherwise it keeps using core hours until it expires after 6 hours:
 
 ```bash
 snouty runs cancel "$TARGET"
