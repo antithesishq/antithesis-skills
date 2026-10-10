@@ -74,6 +74,11 @@ To find a moment (input hash + vtime) from a failing property, use the
 
 - `RUN_ID` is a live run, or a debugging session's run id.
 - `INPUT_HASH` and `VTIME` are a moment from that run, taken together as a pair from its events, logs or properties.
+- `INPUT_HASH` is often negative, for example `-1520695250096255483`. Pass it as-is: snouty reads it as the hash, not as a flag, so you don't need `--`. Adding `--` turns every flag after it into a positional argument and breaks the command.
+
+  ```bash
+  snouty runs exec "$RUN_ID" -1520695250096255483 67.7622960046865 --timeout 30m 'uptime'
+  ```
 - `SCRIPT` is the bash to run. Pass it as the last argument, or omit it and pipe it in, for example < script.sh.
 
 ## Optional flags
