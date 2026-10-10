@@ -55,7 +55,7 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
 
   - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
   - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
-  - Expect about 10 minutes from snouty debug to the first successful exec. After that, the moment is warm and later commands on that moment don't need the source. 
+  - Expect 2 to 20 minutes from snouty debug to the first successful exec: a few minutes of 404s while the session loads, then a rewarm that takes longer the later the moment's vtime. After that, the moment is warm and later commands on that moment don't need the source. 
   - If exec answers 404 or "Moment not warm", the session is still loading. Retry. Look at get a moment to find the right input-hash and vtime for your users request.
 
 ## Get a moment (input hash and vtime)
@@ -111,7 +111,7 @@ snouty runs exec \
 ### Execution Tips
 
 - Use `--container` over podman exec inside the script to run a command on a single container.
-- `--container` needs a container name. To list them, run the following once without `--container`, so the script runs on the host:
+- `--container` needs a container name, and works only on Docker Compose tests (see Kubernetes tests below). To list them, run the following once without `--container`, so the script runs on the host:
 
   ```bash
   snouty runs exec "$TARGET" "$HASH" "$VTIME" 'podman ps --format "{{.Names}}"'
@@ -119,6 +119,18 @@ snouty runs exec \
 
   Names are the same at every moment of a run, so list them once.
 - Don't use `--container` and run on host, if you need a snapshot across multiple containers.
+
+### Kubernetes tests
+
+`--container` doesn't work on a Kubernetes test. It looks containers up with podman, but the cluster runs them under k3s and containerd, so every name fails with exit 125 (`no container with name or ID ... found`). Leave out `--container` and use the cluster's tools on the host:
+
+```bash
+snouty runs exec "$TARGET" "$HASH" "$VTIME" 'kubectl get pods -A'
+snouty runs exec "$TARGET" "$HASH" "$VTIME" \
+  'kubectl exec -n <namespace> <pod> -c <container> -- ps aux'
+```
+
+`crictl ps` and `crictl exec <container id>` work too.
 
 ## Run a Script from a File
 
@@ -151,6 +163,7 @@ snouty runs exec \
 - Your script advances virtual time. Keep snapshots short. Take one query at the right moment rather than polling, because polling can change the timing you're trying to observe.
 - The same command from the same moment gives the same branch. Repeating it doesn't sample new timings.
 - After one exec with a source succeeds, that moment stays warm in the session. Later commands there need no source and return quickly.
+- Earlier moments on the session's own timeline are warm too, so they need no rewarm.
 
 ## Rewarm progress
 
