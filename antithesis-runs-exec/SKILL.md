@@ -55,7 +55,7 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
 
   - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
   - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
-  - Expect about 10 minutes from snouty debug to the first successful exec. After that, the moment is warm and later commands don't need the source. 
+  - Expect about 10 minutes from snouty debug to the first successful exec. After that, the moment is warm and later commands on that moment don't need the source. 
   - If exec answers 404 or "Moment not warm", the session is still loading. Retry. Look at get a moment to find the right input-hash and vtime for your users request.
 
 ## Get a moment (input hash and vtime)
