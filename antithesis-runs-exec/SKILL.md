@@ -46,13 +46,25 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
   ```
 
    A status of in_progress means you can run commands against the run. You'll also see status of starting, completed, incomplete, cancelled or unknown.
+- If the user gives a debugging-session URL, that session may already be
+  running. Find its run ID among the sessions, matching on title, description
+  or creation time, and check that it is `in_progress`:
+
+  ```bash
+  snouty --json runs list --launcher debugging \
+    | jq -c '{run_id, status, created_at, title: .parameters["antithesis.test_name"],
+              source_run: .parameters["antithesis.debugging.run_id"]}'
+  ```
+
+  `source_run` is the value to pass to `--source-run-id`.
 - For an older run, make a debugging session first:
 
   ```bash
   snouty debug --run-id <run> --input-hash <hash> --vtime <vtime> \
-    --description "why you are here"
+    --description "Counter property failure 2026-10-13"
   ```
 
+  - Always pass a `--description` that is unique and easy to find later, for example the property name plus a date or ticket id. You or a teammate will use it to pick this session out of the list. `--recipients` takes semicolon-separated emails to notify.
   - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
   - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
   - Expect 2 to 20 minutes from snouty debug to the first successful exec: a few minutes of 404s while the session loads, then a rewarm that takes longer the later the moment's vtime. After that, the moment is warm and later commands on that moment don't need the source. 
@@ -78,13 +90,13 @@ example workflow).
 - `INPUT_HASH` is often negative, for example `-1520695250096255483`. Pass it as-is: snouty reads it as the hash, not as a flag, so you don't need `--`. Adding `--` turns every flag after it into a positional argument and breaks the command.
 
   ```bash
-  snouty runs exec "$RUN_ID" -1520695250096255483 67.7622960046865 --timeout 30m 'uptime'
+  snouty runs exec "$RUN_ID" -1520695250096255483 67.7622960046865 'uptime'
   ```
 - `SCRIPT` is the bash to run. Pass it as the last argument, or omit it and pipe it in, for example < script.sh.
 
 ## Optional flags
 
-- `--timeout DURATION` takes units: `90s`, `5m`, `1h`. A bare number means seconds. The default is 10m (as of release 64.0). Any rewarm counts against it, so a cold moment may need more.
+- `--timeout DURATION` is how long the server waits for the script to exit. It takes units: `90s`, `5m`, `1h`. A bare number means seconds. The default is 10m (as of release 64.0). Rewarming a cold moment does not count against it.
 - `--container NAME` runs the script inside that container. Without it, the script runs on the host. 
 - `--source-run-id ID` names the run a cold moment comes from. When the target is a debugging session, this is the run you opened the session from, not the session id. Use this flag on your first command after starting a debugging session.
 - `--source-session-id ID` is the session alternative to `--source-run-id`. You can't use both.
@@ -114,11 +126,22 @@ snouty runs exec \
 - `--container` needs a container name, and works only on Docker Compose tests (see Kubernetes tests below). To list them, run the following once without `--container`, so the script runs on the host:
 
   ```bash
-  snouty runs exec "$TARGET" "$HASH" "$VTIME" 'podman ps --format "{{.Names}}"'
+  snouty runs exec "$TARGET" "$HASH" "$VTIME" 'podman ps -a --format "{{.Names}} {{.Status}}"'
   ```
 
   Names are the same at every moment of a run, so list them once.
+- `--container` works only on a container that is running at your moment. If it crashed or exited earlier, `podman ps -a` shows it as `Exited`, and `--container` fails. Exec from an earlier moment when it was still up. Find one with `snouty runs search` on that container's last log lines.
 - Don't use `--container` and run on host, if you need a snapshot across multiple containers.
+- To get a file out of the run, print it to stdout and redirect locally:
+
+  ```bash
+  # text
+  snouty runs exec "$TARGET" "$HASH" "$VTIME" --container app 'cat /var/log/app.log' > app.log
+
+  # binary or a directory: tar + base64, then decode locally
+  snouty runs exec "$TARGET" "$HASH" "$VTIME" --container app \
+    'tar czf - /data/db | base64' | base64 -d > db.tgz
+  ```
 
 ### Kubernetes tests
 
@@ -158,7 +181,7 @@ snouty runs exec "$TARGET" "$HASH" "$VTIME" \
 
 ## Picking a Timeout and Timing
 
-- A cold moment must be rewarmed first, and the rewarm counts against `--timeout`. The default is 10m, but a rewarm can take longer. Raise it with units, for example `--timeout 30m`.
+- Size `--timeout` to the script alone. A cold moment is rewarmed first, which can take minutes (longer the later the moment's vtime), but that time doesn't count against `--timeout`. Raise it only for slow scripts, for example `--timeout 30m`.
 - A timeout doesn't mean the script didn't run. Search the run for its output (`snouty runs search`) before re-running anything that changes state.
 - Your script advances virtual time. Keep snapshots short. Take one query at the right moment rather than polling, because polling can change the timing you're trying to observe.
 - The same command from the same moment gives the same branch. Repeating it doesn't sample new timings.
@@ -171,8 +194,7 @@ A cold moment shows progress while it rewarms. By default the command prints `re
 
 - No progress means the moment was warm. Progress means a rewarm ran.
 - A rising percentage means the rewarm is working. Don't retry or cancel while it climbs.
-- On a timeout, the last percentage shows how far the rewarm got. Progress can jump, so treat this as a rough estimate.
-- The percentage can stay at 0% for several minutes and then jump to near 100%. A stall at 0% is not a failure. Leave the call running until --timeout.
+- The percentage can stay at 0% for several minutes and then jump to near 100%. A stall at 0% is not a failure. Leave the call running.
 
 ## Cancel when done
 
@@ -266,3 +288,12 @@ If the earlier moment isn't warm, add --source-run-id.
 ## Common Errors
 
 If `exec` returns an error, read `references/errors.md`.
+
+## Self-Review
+
+Before reporting back, check your work against these criteria:
+
+- Every finding comes from actual `exec` output, not inferred or assumed.
+- The evidence chain is clear: the moment (input hash and vtime), the script, what it returned, and what follows from it.
+- The summary separates what the output shows from what you interpret or recommend.
+- Any debugging session you opened is cancelled, or the user knows it is still running.
