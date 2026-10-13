@@ -43,6 +43,7 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs.
   ```
 
    A status of in_progress means you can run commands against the run. You'll also see status of starting, completed, incomplete, cancelled or unknown.
+   `snouty runs wait <run> --until running` returns once `runs show` reports `in_progress`. `running` is the wait target and `in_progress` is the status it waits for, so they mean the same thing.
 - If the user gives a debugging-session URL, that session may already be
   running. Find its run ID among the sessions, matching on title, description
   or creation time, and check that it is `in_progress`:
@@ -120,7 +121,7 @@ snouty runs exec \
 ### Execution Tips
 
 - Use `--container` over podman exec inside the script to run a command on a single container.
-- `--container` needs a container name, and works only on Docker Compose tests (see Kubernetes tests below). To list them, run the following once without `--container`, so the script runs on the host:
+- `--container` needs a container name, and works only on Docker Compose tests (see Kubernetes tests below). If you've already run `snouty runs search` or `snouty runs logs`, take the name from any container log event's `source.container`. Otherwise, list them by running this once without `--container`, so it runs on the host:
 
   ```bash
   snouty runs exec "$TARGET" "$HASH" "$VTIME" 'podman ps -a --format "{{.Names}} {{.Status}}"'
@@ -220,7 +221,7 @@ snouty runs show "$RUN" --json | jq -r .status
 ```
 
 - `in_progress`: use the run itself. `TARGET="$RUN"`.
-- `starting`: wait with `snouty runs wait "$RUN" --until running`, then use the run.
+- `starting`: wait with `snouty runs wait "$RUN" --until running` (returns when status is `in_progress`), then use the run.
 - Otherwise: pick a moment (step 3), then open a session at it and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
 
   ```bash

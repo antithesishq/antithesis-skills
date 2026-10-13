@@ -10,7 +10,9 @@
   be gone by the time the probe looks.
 - To see state at vtime X, exec from an earlier moment. Take that hash and
   vtime pair from an earlier event. Don't just subtract from the vtime: the
-  result may fall outside the hash's span (`invalid_vtime`).
+  result may fall outside the hash's span (`invalid_vtime`). To list earlier
+  events on the same timeline, run `snouty runs logs <run> <hash> <vtime>`
+  with the later event's moment.
 - Keep probes short, and take one snapshot at the right moment instead of
   polling. Long or repeated probes shift the timing you are trying to observe.
 - If a bug disappears when you probe closely, the probe may be perturbing it.
