@@ -61,10 +61,10 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `ant
 
   ```bash
   snouty debug --run-id <run> --input-hash <hash> --vtime <vtime> \
-    --description "Counter property failure 2026-10-13"
+    --title "Counter property failure 2026-10-13"
   ```
 
-  - Always pass a `--description` that is unique and easy to find later, for example the property name plus a date or ticket id. You or a teammate will use it to pick this session out of the list. `--recipients` takes semicolon-separated emails to notify.
+  - Always pass a `--title` that is unique and easy to find later, for example the property name plus a date or ticket id. It is the name `snouty runs list` shows for the session. Add `--description` only if the reason won't fit in the title. `--recipients` takes semicolon-separated emails to notify.
   - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
   - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
   - Expect 2 to 20 minutes from snouty debug to the first successful exec: a few minutes of 404s while the session loads, then a rewarm that takes longer the later the moment's vtime. After that, the moment is warm and later commands on that moment don't need the source. 
@@ -227,7 +227,7 @@ snouty runs show "$RUN" --json | jq -r .status
 - Otherwise: pick a moment (step 3), then open a session at it and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
 
   ```bash
-  snouty debug --run-id "$RUN" --input-hash "$HASH" --vtime "$VTIME" --description "why"
+  snouty debug --run-id "$RUN" --input-hash "$HASH" --vtime "$VTIME" --title "<property> <date>"
   TARGET=<runId from the output>
   snouty runs wait "$TARGET" --until running
   ```
@@ -244,7 +244,7 @@ snouty --json runs search "$RUN" \
   | jq -r '.moment | "\(.input_hash) \(.vtime)"'
 ```
 
-Drop the `!` for passing evaluations. Use `contains({output_text: "<error text>"})` for a log line. See `references/moments.md`.
+Drop the `!` for passing evaluations. To find a log line, use `contains({output_text: "<error text>"})`. To find an assertion by its message, use `filter(ev => ev.antithesis_assert?.message?.includes("<message text>"))`. Assertions have no `output_text`, so the log-line query won't find them. See `references/moments.md`.
 
 ### 4. Exec
 Use `--source-run-id` for the first command after starting a session because the moment is still warming up. After that, the moment is warm and later commands don't need the source unless you change the moment.

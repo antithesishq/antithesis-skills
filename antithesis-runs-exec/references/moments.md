@@ -17,6 +17,10 @@ Infer which moment to use based on the user's prompt. The user may ask you to ge
 
   # a log line
   snouty --json runs search "$RUN_ID" 'contains({output_text: "<error text>"})'
+
+  # an assertion, by its message (assertions have no output_text)
+  snouty --json runs search "$RUN_ID" \
+    'filter(ev => ev.antithesis_assert?.message?.includes("<message text>"))'
   ```
 
   Results are a sample, in no fixed order, capped at `--limit`. Run
