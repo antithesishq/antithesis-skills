@@ -12,9 +12,6 @@ compatibility: Requires snouty (https://github.com/antithesishq/snouty) with `ru
 
 Execute a bash script at a moment in a run. Each call branches the multiverse and repeated calls from the same moment reproduce. Can use a currently running run or an active MVD session.
 
-This is the scripted counterpart to `antithesis-debug`, which drives the
-multiverse debugger in a browser. 
-
 ## Failed Property Warning
 
 Commands run with `runs exec` on a live run can trigger a run's assertions, which will result in a failing property that looks exactly like a real bug.
@@ -24,7 +21,7 @@ Preference using a currently running run for speed, ease of use, and less core h
 
 ## When to use this skill
 
-Prefer `runs exec` when you want repeatability, pipes, and heredocs. Prefer `antithesis-debug` when you want to explore by hand.
+Prefer `runs exec` when you want repeatability, pipes, and heredocs.
 
 ## Prerequisites
 
