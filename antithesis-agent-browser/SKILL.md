@@ -13,7 +13,7 @@ metadata:
 
 A helper skill for reading data from authenticated Antithesis web pages
 when the snouty API doesn't expose what's needed. Other skills
-(`antithesis-triage`, `antithesis-debug`, `antithesis-query-logs`) delegate
+(`antithesis-triage`, `antithesis-query-logs`) delegate
 here when they need an authenticated browser session.
 
 ## Purpose

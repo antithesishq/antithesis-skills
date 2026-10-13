@@ -29,7 +29,7 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
 
-`antithesis-agent-browser` is a helper skill that handles interactive browser authentication to your Antithesis tenant and reads Antithesis web pages. Other skills (e.g. `antithesis-debug`, `antithesis-query-logs`) delegate to it when they need authenticated web access; you usually won't invoke it directly.
+`antithesis-agent-browser` is a helper skill that handles interactive browser authentication to your Antithesis tenant and reads Antithesis web pages. Other skills (e.g. `antithesis-triage`, `antithesis-query-logs`) delegate to it when they need authenticated web access; you usually won't invoke it directly.
 
 `antithesis-review-inputs` reviews a workload's input generation for state space exploration — how well it uses randomness to drive the system under test into diverse regions of behavior. Useful when a workload isn't finding bugs and you want to understand whether its input generation is limiting what Antithesis can explore, or as a periodic health check on existing workloads.
 
