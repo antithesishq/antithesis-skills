@@ -12,16 +12,19 @@ compatibility: Requires snouty (https://github.com/antithesishq/snouty) with `ru
 
 Execute a bash script at a moment in a run. Each call branches the multiverse and repeated calls from the same moment reproduce. Can use a currently running run or an active MVD session.
 
-## Failed Property Warning
+## When to use this skill
+
+- The user gives you Antithesis debugging-session run ID or URL
+- The user asks you to debug or investigate a failing property, bug, or any result from a past run
+- The user makes a request to inspect container filesystem, runtime state, or events inside Antithesis
+- The triage skill has launched an MVD session when investigating the results of a run
+
+## Failed property warning
 
 Commands run with `runs exec` on a live run can trigger a run's assertions, which will result in a failing property that looks exactly like a real bug.
 
 Use a debugging session if you want to avoid these kinds of false positives.
 Preference using a currently running run for speed, ease of use, and less core hours for commands you do not think will cause this problem.
-
-## When to use this skill
-
-Prefer `runs exec` when you want repeatability, pipes, and heredocs.
 
 ## Prerequisites
 
@@ -42,7 +45,7 @@ Prefer `runs exec` when you want repeatability, pipes, and heredocs.
   snouty --json runs show <run> | jq -r .status
   ```
 
-   A status of in_progress means you can run commands against the run. You'll also see status of starting, completed, incomplete, cancelled or unknown.
+   A status of in_progress means you can run commands against the run.
    `snouty runs wait <run> --until running` returns once `runs show` reports `in_progress`. `running` is the wait target and `in_progress` is the status it waits for, so they mean the same thing.
 - If the user gives a debugging-session URL, that session may already be
   running. Find its run ID among the sessions, matching on title, description
@@ -101,23 +104,6 @@ example workflow).
 - `--events` streams every event on the timeline while the script runs, not just the script's output.
 - `--json` prints machine-readable json output.
 
-## Execution
-
-This command can take some time depending on the situation. See the picking a timeout section to select a good timeout.
-
-```bash
-snouty runs exec \
-  "$RUN_ID" \
-  "$INPUT_HASH" \
-  "$VTIME" \
-  --json \
-  --timeout "$TIMEOUT" \
-  --container "$CONTAINER" \
-  --source-run-id "$SOURCE_RUN_ID" \
-  --events \
-  < "$SCRIPT_FILE"
-```
-
 ### Execution Tips
 
 - Use `--container` over podman exec inside the script to run a command on a single container.
@@ -159,7 +145,7 @@ contains "Kubernetes" or "k8s"). Leave it out and read `references/kubernetes.md
   snouty runs exec "$RUN_ID" "$INPUT_HASH" "$VTIME" < script.sh
   ```
 
-  Writing the script to a file means you don't have to nest quotes on the command line. The quotes around `'EOF'` keep `$(hostname)` from running on your machine on accident.
+  The quotes around `'EOF'` keep `$(hostname)` from running on your machine on accident.
 
 - Reuse one script across moments. Run the same file at several moments and compare the outputs.
 - Save output to a file named after the moment. 
@@ -183,7 +169,6 @@ contains "Kubernetes" or "k8s"). Leave it out and read `references/kubernetes.md
 
 A cold moment shows progress while it rewarms. By default the command prints `rewarming moment: N%` lines on stderr. With `--json`, it prints `{"status":"rewarming","percent_complete":N}` frames on stdout, ahead of the script's output.
 
-- No progress means the moment was warm. Progress means a rewarm ran.
 - A rising percentage means the rewarm is working. Don't retry or cancel while it climbs.
 - The percentage can stay at 0% for several minutes and then jump to near 100%. A stall at 0% is not a failure. Leave the call running.
 
