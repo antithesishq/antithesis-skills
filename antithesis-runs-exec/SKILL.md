@@ -295,3 +295,8 @@ Before reporting back, check your work against these criteria:
 - The evidence chain is clear: the moment (input hash and vtime), the script, what it returned, and what follows from it.
 - The summary separates what the output shows from what you interpret or recommend.
 - Any debugging session you opened is cancelled, or the user knows it is still running.
+
+## Known issues
+
+- `exec` can still return 404 for several minutes after `snouty runs wait --until running` returns. Keep retrying; the session is still loading.
+- After `snouty runs cancel`, the run's status may show `completed` instead of `cancelled`. The cancel worked.
