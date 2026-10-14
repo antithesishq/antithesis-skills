@@ -127,7 +127,7 @@ snouty runs exec \
   snouty runs exec "$TARGET" "$HASH" "$VTIME" 'podman ps -a --format "{{.Names}} {{.Status}}"'
   ```
 
-  Names are the same at every moment of a run, so list them once.
+  On a Docker Compose test, names are the same at every moment of a run, so list them once.
 - `--container` works only on a container that is running at your moment. If it crashed or exited earlier, `podman ps -a` shows it as `Exited`, and `--container` fails. Exec from an earlier moment when it was still up. Find one with `snouty runs search` on that container's last log lines.
 - Don't use `--container` and run on host, if you need a snapshot across multiple containers.
 - To get a file out of the run, print it to stdout and redirect locally:
@@ -143,15 +143,8 @@ snouty runs exec \
 
 ### Kubernetes tests
 
-`--container` doesn't work on a Kubernetes test. It looks containers up with podman, but the cluster runs them under k3s and containerd, so every name fails with exit 125 (`no container with name or ID ... found`). Leave out `--container` and use the cluster's tools on the host:
-
-```bash
-snouty runs exec "$TARGET" "$HASH" "$VTIME" 'kubectl get pods -A'
-snouty runs exec "$TARGET" "$HASH" "$VTIME" \
-  'kubectl exec -n <namespace> <pod> -c <container> -- ps aux'
-```
-
-`crictl ps` and `crictl exec <container id>` work too.
+`--container` doesn't work on a Kubernetes test (the launcher in `snouty runs show`
+contains "Kubernetes" or "k8s"). Leave it out and read `references/kubernetes.md`.
 
 ## Run a Script from a File
 

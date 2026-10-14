@@ -9,5 +9,10 @@
   attach <pid>
   ```
 
+- On a Kubernetes test, get the container's PID with
+  `crictl inspect <container id> | grep -m1 '"pid"'`. That is the container's
+  entrypoint, which may be a shell; find the service under it with
+  `pgrep -P <pid>` or `pgrep -f <binary>`, then attach as above.
+
 - gdb warns that the target and the debugger are in different PID namespaces
   and calls itself unreliable. Expect that warning.

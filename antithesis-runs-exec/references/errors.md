@@ -17,5 +17,5 @@
 
 | Error | Meaning | Fix |
 |---|---|---|
-| "No Antithesis credentials found" | snouty can't find an API key. | Run `snouty login` or set `ANTITHESIS_API_KEY`. |
+| "No Antithesis credentials found" | snouty can't find an API key. | Ask user to run `snouty login` or set `ANTITHESIS_API_KEY`. |
 | Script exits with code 125: `no container with name or ID ... found` | The container named in `--container` doesn't exist. On a Kubernetes test, no name works. | Check the name with `podman ps` on the host. On Kubernetes, leave out `--container` and use `kubectl exec` in the script. |
