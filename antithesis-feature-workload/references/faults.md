@@ -72,7 +72,7 @@ compaction/GC, forking background processes.
 ## Fault Availability
 
 Not all fault types are enabled by default. The set depends on tenant
-configuration and the webhook used to launch runs. Node termination and clock
+configuration and the launcher used to launch runs. Node termination and clock
 faults are commonly disabled in default configurations.
 
 If a feature property depends on a specific fault type (e.g., testing crash

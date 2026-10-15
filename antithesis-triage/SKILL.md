@@ -22,8 +22,7 @@ Use this skill to analyze Antithesis test runs.
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- DO NOT PROCEED if `snouty` is not at least version 0.6.0. Use `snouty --version` to find the version. Use `snouty update` to update.
-- Searching across timelines needs `snouty runs search`, which is stable from snouty 0.8.0. If `snouty runs search --help` fails, or says the command is behind an unstable feature, update with `snouty update --channel unstable`.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 
 ### Preflight: confirm triage can work

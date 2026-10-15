@@ -6,7 +6,7 @@ You need the following to use antithesis-skills:
 - **npm** — the installer runs via `npx`, which ships with [npm](https://www.npmjs.com/).
 - **Docker Compose v2** — either the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/) or the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/). Antithesis runs the standalone binary against podman.
 - **A container engine** — [Docker](https://github.com/docker) or [Podman](https://podman.io/), used to build and push images.
-- **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.
+- **[Snouty CLI](https://github.com/antithesishq/snouty)** 0.8.0 or newer — used by multiple skills to search docs, validate configurations, and submit test runs.
 
 ## Installation by platform
 

@@ -23,7 +23,7 @@ Apply these rules, in order.
 2. The user may ask for "the latest run" or "the run where we were trying
    <xxx>". Consult `snouty runs` if this is not in your context. You can also
    consider the description of the runs returned in the run list to identify a
-   run the user is asking for. Take into account the webhooks and sources you
+   run the user is asking for. Take into account the launchers and sources you
    have been using with this user. See the notes below.
 
 3. If the user provides a triage report URL, look up the run_id by matching
@@ -56,6 +56,6 @@ Apply these rules, in order.
 
 ### Notes
 
-- When trying to intuit a run_id from the runs list, take into account the webhook and the source the user is using. Filter on these fields. If the user is using a non-default webhook or source this should be in your memory. For example, if you know your user is using a webhook "my_special_webhook", consider only runs in the runs list that use that webhook. This is because sometimes tenants are shared by different projects within the same customer. Of course if the user asks you to go beyond just the one webhook or source, do that.
+- When trying to intuit a run_id from the runs list, take into account the launcher and the source the user is using. Filter on these fields. If the user is using a non-default launcher or source this should be in your memory. For example, if you know your user is using a launcher "my_special_launcher", consider only runs in the runs list that use that launcher. This is because sometimes tenants are shared by different projects within the same customer. Of course if the user asks you to go beyond just the one launcher or source, do that.
 
 - Make sure NOT to filter by text or status unless explicitly asked. If you are trying to find the most recent run for a project, just look at recent runs with any status first. Only filter by text or status if you can't find what you are looking for.

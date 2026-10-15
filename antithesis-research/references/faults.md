@@ -89,7 +89,7 @@ random numbers for probabilistic behavior.
 ## Fault Availability
 
 Not all fault types are enabled by default. The set of enabled faults depends on
-the tenant configuration and the webhook used to launch runs. For example, node
+the tenant configuration and the launcher used to launch runs. For example, node
 termination (kill/stop) and clock faults are commonly disabled in default
 configurations.
 

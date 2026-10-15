@@ -5,7 +5,7 @@ description: >
   `snouty runs exec`, from the terminal and without a browser. Use it for
   scripted forensics on a run: process and container inspection, on-disk
   evidence, gdb attach, and general debugging. Covers command usage, the live-session requirement, common workflows and errors, and how virtual time and perturbation limit what a debugger can see.
-compatibility: Requires snouty (https://github.com/antithesishq/snouty) with `runs exec`, and a tenant whose API supports it.
+compatibility: Requires snouty 0.8.0 or newer (https://github.com/antithesishq/snouty), and a tenant whose API supports `runs exec`.
 metadata:
   version: "2026-10-15 77dc3d0"
 ---
@@ -21,7 +21,7 @@ Execute a bash script at a moment in a run. Each call branches the multiverse an
 - The user gives you Antithesis debugging-session run ID or URL
 - The user asks you to debug or investigate a failing property, bug, or any result from a past run
 - The user makes a request to inspect container filesystem, runtime state, or events inside Antithesis
-- The triage skill has launched an MVD session when investigating the results of a run
+- Triage suggested this skill because logs alone haven't explained a failure
 
 ## Failed property warning
 
@@ -32,9 +32,8 @@ Preference using a currently running run for speed, ease of use, and less core h
 
 ## Prerequisites
 
-- Confirm your snouty build has `runs exec`: `snouty runs --help`
-  must list `exec`. If it does not, install from main:
-  `cargo install --git https://github.com/antithesishq/snouty --branch main --locked`.
+- DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `snouty` is older than 0.8.0, the first release where `runs exec` is stable. Use `snouty --version` to find the version. Use `snouty update` to update.
 - You must have a session from a live run or MVD session to use this command. See get a live session first for more info.
 - You must be logged into an Antithesis tenant from snouty. Run `snouty doctor` to confirm. Ask your user to log you in or use an API key if you are not logged in.
 
@@ -50,7 +49,7 @@ Preference using a currently running run for speed, ease of use, and less core h
   ```
 
    A status of in_progress means you can run commands against the run.
-   `snouty runs wait <run> --until running` returns once `runs show` reports `in_progress`. `running` is the wait target and `in_progress` is the status it waits for, so they mean the same thing.
+   `snouty runs wait <run> --until ready` returns once the run is ready to use, or once it has already finished. It prints the status it stopped at, so check that it is `in_progress` before you exec.
 - If the user gives a debugging-session URL, that session may already be
   running. Find its run ID among the sessions, matching on title, description
   or creation time, and check that it is `in_progress`:
@@ -70,7 +69,7 @@ Preference using a currently running run for speed, ease of use, and less core h
   ```
 
   - Always pass a `--title` that is unique and easy to find later, for example the property name plus a date or ticket id. It is the name `snouty runs list` shows for the session. Add `--description` only if the reason won't fit in the title. `--recipients` takes semicolon-separated emails to notify.
-  - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until running`, then `exec` against it.
+  - This returns a **new** run ID. Wait with `snouty runs wait <new run ID> --until ready`, then `exec` against it.
   - Use `--source-run-id <run>` for the first command because the moment isn't warm yet. With the source, the call blocks and prints rewarming moment: N% until the moment is ready. 
   - Expect 2 to 20 minutes from snouty debug to the first successful exec: a few minutes of 404s while the session loads, then a rewarm that takes longer the later the moment's vtime. After that, the moment is warm and later commands on that moment don't need the source. 
   - If exec answers 404 or "Moment not warm", the session is still loading. Retry. Look at get a moment to find the right input-hash and vtime for your users request.
@@ -193,7 +192,7 @@ snouty runs cancel "$TARGET"
 ### 1. Prerequisites
 
 ```bash
-snouty runs --help | grep exec
+snouty --version   # 0.8.0 or newer
 ```
 
 ### 2. Get a session
@@ -204,13 +203,13 @@ snouty runs show "$RUN" --json | jq -r .status
 ```
 
 - `in_progress`: use the run itself. `TARGET="$RUN"`.
-- `starting`: wait with `snouty runs wait "$RUN" --until running` (returns when status is `in_progress`), then use the run.
+- `starting`: wait with `snouty runs wait "$RUN" --until ready`, then use the run if the status it prints is `in_progress`.
 - Otherwise: pick a moment (step 3), then open a session at it and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
 
   ```bash
   snouty debug --run-id "$RUN" --input-hash "$HASH" --vtime "$VTIME" --title "<property> <date>"
   TARGET=<runId from the output>
-  snouty runs wait "$TARGET" --until running
+  snouty runs wait "$TARGET" --until ready
   ```
 
 ### 3. Pick a moment
@@ -283,5 +282,5 @@ Before reporting back, check your work against these criteria:
 
 ## Known issues
 
-- `exec` can still return 404 for several minutes after `snouty runs wait --until running` returns. Keep retrying; the session is still loading.
+- `exec` can still return 404 for several minutes after `snouty runs wait --until ready` returns. Keep retrying; the session is still loading.
 - After `snouty runs cancel`, the run's status may show `completed` instead of `cancelled`. The cancel worked.

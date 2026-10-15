@@ -248,7 +248,7 @@ many runs the catalog needs — but the bar is evidence, not convenience.
 The test, in order:
 
 1. **Attribute it to the mutant, exactly as the target is attributed**: the marker in the counterexample's own history, before the failure. No marker, no credit.
-2. Ask whether the collateral property ever fails **in a timeline where the target holds** — evaluated, and not violated. That is the only question separating an independent violation from one root cause cascading downstream, and "the target didn't fail" is not enough: a timeline where the target was never evaluated is the cascade case, not evidence against it. `snouty runs search` answers this across every timeline; run `snouty runs search --help` for its query language. Where it is unavailable, or no query settles the question, the counterexample logs are what you have.
+2. Ask whether the collateral property ever fails **in a timeline where the target holds** — evaluated, and not violated. That is the only question separating an independent violation from one root cause cascading downstream, and "the target didn't fail" is not enough: a timeline where the target was never evaluated is the cascade case, not evidence against it. `snouty runs search` answers this across every timeline; run `snouty runs search --help` for its query language.
 3. If both hold, credit it. If either fails, or you cannot establish it either way, do not — an unanswerable question is not a yes. Record it as expected collateral and leave the property needing its own mutant.
 
 **Firing first is not evidence.** In a cascade the downstream property is often

@@ -51,6 +51,7 @@ Success means:
   The user-facing commit display uses the short hash (first 12 characters) for readability; the frontmatter still stores the full SHA.
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 
 ## Documentation Grounding
 
