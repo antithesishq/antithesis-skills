@@ -180,7 +180,8 @@ Runs and debugging sessions use core hours until they end. A debugging session d
 snouty runs cancel "$TARGET"
 ```
 
-- Make sure you are completely done with a run or debugging session before canceling, as if you want to run more commands you will have to wait for a new session to get setup. 
+- Ask a user before canceling a session. They may want to continue to use it for another debugging session when you are done.
+- Make sure you are completely done with a run or debugging session before canceling, as if you want to run more commands you will have to wait for a new session to get setup.
 - Don't cancel a run you didn't open unless the user asks.
 
 # Example Workflow
@@ -244,7 +245,7 @@ If necessary give the user the moment, the script, and the relevant output, so t
 
 ### 6. Cancel
 
-If you opened a session, cancel it once you are done running commands. Otherwise it keeps using core hours until it expires after 6 hours:
+If you opened a session, ask a user if they want you to cancel the run once you are done running commands. Otherwise it keeps using core hours until it expires after 6 hours:
 
 ```bash
 snouty runs cancel "$TARGET"
@@ -272,7 +273,7 @@ Before reporting back, check your work against these criteria:
 - Every finding comes from actual `exec` output, not inferred or assumed.
 - The evidence chain is clear: the moment (input hash and vtime), the script, what it returned, and what follows from it.
 - The summary separates what the output shows from what you interpret or recommend.
-- Any debugging session you opened is cancelled, or the user knows it is still running.
+- You've asked the user if you should cancel any debugging session you opened, or the user knows it is still running.
 
 ## Known issues
 
