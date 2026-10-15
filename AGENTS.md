@@ -18,7 +18,7 @@ https://agentskills.io/specification.md
 - `make validate-links`: runs the `lychee` link checker (config in
   `lychee.toml`).
 - `make test`: runs unit tests for skill helper scripts (`process-logs.py`
-  in debug; `build-url.py` in query-logs).
+  in agent-browser; `build-url.py` in query-logs).
 - `make install-dev`: bootstraps the dev environment via
   `scripts/install.sh`.
 
@@ -60,7 +60,7 @@ Testing is validation-driven:
 - For validator updates, test both pass and fail paths (for example, a missing `description` should fail).
 
 Some skills also ship a live integration harness as a sibling directory
-(`<skill>-test/`, e.g. `antithesis-debug-test/`, `antithesis-query-logs-test/`).
+(`<skill>-test/`, e.g. `antithesis-query-logs-test/`).
 These exercise the skill end-to-end against a real Antithesis tenant via
 `agent-browser` and are invoked manually with `<skill>-test/run.sh ...`. They
 are not wired into `make validate` or `make test` — see each harness's

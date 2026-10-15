@@ -73,5 +73,5 @@ jobs:
 
       - name: Run asset unit tests
         run: |
-          python antithesis-debug/assets/process-logs.py --test
+          python antithesis-agent-browser/assets/process-logs.py --test
           python antithesis-query-logs/assets/build-url.py --test
