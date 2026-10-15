@@ -5,7 +5,7 @@ description: >
   `snouty runs exec`, from the terminal and without a browser. Use it for
   scripted forensics on a run: process and container inspection, on-disk
   evidence, gdb attach, and general debugging. Covers command usage, the live-session requirement, common workflows and errors, and how virtual time and perturbation limit what a debugger can see.
-compatibility: Requires snouty 0.8.0 or newer (https://github.com/antithesishq/snouty), and a tenant whose API supports `runs exec`.
+compatibility: Requires snouty 0.8.0 or newer (https://github.com/antithesishq/snouty), and an Antithesis tenant on release 64.0 or newer.
 metadata:
   version: "2026-10-15 77dc3d0"
 ---
@@ -45,14 +45,15 @@ Preference using a currently running run for speed, ease of use, and less core h
 - To see if a run has an active session use:
 
   ```bash
-  snouty --json runs show <run> | jq -r .status
+  snouty --json runs show <run> | jq -r '[.status, .sub_status // empty] | join(":") | ascii_downcase'
   ```
 
-   A status of in_progress means you can run commands against the run.
-   `snouty runs wait <run> --until ready` returns once the run is ready to use, or once it has already finished. It prints the status it stopped at, so check that it is `in_progress` before you exec.
+   This prints the status and the sub-status together. `in_progress:ready` means you can run commands against the run. `in_progress` with any other sub-status, such as `in_progress:loading`, means the session is still loading.
+   `snouty runs wait <run> --until ready` returns once the run is ready to use, or once it has already finished. It prints the status it stopped at, so check that it is `in_progress:ready` before you exec.
 - If the user gives a debugging-session URL, that session may already be
   running. Find its run ID among the sessions, matching on title, description
-  or creation time, and check that it is `in_progress`:
+  or creation time. `runs list` shows only the status, so pick an `in_progress`
+  session, then check that `runs show` reports it `in_progress:ready`:
 
   ```bash
   snouty --json runs list --launcher debugging \
@@ -199,11 +200,11 @@ snouty --version   # 0.8.0 or newer
 
 ```bash
 RUN=<run_id>
-snouty runs show "$RUN" --json | jq -r .status
+snouty --json runs show "$RUN" | jq -r '[.status, .sub_status // empty] | join(":") | ascii_downcase'
 ```
 
-- `in_progress`: use the run itself. `TARGET="$RUN"`.
-- `starting`: wait with `snouty runs wait "$RUN" --until ready`, then use the run if the status it prints is `in_progress`.
+- `in_progress:ready`: use the run itself. `TARGET="$RUN"`.
+- `starting`, or `in_progress` with another sub-status: wait with `snouty runs wait "$RUN" --until ready`, then use the run if the status it prints is `in_progress:ready`.
 - Otherwise: pick a moment (step 3), then open a session at it and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
 
   ```bash
