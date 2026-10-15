@@ -25,7 +25,7 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-triage` enables agents to parse and analyze the results of your Antithesis test runs.
 
-`antithesis-debug` enables agents to interactively debug Antithesis test runs using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/) — inspecting container filesystems and runtime state, running shell commands, and extracting evidence from inside the Antithesis environment.
+`antithesis-debug` enables agents to use `snouty runs exec` to run a bash script inside a test run at a chosen moment from the terminal, using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/). It covers scripted forensics, process and container inspection, on-disk evidence, gdb attach, and the virtual-time and perturbation limits that shape what a debugger can observe.
 
 `antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
 
@@ -200,7 +200,7 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-feature-workload` | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-triage`        | `snouty`, `jq`                                                 |
-| `antithesis-debug`         | `agent-browser`, `jq`                                          |
+| `antithesis-debug`         | `snouty`, `jq`                                                 |
 | `antithesis-query-logs`    | `snouty`, `agent-browser`, `jq`                                |
 | `antithesis-agent-browser` | `agent-browser`, `jq`                                          |
 | `antithesis-review-inputs` | No explicit external tools                                     |
