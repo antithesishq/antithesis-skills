@@ -7,7 +7,7 @@ description: >
   oracle, bad workload, or bad property, and routes fixes back to
   antithesis-workload or antithesis-research. Use once the harness is built and
   a baseline run is green.
-compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync. Crediting collateral damage across timelines uses `snouty runs search`.
+compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync.
 metadata:
   version: "2026-10-15 77dc3d0"
 ---
