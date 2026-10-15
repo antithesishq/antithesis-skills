@@ -5,6 +5,7 @@ are grouped by date (UTC) with newest first.
 
 ## 2026-10-15
 
+- BREAKING CHANGE: Require snouty 0.8.0, and replace `antithesis-query-logs` and `antithesis-agent-browser` with `snouty runs search` in triage ([PR #209](https://github.com/antithesishq/antithesis-skills/pull/209))
 - BREAKING CHANGE: Rebuild `antithesis-debug` on `snouty runs exec` so agents can debug runs from the terminal ([PR #206](https://github.com/antithesishq/antithesis-skills/pull/206))
 - BREAKING CHANGE: feat!: remove browser-based antithesis-debug skill ([PR #208](https://github.com/antithesishq/antithesis-skills/pull/208))
 
