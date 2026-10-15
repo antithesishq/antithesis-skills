@@ -8,12 +8,12 @@ description: >
   when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
-  version: "2026-10-15 77dc3d0"
+  version: "2026-10-15 84b188a"
 ---
 
 # Antithesis Run Triage
 
-**Skill version:** `2026-10-15 77dc3d0`
+**Skill version:** `2026-10-15 84b188a`
 
 Use this skill to analyze Antithesis test runs.
 
