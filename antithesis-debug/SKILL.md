@@ -1,5 +1,5 @@
 ---
-name: antithesis-runs-exec
+name: antithesis-debug
 description: >
   Run a bash script inside an Antithesis run at a chosen moment with
   `snouty runs exec`, from the terminal and without a browser. Use it for
@@ -8,7 +8,7 @@ description: >
 compatibility: Requires snouty (https://github.com/antithesishq/snouty) with `runs exec`, and a tenant whose API supports it.
 ---
 
-# `snouty runs exec`
+# Antithesis Debug
 
 Execute a bash script at a moment in a run. Each call branches the multiverse and repeated calls from the same moment reproduce. Can use a currently running run or an active MVD session.
 
