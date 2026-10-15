@@ -6,9 +6,13 @@ description: >
   scripted forensics on a run: process and container inspection, on-disk
   evidence, gdb attach, and general debugging. Covers command usage, the live-session requirement, common workflows and errors, and how virtual time and perturbation limit what a debugger can see.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty) with `runs exec`, and a tenant whose API supports it.
+metadata:
+  version: "2026-10-15 77dc3d0"
 ---
 
 # Antithesis Debug
+
+**Skill version:** `2026-10-15 77dc3d0`
 
 Execute a bash script at a moment in a run. Each call branches the multiverse and repeated calls from the same moment reproduce. Can use a currently running run or an active MVD session.
 
