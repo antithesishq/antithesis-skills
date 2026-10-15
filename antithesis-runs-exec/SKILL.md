@@ -223,6 +223,8 @@ snouty --json runs search "$RUN" \
 
 Drop the `!` for passing evaluations. To find a log line, use `contains({output_text: "<error text>"})`. To find an assertion by its message, use `filter(ev => ev.antithesis_assert?.message?.includes("<message text>"))`. Assertions have no `output_text`, so the log-line query won't find them. See `references/moments.md`.
 
+`runs search` returns at most 50 results by default. Add `--limit 999` if you need more than a few.
+
 ### 4. Exec
 Use `--source-run-id` for the first command after starting a session because the moment is still warming up. After that, the moment is warm and later commands don't need the source unless you change the moment.
 
