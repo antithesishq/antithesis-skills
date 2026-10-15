@@ -17,8 +17,6 @@ https://agentskills.io/specification.md
 - `make validate-changelog`: validates `CHANGELOG.md` format.
 - `make validate-links`: runs the `lychee` link checker (config in
   `lychee.toml`).
-- `make test`: runs unit tests for skill helper scripts (`process-logs.py`
-  in agent-browser; `build-url.py` in query-logs).
 - `make install-dev`: bootstraps the dev environment via
   `scripts/install.sh`.
 
@@ -46,10 +44,9 @@ with Python 3.9.
 - Stick to the standard library — asset scripts must not require `pip
   install` on a customer's machine.
 
-The `python-compat` CI job (in `.github/workflows/ci.yml`) runs each asset
-script's `--test` mode under Python 3.9. Tooling under `.ci-scripts/` and
-`scripts/` is *not* subject to this floor — those run under the project's
-`uv`-managed interpreter (`>=3.11`, see `pyproject.toml`).
+Tooling under `.ci-scripts/` and `scripts/` is *not* subject to this floor —
+those run under the project's `uv`-managed interpreter (`>=3.11`, see
+`pyproject.toml`).
 
 ## Testing Guidelines
 
@@ -58,13 +55,6 @@ Testing is validation-driven:
 - Primary check: `make validate`.
 - Scope: verifies presence and correctness of frontmatter, heading requirements, and skill discovery via `*/SKILL.md`.
 - For validator updates, test both pass and fail paths (for example, a missing `description` should fail).
-
-Some skills also ship a live integration harness as a sibling directory
-(`<skill>-test/`, e.g. `antithesis-query-logs-test/`).
-These exercise the skill end-to-end against a real Antithesis tenant via
-`agent-browser` and are invoked manually with `<skill>-test/run.sh ...`. They
-are not wired into `make validate` or `make test` — see each harness's
-`README.md` for prerequisites.
 
 ## Commit & Pull Request Guidelines
 

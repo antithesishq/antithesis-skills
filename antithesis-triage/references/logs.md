@@ -16,7 +16,7 @@ If the download does not complete, read "Large logs" below.
 
 `snouty runs --json logs` streams the history up to the moment as NDJSON — one JSON event per line. Snouty post-processes the stream: it strips ANSI escape codes from `output_text` and adds an `active_faults` field to every event (see "Active (ongoing) faults" below). See "Analyzing logs with jq" below for how to query and filter the resulting logs.
 
-`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array (or from `failure_moment` in `snouty runs --json show`, or from `snouty runs --json events`) — pass them verbatim, do not round or reformat.
+`INPUT_HASH` and `VTIME` come verbatim from the property's `examples` or `counterexamples` array (or from `failure_moment` in `snouty runs --json show`, or from `snouty runs --json search`) — pass them verbatim, do not round or reformat.
 
 Always write logs to a unique path unless you have explicit instructions otherwise. Other agents may be concurrently downloading logs.
 

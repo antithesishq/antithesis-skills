@@ -27,10 +27,6 @@ Enable AI agents to set up Antithesis, bootstrap your first Antithesis test, lau
 
 `antithesis-debug` enables agents to use `snouty runs exec` to run a bash script inside a test run at a chosen moment from the terminal, using the [multiverse debugger](https://antithesis.com/docs/multiverse_debugging/). It covers scripted forensics, process and container inspection, on-disk evidence, gdb attach, and the virtual-time and perturbation limits that shape what a debugger can observe.
 
-`antithesis-query-logs` enables agents to search across all timelines in an Antithesis test run to find events, correlate property failures, and answer temporal questions about ordering and causation — e.g., cascade elimination, fault correlation, and root cause hypothesis testing.
-
-`antithesis-agent-browser` is a helper skill that handles interactive browser authentication to your Antithesis tenant and reads Antithesis web pages. Other skills (e.g. `antithesis-triage`, `antithesis-query-logs`) delegate to it when they need authenticated web access; you usually won't invoke it directly.
-
 `antithesis-review-inputs` reviews a workload's input generation for state space exploration — how well it uses randomness to drive the system under test into diverse regions of behavior. Useful when a workload isn't finding bugs and you want to understand whether its input generation is limiting what Antithesis can explore, or as a periodic health check on existing workloads.
 
 `antithesis-launch` enables agents to build the harness, run `snouty validate`, and submit `snouty launch` with sensible metadata once the harness is ready.
@@ -187,7 +183,7 @@ You'll need an AI agent, npm, Docker Compose v2, a container engine (Docker or P
 
 ## Permissions
 
-These skills invoke external tools (Docker Compose, Docker, Snouty, agent-browser) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
+These skills invoke external tools (Docker Compose, Docker, Snouty) that your AI agent may prompt you to approve. The skills themselves do not configure permissions — that's up to you based on your security preferences.
 
 Here are the tools each skill may invoke, so you can pre-approve them if you prefer fewer interruptions:
 
@@ -201,8 +197,6 @@ Here are the tools each skill may invoke, so you can pre-approve them if you pre
 | `antithesis-launch`        | `docker compose`/`docker-compose`, `docker`/`podman`, `snouty` |
 | `antithesis-triage`        | `snouty`, `jq`                                                 |
 | `antithesis-debug`         | `snouty`, `jq`                                                 |
-| `antithesis-query-logs`    | `snouty`, `agent-browser`, `jq`                                |
-| `antithesis-agent-browser` | `agent-browser`, `jq`                                          |
 | `antithesis-review-inputs` | No explicit external tools                                     |
 | `antithesis-documentation` | `snouty docs`                                                  |
 | `antithesis-mutation-testing` | `docker-compose`, `snouty`, `jq`, `git`, `rsync`            |
@@ -227,8 +221,6 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-triage`
    - `antithesis-workload`
    - `antithesis-debug`
-   - `antithesis-query-logs`
-   - `antithesis-agent-browser`
    - `antithesis-launch`
    - `antithesis-mutation-testing`
    - `antithesis-review-inputs`

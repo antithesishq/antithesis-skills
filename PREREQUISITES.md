@@ -7,7 +7,6 @@ You need the following to use antithesis-skills:
 - **Docker Compose v2** — either the [`docker compose` CLI plugin](https://docs.docker.com/compose/install/) or the standalone [`docker-compose` binary](https://docs.docker.com/compose/install/standalone/). Antithesis runs the standalone binary against podman.
 - **A container engine** — [Docker](https://github.com/docker) or [Podman](https://podman.io/), used to build and push images.
 - **[Snouty CLI](https://github.com/antithesishq/snouty)** — used by multiple skills to search docs, validate configurations, and submit test runs.
-- **[agent-browser](https://github.com/vercel-labs/agent-browser)** — optional, used by the triage, debug, and query-logs skills to interact with the Antithesis web UI.
 
 ## Installation by platform
 
@@ -66,15 +65,6 @@ for other architectures.
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
-
-### agent-browser (optional)
-
-```bash
-npm install -g agent-browser
-agent-browser install --with-deps
-```
-
-The `install --with-deps` flag installs required system dependencies and downloads Chrome for Testing.
 
 ### AI Agent
 
@@ -138,15 +128,6 @@ podman machine start
 ```bash
 curl --proto '=https' --tlsv1.2 -LsSf https://github.com/antithesishq/snouty/releases/latest/download/snouty-installer.sh | sh
 ```
-
-### agent-browser (optional)
-
-```bash
-brew install agent-browser
-agent-browser install
-```
-
-The `install` step downloads Chrome for Testing on first use.
 
 ### AI Agent
 
