@@ -3,8 +3,9 @@ name: antithesis-triage
 description: >
   Triage Antithesis test reports to understand what happened in a run: look
   up runs, check status, investigate failed properties (assertions), view
-  metadata, download logs, inspect findings, and examine environmental
-  details. Load after a run completes or when investigating a failure.
+  metadata, download logs, search events across all timelines, inspect
+  findings, and examine environmental details. Load after a run completes or
+  when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
   version: "2026-10-15 77dc3d0"
@@ -21,7 +22,7 @@ Use this skill to analyze Antithesis test runs.
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
-- DO NOT PROCEED if `snouty` is not at least version 0.6.0. Use `snouty --version` to find the version. Use `snouty update` to update.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if `jq` is not installed. See `https://jqlang.org/download/` for installation options.
 
 ### Preflight: confirm triage can work
@@ -88,20 +89,17 @@ If the run has a status of "incomplete", refer to the `Diagnose incomplete run` 
    d. Analyze the downloaded log locally
    e. If you aren't certain what caused the issue, consider downloading logs from other counterexamples and examples for the same property. Compare each occurrence and try to see if there are any similarities or differences that might explain the failure cause. Logs from passing examples can be useful to compare against to find differences between success and failure cases.
 
-   When searching for additional logs for property failures, first use:
-
-   ```bash
-   snouty runs --json events ${RUN_ID} ${PROPERTY_NAME}
-   ```
-
-   This returns SOME but not necessarily ALL cases of the property passing or failing in the run. PROPERTY_NAME should match the "name" field
-   in the property data you are investigating. Match the "hit" and "condition" fields against the examples or counterexamples you are trying to find more of. Note that it is likely the examples and counterexamples you already know about will be in the list returned. Check the moment of the property returned from `snouty runs events` against the moment in the examples or counterexamples you have already downloaded.
+   To find more passing or failing evaluations of the property, use `snouty runs --json search`. Run `snouty runs search --help` first: it documents the query language and has ready-to-paste snippets, including one that selects an assertion's evaluations by id. The id is the "name" field in the property data you are investigating; match the "condition" field against the examples or counterexamples you want more of. Results are a sample capped at `--limit` (default 50), so they show SOME but not necessarily ALL evaluations. The examples and counterexamples you already have will likely be among them; compare each result's moment against the ones you have already downloaded.
 
 4. **Important:** Cross-reference the log against the source code of the system under test (SUT) and the workload if you have access to it.
 5. Deeply investigate the failure to develop an understanding of the timeline of events which led up to and potentially caused it.
 6. Report your findings.
 
 **Important:** The property status and assertion text alone are not sufficient — the logs provide the actual runtime context needed to understand the failure.
+
+### Search across timelines
+
+A downloaded log covers one history. To answer questions that span every timeline in the run — "did event A always precede failure B?", "does the failure still occur without the preceding fault?", "which container logged this error first?" — use `snouty runs --json search`. Run `snouty runs search --help` to learn the query language before writing a query. It covers filtering by log text, container, assertion, and vtime window, combining event sets, and annotating each event with the nearest earlier or later event from another set on the same timeline. Every result carries a `moment`, so you can download the log leading up to any hit as described in `references/logs.md`.
 
 ### Verify instrumentation
 
@@ -134,7 +132,6 @@ Skills worth suggesting based on what triage uncovers:
 - **`antithesis-workload`** — extend or refine assertions, test commands, and logs. Should be suggested whenever all properties are passing to incrementally improve the workload, or when properties are not reachable due to the workload being underpowered. This skill can also be used to add more logging or fix properties to assist with root cause analysis.
 - **`antithesis-debug`** — run shell commands inside the run at the failing moment, or an earlier one, with `snouty runs exec` to inspect container, process, and on-disk state. Useful when log analysis alone hasn't explained the failure. Requires snouty. A finished run needs a debugging session, which uses core hours until it is cancelled.
 - **`antithesis-mutation-testing`** — prove the properties can actually fail, by injecting one realistic bug per property and confirming each one fires. Suggest this **only** when the run came back green (no failing properties, so there is no SUT bug to chase first) **and** there is no sign the catalog has already been mutation tested — check for a `## Falsification` section in the scratchbook's property evidence files, or an `antithesis/scratchbook/mutation-testing/` directory. An all-green report is exactly the situation where you cannot tell a well-guarded system from a catalog that would never notice a problem.
-- **`antithesis-query-logs`** — search across all timelines for ordering and causality questions ("did event A always precede failure B?", "do failures still occur without the preceding fault?"). Useful when a failure looks correlated with another event or fault, or when you've only inspected one history out of many. Requires agent-browser and may require interactive login in a browser.
 
 Include the data the next skill will need (run_id, property name, moment, etc.) so the user can invoke it without re-discovering context.
 

@@ -28,6 +28,7 @@ Use the `antithesis-research` skill first to build the property catalog. Use the
 - DO NOT PROCEED if the Antithesis scratchbook (usually at `antithesis/scratchbook/`) doesn't exist. Use the `antithesis-research` skill to create it.
 - DO NOT PROCEED if there is no `docker-compose.yaml` for Antithesis present. Use the `antithesis-setup` skill to create it.
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 
 # Scoping
 

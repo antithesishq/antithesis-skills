@@ -31,6 +31,8 @@ Run `snouty docs --help` to get started.
 3. Ask whether they want you to install it. If yes, follow instructions in `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md`.
 4. After installation, re-run `snouty --help`.
 
+If `snouty --version` is older than 0.8.0, run `snouty update` first.
+
 ## Using `snouty docs`
 
 Use `snouty docs` to discover authoritative Antithesis documentation before giving detailed guidance. Inspect `snouty docs --help` to discover subcommands and usage examples.

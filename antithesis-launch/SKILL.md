@@ -18,6 +18,7 @@ metadata:
 ## Prerequisites
 
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - Run `snouty doctor`. It checks the container runtime and the compose CLI. Report both to the user and build with that same pair. This skill writes `docker compose`; use `docker-compose` instead when that is the CLI snouty names.
 
 ## Goal
@@ -48,7 +49,7 @@ Launch an Antithesis run in this order only:
 
 ## Run Arguments
 
-- Determine the webhook in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
+- Determine the launcher in this order: explicit user input, existing repo docs/scripts/examples, otherwise default to `basic_test` when using a docker-compose.yaml file and to `basic_k8s_test` when using a kubernetes setup.
 - If explicitly directed to launch a run against a pre-built image, run `snouty launch --config-image <CONFIG_IMAGE>` with the user-supplied image reference.
 - Otherwise, use `snouty launch --config <CONFIG>`, which requires `ANTITHESIS_REPOSITORY`. Reuse the current environment if it is already set. If not, stop and ask the user for it.
 - Always set all of these explicitly:
@@ -70,7 +71,7 @@ docker compose -f "$CONFIG_DIR/docker-compose.yaml" build
 snouty validate "$CONFIG_DIR"
 snouty launch \
   --json \
-  --webhook "$WEBHOOK" \
+  --launcher "$LAUNCHER" \
   --config "$CONFIG_DIR" \
   --duration "$DURATION" \
   --source "$SOURCE" \

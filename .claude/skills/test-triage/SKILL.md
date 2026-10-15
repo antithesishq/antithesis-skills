@@ -26,7 +26,7 @@ Before starting, verify the same prerequisites the triage skill requires:
 which snouty && which jq && snouty --version
 ```
 
-`snouty` must be at least version 0.6.0. Then confirm credentials with the canonical check (same as the triage skill's preflight):
+`snouty` must be at least version 0.8.0. Then confirm credentials with the canonical check (same as the triage skill's preflight):
 
 ```bash
 snouty doctor
@@ -201,7 +201,7 @@ Scan the raw traces for issues in these categories:
 **Compliance violations** — the sub-agent did not follow the skill
 protocol:
 
-- Reaching for the web UI / agent-browser / `curl` against the report URL
+- Reaching for the web UI / `curl` against the report URL
   when `snouty runs` exposes the data
 - Skipping the `snouty runs --json show` step before triaging
 - Triaging a run with no `links.triage_report` without first reporting

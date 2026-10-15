@@ -7,7 +7,7 @@ description: >
   oracle, bad workload, or bad property, and routes fixes back to
   antithesis-workload or antithesis-research. Use once the harness is built and
   a baseline run is green.
-compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync. Crediting collateral damage additionally needs the antithesis-query-logs skill and its authenticated agent-browser; without it, credit only what the counterexample logs can establish.
+compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync.
 metadata:
   version: "2026-10-15 77dc3d0"
 ---
@@ -46,6 +46,7 @@ skill to submit runs — do not run `snouty launch` directly. Use the
 - DO NOT PROCEED if there is no `docker-compose.yaml` for Antithesis and no `manifests/` directory either. Use the `antithesis-setup` skill to create the compose harness.
 - DO NOT PROCEED if the SUT and workload contain no Antithesis SDK assertions at all. Use the `antithesis-workload` skill first — there is no oracle to validate, and a reconstruction cannot stand in for this one.
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
+- DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if no SUT service is built from source in this repo. A *partial* case — some services built from source, some prebuilt — is fine, and is handled by scoping (below).
 
 ### The baseline gate

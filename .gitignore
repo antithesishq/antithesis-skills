@@ -1,7 +1,3 @@
 .venv/
 __pycache__/
 .lycheecache
-antithesis-triage-test/out
-antithesis-triage-test/tmp
-antithesis-query-logs-test/out
-antithesis-query-logs-test/tmp

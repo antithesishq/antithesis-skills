@@ -74,7 +74,7 @@ takes, so triage knows where to look.
 Three practical constraints on the assertion form:
 
 - **The SDK must be importable at that site.** A new import in a crate, module, or translation unit that doesn't already depend on the SDK means a new dependency edge — and under the hermetic, vendored builds Antithesis requires, adding one usually fails the build outright rather than degrading. Check this while designing, not after the build fails. If the site can't reach the SDK, use the log-record form.
-- **A log-record marker is read with `snouty runs events "$RUN_ID" "<marker text>"`**, which searches a run's events from the CLI. Do not make this path depend on the `antithesis-query-logs` skill: that needs an authenticated `agent-browser`, which an unattended sweep does not have, and this marker is exactly the case a fallback-SDK or JavaScript service always lands in.
+- **A log-record marker is read with `snouty runs events "$RUN_ID" "<marker text>"`**, which searches a run's events from the CLI, so an unattended sweep can read it. This marker is exactly the case a fallback-SDK or JavaScript service always lands in.
 - **Cataloging is per-artifact.** A Java module jar, a Python wheel, or a strong-named .NET assembly that isn't in the image's catalog set yields an uncataloged marker, which reports as absent rather than red. If the mutated component sits outside what `/opt/antithesis/catalog/` covers, use the log-record form.
 
 **Place the marker where the mutation actually diverges, not where the enclosing

@@ -62,8 +62,8 @@ assertions pass on the first run.
 - A feature to test — source code, a spec, a description, or a combination
 - Access to the SUT source code
 - Docker Compose v2 and a container engine (Docker or Podman) for local runs
-- `snouty` CLI installed when moving to Antithesis runs (not needed for
-  local-only work)
+- `snouty` CLI 0.8.0 or newer installed when moving to Antithesis runs (not
+  needed for local-only work)
 
 ## Relationship to Other Skills
 
