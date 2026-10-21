@@ -9,12 +9,12 @@ description: >
   a baseline run is green.
 compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync.
 metadata:
-  version: "2026-10-15 84b188a"
+  version: "2026-10-21 4f8d80b"
 ---
 
 # Antithesis Mutation Testing
 
-**Skill version:** `2026-10-15 84b188a`
+**Skill version:** `2026-10-21 4f8d80b`
 
 ## Purpose and Goal
 
