@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-10-21
+
+- Update Go instrumentation guidance for antithesis-go-toolexec ([PR #210](https://github.com/antithesishq/antithesis-skills/pull/210))
+
 ## 2026-10-15
 
 - BREAKING CHANGE: Require snouty 0.8.0, and replace `antithesis-query-logs` and `antithesis-agent-browser` with `snouty runs search` in triage ([PR #209](https://github.com/antithesishq/antithesis-skills/pull/209))
