@@ -19,7 +19,7 @@ snouty runs show "$RUN_ID" --web
 ```
 
 This opens the run's triage report in the user's browser. `--web` only works when
-a triage report exists; for runs without one (e.g. `incomplete` or `cancelled`),
-it errors out — there is nothing to open.
+a triage report exists; if `links.triage_report` is null, it errors out. Properties
+are still available with `snouty runs properties`, even for `incomplete` and `cancelled` runs.
 
 If the user does not have access to the browser on this machine (for example, this is a headless vm), you can instead get the full url from the `show` commands json output at the path: `links.triage_report`.

@@ -6,6 +6,8 @@ Use `snouty runs --json properties` to retrieve properties and `snouty runs --js
 
 Use `snouty runs --json properties FLAGS "${RUN_ID}"` to download all the properties for a run.
 
+On an `in_progress` run this is a snapshot, and not every status in it is final. Read `references/live-runs.md` to stream new results and see which ones are final.
+
 Example return:
 
 ```json
@@ -58,6 +60,19 @@ These are from across all the histories in the run (not just the 3-4 example row
 
 - `name` is the name of the property as it appears in the triage report and as it is known to the user.
 
+- `id` is an opaque, unique, stable identifier for the property within its run. Use it with `snouty runs property <run_id> <id>` and `snouty runs stream --property`. Don't compare it across runs (match on `name`), and don't use it in `runs search`, where `antithesis_assert.id` is the property's `name`.
+
+- `status` is `Passing`, `Failing`, or `Undetermined` (API and `--json` output). Undetermined means the property has not triggered yet; the triage report calls this "unfound". Other snouty output spells them differently:
+
+  | Output | Passing | Failing | Undetermined |
+  | --- | --- | --- | --- |
+  | `runs properties` table, STATUS column | `pass` | `fail` | `unseen` |
+  | `runs property`, `--detail` | `passing` | `failing` | `undetermined` |
+  | `runs properties` filter flags | `--passing` | `--failing` | `--undetermined` |
+  | `runs stream` verdict lines | `passed` | `failed` | no line |
+
+  On a live run, an undetermined property can still get a verdict (see `references/live-runs.md`).
+
 - `counterexamples`: This field contains an array of a _select_ number of counterexamples from the run.
 
 - `examples`: This field contains array of a _select_ number of passing examples of the property from the run.
@@ -80,7 +95,7 @@ query language.
 
 `snouty runs --json properties` supports several filters (combine them as needed):
 
-- `--passing` / `--failing` — only passing or only failing properties.
+- `--passing` / `--failing` / `--undetermined` — only properties with that status. Give more than one to combine them.
 - `--name <substr>` — only properties whose name contains the substring (case-insensitive).
 - `--group <substr>` — only properties whose group contains the substring (case-insensitive).
 
