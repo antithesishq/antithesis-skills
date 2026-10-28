@@ -59,7 +59,7 @@ recorded: 2026-08-19 · updated: 2026-08-20
 | # | Question | Answer |
 | --- | --- | --- |
 | 1 | Fork location | `/home/dev/scratch/myapp-mutation-fork`; exclude `target/`, `node_modules/` |
-| 2 | Budget and concurrency | ceiling **70 runs**; max **4** in flight |
+| 2 | Budget and concurrency | ceiling **70 runs**; max **4** in flight; cancel on attributed kill |
 | 3 | Rounds | autonomous |
 | 4 | Changes to source | apply directly |
 | 5 | On a bad property | refine in place, keep going |
