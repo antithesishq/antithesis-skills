@@ -88,8 +88,16 @@ snouty launch \
 
 Start with a short duration to verify the SUT works. Iterate with the user to fix issues. Document any durable issues or follow-up decisions in the relevant Antithesis scratchbook file under `antithesis/scratchbook/`.
 
-After the first run, review the triage report for:
+## Watch the first run
 
-- `Software was instrumented` in the `Setup` property group
-- the bootstrap property emitted by setup, a simple `reachable` check in a startup or readiness path
-- any symbolization or instrumentation failures under `No Antithesis session errors`
+Don't wait for the triage report. Stream the run as soon as it has a run id:
+
+```sh
+snouty runs stream "$RUN_ID" > first-run.stream
+```
+
+- The stream answers 404 for its first ~5 minutes; snouty waits through it.
+- By about 6 minutes, check `snouty runs properties "$RUN_ID" --group Setup` for `Software was instrumented`, and confirm the bootstrap property (a simple `reachable` check in a startup or readiness path) has a `verdict <id> passed` line in the stream.
+- If no properties appear by about 8–10 minutes, or the bootstrap hasn't passed, ask the user to cancel (`snouty runs cancel "$RUN_ID"`) and fix the setup instead of waiting 30 minutes for the triage report.
+
+When the run finishes, check the triage report for symbolization or instrumentation failures under `No Antithesis session errors`.
