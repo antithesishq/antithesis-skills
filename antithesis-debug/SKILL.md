@@ -84,14 +84,12 @@ If the user didn't give you a moment, read `references/moments.md` for where to 
 If you can't pin down both an input hash and a vtime from a clear source, ask
 the user rather than guessing.
 
-To find a moment (input hash + vtime) from a failing or passing property, or
-from a log line, query for it with `snouty runs search` (see step 3 of the
-example workflow).
+For a failing property, take a counterexample's moment from `snouty runs properties`, on a live or finished run. On a live run, a `runs stream` sample line also gives one (step 2a). For a log line or anything else, query with `snouty runs search` (step 2b).
 
 ## Required input
 
 - `RUN_ID` is a live run, or a debugging session's run id.
-- `INPUT_HASH` and `VTIME` are a moment from that run, taken together as a pair from one event that `snouty runs search` returns.
+- `INPUT_HASH` and `VTIME` are a moment from that run, taken together as a pair from one source: a `runs properties` counterexample, a `runs stream` sample line, or a `runs search` event.
 - `INPUT_HASH` is often negative, for example `-1520695250096255483`. Pass it as-is: snouty reads it as the hash, not as a flag, so you don't need `--`. Adding `--` turns every flag after it into a positional argument and breaks the command.
 
   ```bash
@@ -184,9 +182,8 @@ Runs and debugging sessions use core hours until they end. A debugging session d
 snouty runs cancel "$TARGET"
 ```
 
-- Ask a user before canceling a session. They may want to continue to use it for another debugging session when you are done.
+- Always ask the user before canceling any run or debugging session, even when you think you have everything you need. Cancelling a live run stops their test, and they may want to keep a session for more debugging.
 - Make sure you are completely done with a run or debugging session before canceling, as if you want to run more commands you will have to wait for a new session to get setup.
-- Don't cancel a run you didn't open unless the user asks.
 
 # Example Workflow
 
@@ -194,26 +191,27 @@ snouty runs cancel "$TARGET"
 
 ```bash
 snouty --version   # 0.8.0 or newer
-```
-
-### 2. Get a session
-
-```bash
 RUN=<run_id>
 snouty --json runs show "$RUN" | jq -r '[.status, .sub_status // empty] | join(":") | ascii_downcase'
 ```
 
-- `in_progress:ready`: use the run itself. `TARGET="$RUN"`.
-- `starting`, or `in_progress` with another sub-status: wait with `snouty runs wait "$RUN" --until ready`, then use the run if the status it prints is `in_progress:ready`.
-- Otherwise: pick a moment (step 3), then open a session at it and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
+- `in_progress:ready` → **2a. Live run**.
+- `starting`, or `in_progress` with another sub-status → `snouty runs wait "$RUN" --until ready`, then 2a if it prints `in_progress:ready`.
+- Anything else → **2b. Past run**.
 
-  ```bash
-  snouty debug --run-id "$RUN" --input-hash "$HASH" --vtime "$VTIME" --title "<property> <date>"
-  TARGET=<runId from the output>
-  snouty runs wait "$TARGET" --until ready
-  ```
+### 2a. Live run: stream a moment, exec on the run itself
 
-### 3. Pick a moment
+No debugging session is needed.
+
+```bash
+snouty runs stream "$RUN"
+# sample <property id> counterexample <hash> <vtime>
+TARGET="$RUN"; HASH=<hash>; VTIME=<vtime>
+```
+
+The stream shows only samples that arrive after it opens. For a counterexample that already happened, take its moment from `snouty runs properties` instead.
+
+### 2b. Past run: search a moment, open a debugging session
 
 Find moments with `snouty runs search`, and query for exactly the events you want. For example, the failing evaluations of one property:
 
@@ -229,8 +227,17 @@ Drop the `!` for passing evaluations. To find a log line, use `contains({output_
 
 `runs search` returns at most 50 results by default. Add `--limit 999` if you need more than a few.
 
-### 4. Exec
-Use `--source-run-id` for the first command after starting a session because the moment is still warming up. After that, the moment is warm and later commands don't need the source unless you change the moment.
+Then open a session at that moment and wait for it. Retry exec on 404 or "Moment not warm" while it loads.
+
+```bash
+snouty debug --run-id "$RUN" --input-hash "$HASH" --vtime "$VTIME" --title "<property> <date>"
+TARGET=<runId from the output>
+snouty runs wait "$TARGET" --until ready
+```
+
+Pass `--source-run-id "$RUN"` on the first exec.
+
+### 3. Exec
 
 ```bash
 cat > probe.sh <<'EOF'
@@ -238,10 +245,10 @@ hostname
 ps aux | head -20
 EOF
 
-snouty runs exec "$TARGET" "$HASH" "$VTIME" --source-run-id "$RUN" < probe.sh > out.txt
+snouty runs exec "$TARGET" "$HASH" "$VTIME" < probe.sh > out.txt
 ```
 
-### 5. Use the results
+### 4. Use the results
 
 Apply the output to the user's goal, usually finding the cause of a bug. If the
 output doesn't answer the question, exec again at an earlier moment, or from the
@@ -249,13 +256,20 @@ output doesn't answer the question, exec again at an earlier moment, or from the
 
 If necessary give the user the moment, the script, and the relevant output, so they can rerun it.
 
-### 6. Cancel
+### 5. Clean up
 
-If you opened a session, ask a user if they want you to cancel the run once you are done running commands. Otherwise it keeps using core hours until it expires after 6 hours:
+Always ask the user before cancelling. Cancelling a live run stops their test, and cancelling a debugging session means a new one is needed for any more commands.
 
 ```bash
-snouty runs cancel "$TARGET"
+snouty runs cancel "$TARGET"   # only after the user says yes
 ```
+
+| | Live run (2a) | Past run (2b) |
+| --- | --- | --- |
+| Find the moment | `runs stream` sample line | `runs search` |
+| Session | The run itself | New `snouty debug` session |
+| First exec | Plain | Add `--source-run-id` |
+| Cancel | Ask the user (it stops their test) | Ask the user (it ends the session) |
 
 ## gdb
 
@@ -279,7 +293,7 @@ Before reporting back, check your work against these criteria:
 - Every finding comes from actual `exec` output, not inferred or assumed.
 - The evidence chain is clear: the moment (input hash and vtime), the script, what it returned, and what follows from it.
 - The summary separates what the output shows from what you interpret or recommend.
-- You've asked the user if you should cancel any debugging session you opened, or the user knows it is still running.
+- You've asked the user before cancelling any run or debugging session, or the user knows it is still running.
 
 ## Known issues
 
