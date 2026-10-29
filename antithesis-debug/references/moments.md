@@ -12,7 +12,7 @@ Infer which moment to use based on the user's prompt. The user may ask you to ge
   Telemetry and meta properties have no `moment`.
 - **A moment pasted from the Antithesis UI.** The report's copy moment button
   gives a `Moment.from({ ... })` blob. A copied log line or a free-form message can also contain one. Extract params (like `input_hash` and `vtime`) out of the blob yourself and pass them as flags to snouty.
-- **`snouty runs stream` (live run).** A counterexample `sample` line is a moment on the run itself. See "Moment from the stream" below.
+- **`snouty runs stream` (live run).** A counterexample `sample` line is a moment on the run itself; exec on the run directly. If exec answers "Moment not warm", the run has most likely ended — open a debugging session.
 - **`snouty runs search` (past run).** Every event it returns carries a `moment` with
   `input_hash` and `vtime`. Write a query that matches exactly what you want:
 
@@ -39,18 +39,3 @@ Infer which moment to use based on the user's prompt. The user may ask you to ge
   first: `runs properties` for a failing property, `runs stream` for one that
   fails while you watch a live run, `runs search` for a log line or a specific
   evaluation.
-
-## Moment from the stream
-
-On a live run, a counterexample `sample` line from `snouty runs stream` is a ready moment. Pass its hash and vtime straight to `runs exec` on the same run:
-
-```bash
-snouty runs stream "$RUN"
-# sample <property id> counterexample -1520695250096255483 67.7622960046865
-
-snouty runs exec "$RUN" -1520695250096255483 67.7622960046865 'uptime'
-```
-
-- The target is the run itself. No debugging session is needed.
-- Pass the hash as-is, even when it is negative.
-- If exec answers "Moment not warm", the run has most likely ended. Launch a debugging session.

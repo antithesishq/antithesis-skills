@@ -84,8 +84,6 @@ If the user didn't give you a moment, read `references/moments.md` for where to 
 If you can't pin down both an input hash and a vtime from a clear source, ask
 the user rather than guessing.
 
-For a failing property, take a counterexample's moment from `snouty runs properties`, on a live or finished run. On a live run, a `runs stream` sample line also gives one (step 2a). For a log line or anything else, query with `snouty runs search` (step 2b).
-
 ## Required input
 
 - `RUN_ID` is a live run, or a debugging session's run id.
@@ -258,18 +256,9 @@ If necessary give the user the moment, the script, and the relevant output, so t
 
 ### 5. Clean up
 
-Always ask the user before cancelling. Cancelling a live run stops their test, and cancelling a debugging session means a new one is needed for any more commands.
-
 ```bash
 snouty runs cancel "$TARGET"   # only after the user says yes
 ```
-
-| | Live run (2a) | Past run (2b) |
-| --- | --- | --- |
-| Find the moment | `runs stream` sample line | `runs search` |
-| Session | The run itself | New `snouty debug` session |
-| First exec | Plain | Add `--source-run-id` |
-| Cancel | Ask the user (it stops their test) | Ask the user (it ends the session) |
 
 ## gdb
 

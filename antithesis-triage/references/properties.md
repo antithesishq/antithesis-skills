@@ -71,8 +71,6 @@ These are from across all the histories in the run (not just the 3-4 example row
   | `runs properties` filter flags | `--passing` | `--failing` | `--undetermined` |
   | `runs stream` verdict lines | `passed` | `failed` | no line |
 
-  On a live run, an undetermined property can still get a verdict (see `references/live-runs.md`).
-
 - `counterexamples`: This field contains an array of a _select_ number of counterexamples from the run.
 
 - `examples`: This field contains array of a _select_ number of passing examples of the property from the run.
