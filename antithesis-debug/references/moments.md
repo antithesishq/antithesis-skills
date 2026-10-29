@@ -5,7 +5,7 @@ Infer which moment to use based on the user's prompt. The user may ask you to ge
 - **`snouty runs properties` (live or finished run).** A failing property's `counterexamples` each carry a `moment`; get them by exact name (`antithesis-triage`, `references/properties.md`). Telemetry and meta properties have no `moment`.
 - **A moment pasted from the Antithesis UI.** The report's copy moment button
   gives a `Moment.from({ ... })` blob. A copied log line or a free-form message can also contain one. Extract params (like `input_hash` and `vtime`) out of the blob yourself and pass them as flags to snouty.
-- **`snouty runs stream` (live run).** A counterexample `sample` line is a moment on the run itself; exec on the run directly. If exec answers "Moment not warm", the run has most likely ended — open a debugging session.
+- **`snouty runs stream` (live run).** A counterexample `sample` line is a moment on the run itself; exec on the run directly. If exec answers "Moment not warm", the run has most likely ended, open a debugging session.
 - **`snouty runs search` (past run).** Every event it returns carries a `moment` with
   `input_hash` and `vtime`. Write a query that matches exactly what you want:
 

@@ -10,13 +10,7 @@ After running `antithesis-triage` on a completed test run, or as soon as a watch
 
 ## Watch the run
 
-After implementing a property, stream its run with only that property's assertions. Look up each id by exact name (`antithesis-triage`, `references/properties.md`):
-
-```sh
-snouty runs stream "$RUN_ID" --property "$REACH_ID" --property "$ALWAYS_ID"
-```
-
-A `verdict` line is final (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and start the loop below.
+After implementing a property, follow its run live (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and start the loop below.
 
 ## Triage-to-Improvement Loop
 

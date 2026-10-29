@@ -135,10 +135,10 @@ Write each run id into `status.md` as it comes back, before launching the next
 
 ## Watching runs
 
-Watch each run in the background with `snouty runs stream`. Look up the target's and marker's ids by exact name ("Map slugs to property names first"; `antithesis-triage`, `references/properties.md`):
+Watch each run in the background with `snouty runs stream`, and match the target and marker by their `property <id> <name>` lines ("Map slugs to property names first"):
 
 ```sh
-snouty runs stream "$RUN_ID" --property "$TARGET_ID" --property "$MARKER_ID" > "$STREAM_LOG"
+snouty runs stream "$RUN_ID" > "$STREAM_LOG"
 ```
 
 Once the marker's `verdict` is `passed` and the target's is `failed`, attribute a `sample <target id> counterexample <hash> <vtime>` line ("Attributing a falsification"). If it is attributed and the interview allowed it, record **falsified** and `snouty runs cancel "$RUN_ID"`. If the stream errors (`antithesis-triage`, `references/live-runs.md`), poll `snouty runs --json show "$RUN_ID" | jq -r .status` instead.
