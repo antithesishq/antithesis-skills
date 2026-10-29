@@ -38,7 +38,7 @@ Never the Violation."
 
 ### Watch the run
 
-After implementing a property, stream its run with only that property's assertions. Look up each id with `snouty --json runs properties "$RUN_ID" --name "<message>" | jq -r .id` (ids are per run; `antithesis-triage`, `references/properties.md`):
+After implementing a property, stream its run with only that property's assertions. Look up each id by exact name (`antithesis-triage`, `references/properties.md`):
 
 ```sh
 snouty runs stream "$RUN_ID" --property "$REACH_ID" --property "$ALWAYS_ID"

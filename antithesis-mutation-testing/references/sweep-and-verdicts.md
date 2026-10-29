@@ -135,7 +135,7 @@ Write each run id into `status.md` as it comes back, before launching the next
 
 ## Watching runs
 
-Watch each run in the background with `snouty runs stream`. Look up the target's and marker's ids with `snouty --json runs properties --name … | jq -r .id` ("Map slugs to property names first"; ids are per run, `antithesis-triage`, `references/properties.md`):
+Watch each run in the background with `snouty runs stream`. Look up the target's and marker's ids by exact name ("Map slugs to property names first"; `antithesis-triage`, `references/properties.md`):
 
 ```sh
 snouty runs stream "$RUN_ID" --property "$TARGET_ID" --property "$MARKER_ID" > "$STREAM_LOG"

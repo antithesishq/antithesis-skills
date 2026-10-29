@@ -60,7 +60,15 @@ These are from across all the histories in the run (not just the 3-4 example row
 
 - `name` is the name of the property as it appears in the triage report and as it is known to the user.
 
-- `id` is an opaque, unique, stable identifier for the property within its run. Use it with `snouty runs property <run_id> <id>` and `snouty runs stream --property`. Don't compare it across runs (match on `name`), and don't use it in `runs search`, where `antithesis_assert.id` is the property's `name`.
+- `id` is an opaque, unique, stable identifier for the property within its run. Find it in `runs properties --json` (`.id`), or in a `runs stream` `property <id> <name>` line, which the stream always prints before any sample for that property. Use it with `snouty runs property <run_id> <id>` and `snouty runs stream --property`. Don't compare it across runs (match on `name`), and don't use it in `runs search`, where `antithesis_assert.id` is the property's `name`.
+
+  To get one property by its exact name (`--name` is a substring match and can return others):
+
+  ```sh
+  snouty --json runs properties "$RUN_ID" | jq -c --arg n "<name>" 'select(.name == $n)'
+  ```
+
+  Add `| jq -r .id` for its id, or `| jq -r '.counterexamples[].moment | "\(.input_hash) \(.vtime)"'` for its failing moments.
 
 - `status` is `Passing`, `Failing`, or `Undetermined` (API and `--json` output). Undetermined means the property has not triggered yet; the triage report calls this "unfound". Other snouty output spells them differently:
 
