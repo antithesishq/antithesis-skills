@@ -38,13 +38,13 @@ Never the Violation."
 
 ### Watch the run
 
-After implementing a property, stream its run with only that property's assertions. Property ids are per run, so look each up with `snouty --json runs properties "$RUN_ID" --name "<message>" | jq -r .id`:
+After implementing a property, stream its run with only that property's assertions. Look up each id with `snouty --json runs properties "$RUN_ID" --name "<message>" | jq -r .id` (ids are per run; `antithesis-triage`, `references/properties.md`):
 
 ```sh
 snouty runs stream "$RUN_ID" --property "$REACH_ID" --property "$ALWAYS_ID"
 ```
 
-A reach claim's `verdict … passed` and an `Always`'s `verdict … failed` are final as soon as they appear (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
+A `verdict` line is final (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
 
 ### Triage results (Antithesis runs)
 

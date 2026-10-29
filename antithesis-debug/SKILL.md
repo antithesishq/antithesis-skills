@@ -209,7 +209,7 @@ snouty runs stream "$RUN"
 TARGET="$RUN"; HASH=<hash>; VTIME=<vtime>
 ```
 
-The stream shows only samples that arrive after it opens. For a counterexample that already happened, take its moment from `snouty runs properties` instead.
+For a counterexample from before the stream opened, take its moment from `snouty runs properties`.
 
 ### 2b. Past run: search a moment, open a debugging session
 

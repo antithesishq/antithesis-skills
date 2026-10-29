@@ -90,14 +90,13 @@ Start with a short duration to verify the SUT works. Iterate with the user to fi
 
 ## Watch the first run
 
-Don't wait for the triage report. Stream the run as soon as it has a run id:
+Stream the run as soon as it has a run id:
 
 ```sh
 snouty runs stream "$RUN_ID" > first-run.stream
 ```
 
-- The stream answers 404 for its first ~5 minutes; snouty waits through it.
-- By about 6 minutes, check `snouty runs properties "$RUN_ID" --group Setup` for `Software was instrumented`, and confirm the bootstrap property (a simple `reachable` check in a startup or readiness path) has a `verdict <id> passed` line in the stream.
-- If no properties appear by about 8–10 minutes, or the bootstrap hasn't passed, ask the user to cancel (`snouty runs cancel "$RUN_ID"`) and fix the setup instead of waiting 30 minutes for the triage report.
+- Once stderr prints `the stream of run <id> is open`, check `snouty runs properties "$RUN_ID" --group Setup` for `Software was instrumented`, and watch the stream for a `verdict <id> passed` line on the bootstrap property.
+- If no properties appear after the stream opens, or the Setup properties are in but the bootstrap still hasn't passed, ask the user to cancel (`snouty runs cancel "$RUN_ID"`) and fix the setup instead of waiting for the run to finish.
 
 When the run finishes, check the triage report for symbolization or instrumentation failures under `No Antithesis session errors`.

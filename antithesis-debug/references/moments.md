@@ -53,4 +53,4 @@ snouty runs exec "$RUN" -1520695250096255483 67.7622960046865 'uptime'
 
 - The target is the run itself. No debugging session is needed.
 - Pass the hash as-is, even when it is negative.
-- If exec answers "Moment not warm", retry with `--source-run-id "$RUN"`.
+- If exec answers "Moment not warm", the run has most likely ended. Launch a debugging session.
