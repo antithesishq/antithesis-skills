@@ -36,15 +36,25 @@ negation of a green `Always` cannot fire. Fix the claim, not the workload —
 see `references/assertions.md`, "A Reach Claim Asserts the Precondition,
 Never the Violation."
 
+### Watch the run
+
+After implementing a property, stream its run with only that property's assertions. Property ids are per run, so look each up with `snouty --json runs properties "$RUN_ID" --name "<message>" | jq -r .id`:
+
+```sh
+snouty runs stream "$RUN_ID" --property "$REACH_ID" --property "$ALWAYS_ID"
+```
+
+A reach claim's `verdict … passed` and an `Always`'s `verdict … failed` are final as soon as they appear (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
+
 ### Triage results (Antithesis runs)
 
 After an Antithesis run, `antithesis-triage` reports property status:
 
-- **Passed**: The invariant held throughout. Good — but the workload may not
+- **Passing**: The invariant held throughout. Good — but the workload may not
   have reached all the conditions where the invariant could be violated.
-- **Failed**: The invariant was violated. This needs verification — see
+- **Failing**: The invariant was violated. This needs verification — see
   `references/verification.md`.
-- **Unfound**: The assertion was never evaluated. The workload isn't reaching
+- **Undetermined**: The assertion was never evaluated. The workload isn't reaching
   the code path at all.
 
 Frame triage with a focused lens: "Are the feature's properties being

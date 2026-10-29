@@ -162,7 +162,8 @@ Use the `antithesis-documentation` skill to access Antithesis docs.
 14. If moving to Antithesis:
     a. Check existing setup; use `antithesis-setup` if infrastructure is needed
     b. Use `antithesis-launch` for runs
-    c. Use `antithesis-triage` for analysis (framed: "are the feature's
+    c. Watch the run (`references/iteration.md`, "Watch the run"), or use
+       `antithesis-triage` for analysis (framed: "are the feature's
        properties being exercised? Any failures?")
     d. Based on triage results: if a property failed, go to step 15; if reach
        claims aren't firing, go to "Iterate after a run"; if the mechanism is
