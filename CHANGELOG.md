@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file. Entries
 are grouped by date (UTC) with newest first.
 
+## 2026-10-30
+
+- feat: add live-run streaming to the triage and debug skills ([PR #212](https://github.com/antithesishq/antithesis-skills/pull/212))
+
 ## 2026-10-21
 
 - Update Go instrumentation guidance for antithesis-go-toolexec ([PR #210](https://github.com/antithesishq/antithesis-skills/pull/210))
