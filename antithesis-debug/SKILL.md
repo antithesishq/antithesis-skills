@@ -7,12 +7,12 @@ description: >
   evidence, gdb attach, and general debugging. Covers command usage, the live-session requirement, common workflows and errors, and how virtual time and perturbation limit what a debugger can see.
 compatibility: Requires snouty 0.8.0 or newer (https://github.com/antithesishq/snouty), and an Antithesis tenant on release 64.0 or newer.
 metadata:
-  version: "2026-10-21 4f8d80b"
+  version: "2026-10-30 d5d7b3b"
 ---
 
 # Antithesis Debug
 
-**Skill version:** `2026-10-21 4f8d80b`
+**Skill version:** `2026-10-30 d5d7b3b`
 
 Execute a bash script at a moment in a run. Each call branches the multiverse and repeated calls from the same moment reproduce. Can use a currently running run or an active MVD session.
 

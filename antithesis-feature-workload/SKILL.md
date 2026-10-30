@@ -6,7 +6,7 @@ description: >-
   that runs locally and in Antithesis, and iterate until the feature's
   behaviors are exercised and its invariants are checked.
 metadata:
-  version: "2026-10-21 4f8d80b"
+  version: "2026-10-30 d5d7b3b"
   model_guidance:
     - model: all
       level: required
@@ -22,7 +22,7 @@ metadata:
 
 # Build a feature workload for Antithesis
 
-**Skill version:** `2026-10-21 4f8d80b`
+**Skill version:** `2026-10-30 d5d7b3b`
 
 ## Purpose and Goal
 
