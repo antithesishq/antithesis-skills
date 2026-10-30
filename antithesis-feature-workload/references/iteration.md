@@ -48,7 +48,7 @@ After an Antithesis run, `antithesis-triage` reports property status:
   have reached all the conditions where the invariant could be violated.
 - **Failing**: The invariant was violated. This needs verification — see
   `references/verification.md`.
-- **Undetermined**: The assertion was never evaluated. The workload isn't reaching
+- **Never fired** (zero examples and counterexamples): The assertion was never evaluated. The workload isn't reaching
   the code path at all.
 
 Frame triage with a focused lens: "Are the feature's properties being

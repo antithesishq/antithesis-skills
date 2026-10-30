@@ -14,9 +14,9 @@ After implementing a property, follow its run live (`antithesis-triage`, `refere
 
 ## Triage-to-Improvement Loop
 
-1. Review which properties passed, failed, or were undetermined.
+1. Review which properties passed, failed, or never fired (zero examples and counterexamples).
 2. For failed properties, decide whether the problem is a SUT bug, a flawed assertion, or a workload gap.
-3. For undetermined properties, check whether Sometimes reach claims (see `assertions.md`, "Sometimes Assertions as Workload Reach Claims") cover the relevant behaviors. Unfired Sometimes assertions are the sharpest signal — each one names a behavior the workload was designed to drive but did not. Use them as the prioritized list of what to fix: add or adjust commands until the unfired assertions start firing. When no reach claims exist for the undetermined property, add them as part of the fix so the next run has the signal.
+3. For properties that never fired, check whether Sometimes reach claims (see `assertions.md`, "Sometimes Assertions as Workload Reach Claims") cover the relevant behaviors. Unfired Sometimes assertions are the sharpest signal — each one names a behavior the workload was designed to drive but did not. Use them as the prioritized list of what to fix: add or adjust commands until the unfired assertions start firing. When no reach claims exist for the property, add them as part of the fix so the next run has the signal.
 4. Before you treat an unfired reach claim as a coverage gap, make sure that it is a precondition claim, and not the negation of an `Always` at the same site. The negation of a green `Always` cannot fire. Fix the claim, not the workload — see `assertions.md`, "A Reach Claim Asserts The Precondition, Never The Violation".
 5. When extra guidance is needed beyond workload changes, prefer targeted `Reachable(...)`, `Unreachable(...)`, or non-trivial `Sometimes(cond, ...)` assertions in the SUT over generic workload-side canaries.
 6. For newly discovered behaviors, add new properties and assertions and record them in the Antithesis scratchbook.

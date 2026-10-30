@@ -70,7 +70,7 @@ These are from across all the histories in the run (not just the 3-4 example row
 
   Add `| jq -r .id` for its id, or `| jq -r '.counterexamples[].moment | "\(.input_hash) \(.vtime)"'` for its failing moments.
 
-- `status` is `Passing`, `Failing`, or `Undetermined` (API and `--json` output). Undetermined means the property has not triggered yet; the triage report calls this "unfound". Other snouty output spells them differently:
+- `status` is `Passing`, `Failing`, or `Undetermined` (API and `--json` output). `Undetermined` (live runs only) means no verdict yet. On a finished run, a property that never fired ("unfound" in the triage report) has zero examples and counterexamples. Other snouty output spells them differently:
 
   | Output | Passing | Failing | Undetermined |
   | --- | --- | --- | --- |

@@ -76,9 +76,9 @@ To look up a specific run (report), read `references/run-info.md`. Then continue
 If the run has a status of "incomplete", refer to the `Diagnose incomplete run` section below.
 
 1. Read `references/run-info.md` to load information on a run
-2. If `links.triage_report` is null/absent, no triage report was generated. Fetch properties anyway: `incomplete` and `cancelled` runs still return them. If `properties` returns nothing or 404, report that the run has no properties yet and stop.
+2. If `links.triage_report` is null/absent, no triage report was generated. Fetch properties anyway: `incomplete` and `cancelled` runs can return them. If `properties` returns nothing or 404, report that the run has no properties yet and stop.
 3. Read `references/properties.md` to load properties
-4. Review the `Passing`, `Failing`, and `Undetermined` counts
+4. Review the `Passing` and `Failing` counts (`Undetermined` only on a live run)
 5. Check the instrumentation setup signals — the `Software was instrumented` and `Symbols were uploaded` properties. Read `references/instrumentation.md` to interpret them.
 6. Build a detailed summary of the run including a review of all failures as well as flagging any new failures. Include the instrumentation status in the summary.
 
@@ -117,7 +117,7 @@ If the "status" of a specific run is "incomplete", there may be an error log to 
 2. Look at the `failure_moment` structure in the returned JSON. If present, use the input_hash and vtime from `failure_moment` to download a log in accordance with the instructions in `references/logs.md`.
 3. Try and obtain the build logs, especially if there is no failure moment, using `snouty runs --json build-logs ${RUN_ID}` and look for errors in the build.
 
-> **Note on `links.triage_report`:** Incomplete runs return properties, and `show` may still include `links.triage_report` and `failure_moment`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. Start with `failure_moment` + `build-logs`, then review the run's properties.
+> **Note on `links.triage_report`:** Incomplete runs can return properties, and `show` may still include `links.triage_report` and `failure_moment`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. Start with `failure_moment` + `build-logs`, then review the run's properties.
 
 ## General guidance
 
