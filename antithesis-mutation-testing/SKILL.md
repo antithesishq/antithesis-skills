@@ -150,8 +150,9 @@ to correct a name or scope call is before any budget is spent.
    it from the service count) and the true per-run wall clock (roughly 45
    minutes for a 15-minute run, counting setup and reporting) are unknown until
    the baseline measures them; say so plainly. Then ask how many runs may be
-   **in flight** at once — submissions are serialized regardless
-   (`references/sweep-and-verdicts.md`).
+   **in flight** at once — submissions are serialized regardless — and whether
+   a run may be cancelled once its kill is attributed (`references/sweep-and-verdicts.md`).
+   Early cancels make killed mutants cheaper than a full run in core hours; survivors still cost the full run.
 3. **Rounds.** Checkpoint after each sweep, or iterate autonomously.
 4. **Changes to your source.** May the skill apply assertion and workload fixes
    directly to the user's tree, or should it propose them and leave them
@@ -193,7 +194,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 | `references/catalog-reconstruction.md` | The scratchbook is missing or lags the code — rebuilding a catalog to mutate against |
 | `references/mutant-design.md`      | Designing a mutant for a property; the three-part patch              |
 | `references/static-validation.md`  | Tracing the kill chain before spending a run                         |
-| `references/sweep-and-verdicts.md` | Launching, polling, classifying survivors, and the iteration loop    |
+| `references/sweep-and-verdicts.md` | Launching, watching runs, classifying survivors, and the iteration loop |
 | `references/evidence-and-report.md`| Recording verdicts, and the final report                             |
 | `references/resume.md`             | `interview.md` exists from a previous sweep — resuming it            |
 
@@ -212,7 +213,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 9. Author the accepted mutants in the fork, one `mut/<id>` branch each, and export them with `sync-patches.sh`
 10. Build the baseline and every mutant image, then verify each mutant locally with `verify-mutant.sh`
 11. Read `references/sweep-and-verdicts.md`; launch the sweep, one `select-mutant.sh` → launch at a time, with runs overlapping up to the agreed limit
-12. Poll, triage, and classify each run
+12. Watch, triage, and classify each run
 13. Read `references/evidence-and-report.md`; record verdicts and write the report
 14. Run `clean.sh` when the sweep has converged or been abandoned, and after any failure — **not when it will be resumed**, and a ceiling stop with outstanding properties counts as to-be-resumed: the fork holds any unexported mutant branch, and its `base_tree` is what a resume diffs against (`references/resume.md`). If you must clean first, run `sync-patches.sh`; the resume then treats any fingerprint drift as real and re-baselines
 

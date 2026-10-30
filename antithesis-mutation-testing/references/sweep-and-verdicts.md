@@ -110,7 +110,7 @@ about mutants: **exactly one process may touch `$FORK` at a time, and it stays
 held from `select-mutant.sh` until `snouty launch` returns a run id.**
 `build-mutants.sh`, `verify-mutant.sh`, `fork.sh`, `sync-patches.sh`, the
 authoring loop, and `clean.sh` all act on the fork as well — the guidance to
-run builds and polling in the background applies to *runs* in flight, and none
+run builds and stream watchers in the background applies to *runs* in flight, and none
 of those may overlap a held fork.
 
 The window is longer than it looks — the launch skill's build plus validate is
@@ -133,16 +133,17 @@ real testing for hours.
 Write each run id into `status.md` as it comes back, before launching the next
 (`evidence-and-report.md`).
 
-## Polling
+## Watching runs
 
-Runs are long. Poll in a background loop rather than blocking:
+Watch each run in the background with `snouty runs stream`, and match the target and marker by their `property <id> <name>` lines ("Map slugs to property names first"):
 
 ```sh
-snouty runs --json show "$RUN_ID" | jq -r '.status'
+snouty runs stream "$RUN_ID" > "$STREAM_LOG"
 ```
 
-A run is finished once `status` is anything other than `starting` or
-`in_progress`. Triage each run as it lands rather than waiting for the whole
+Once the marker's `verdict` is `passed` and the target's is `failed`, attribute a `sample <target id> counterexample <hash> <vtime>` line ("Attributing a falsification"). If it is attributed and the interview allowed it, record **falsified** and `snouty runs cancel "$RUN_ID"`. If the stream errors (`antithesis-triage`, `references/live-runs.md`), poll `snouty runs --json show "$RUN_ID" | jq -r .status` instead.
+
+Triage each run as it lands rather than waiting for the whole
 batch, and append its row to `history.md` — run id, mutant, attempt, diagnosis,
 prescribed action — at the same moment `status.md`'s row is updated
 (`evidence-and-report.md`).
@@ -155,7 +156,7 @@ Check these before judging any individual mutant.
 | --- | --- | --- |
 | Announcement missing in local validate | Wrong or unpatched build | Caught **pre-launch**; no run budget spent. Rebuild and re-verify |
 | Baseline red on a safety property | — | **Stop.** The batch cannot be interpreted: a property that was already failing tells you nothing about your mutant. Report the failures and route to `antithesis-workload` or `antithesis-research` |
-| Run did not finish normally — `status` is `incomplete`, `cancelled`, or `unknown`, or `links.triage_report` is null in `snouty runs --json show` | **No result** | Not a survivor. The properties and logs endpoints return 404 for these runs (`antithesis-triage`, `SKILL.md`), so the target's silence is missing data, not evidence. Re-launch the mutant. If it fails the same way twice, diagnose it with the incomplete-run workflow — `failure_moment` plus `build-logs` — before spending another run, and record *outstanding* if it cannot be resolved |
+| Run did not finish normally — `status` is `incomplete`, `cancelled` (other than after an attributed kill), or `unknown` | **No result** | Not a survivor: the target's silence is missing data, not evidence. Re-launch the mutant. If it fails the same way twice, diagnose it with the incomplete-run workflow — `failure_moment` plus `build-logs` — before spending another run, and record *outstanding* if it cannot be resolved |
 
 A baseline that goes red after a round of fixes stops the loop the same way, in
 both workflows.
@@ -222,7 +223,7 @@ logs` streams *the history up to that moment* (`antithesis-triage`,
 same history and earlier than the failure:
 
 ```sh
-# INPUT_HASH and VTIME come verbatim from the property's counterexamples array
+# INPUT_HASH and VTIME come verbatim from a counterexample: a stream sample line or the property's counterexamples array
 snouty runs --json logs "$RUN_ID" "$INPUT_HASH" "$VTIME" > "$LOG"
 grep -c "<marker text>" "$LOG"
 ```

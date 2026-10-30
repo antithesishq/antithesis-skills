@@ -4,8 +4,8 @@ description: >
   Triage Antithesis test reports to understand what happened in a run: look
   up runs, check status, investigate failed properties (assertions), view
   metadata, download logs, search events across all timelines, inspect
-  findings, and examine environmental details. Load after a run completes or
-  when investigating a failure.
+  findings, and examine environmental details. Load after a run completes, to
+  follow a live run, or when investigating a failure.
 compatibility: Requires snouty (https://github.com/antithesishq/snouty), and jq.
 metadata:
   version: "2026-10-21 4f8d80b"
@@ -63,6 +63,10 @@ You will need to know the RUN_ID. Read `references/run-discovery.md` to learn ho
 
 Read `references/run-discovery.md` to get a list of recent runs. Then summarize them in a report.
 
+### Follow a live run
+
+If the run is `in_progress`, read `references/live-runs.md` to stream its properties as they are decided.
+
 ### Looking up a specific run
 
 To look up a specific run (report), read `references/run-info.md`. Then continue with other workflows as needed.
@@ -72,9 +76,9 @@ To look up a specific run (report), read `references/run-info.md`. Then continue
 If the run has a status of "incomplete", refer to the `Diagnose incomplete run` section below.
 
 1. Read `references/run-info.md` to load information on a run
-2. If `links.triage_report` is null/absent in the run-info output, no triage report was generated for this run (typical for `cancelled` runs and some `unknown`/`starting` states). Report that the run is not triageable — the properties and logs endpoints will return 404 for these runs.
+2. If `links.triage_report` is null/absent, no triage report was generated. Fetch properties anyway: `incomplete` and `cancelled` runs can return them. If `properties` returns nothing or 404, report that the run has no properties yet and stop.
 3. Read `references/properties.md` to load properties
-4. Review passed/failed counts
+4. Review the `Passing` and `Failing` counts (`Undetermined` only on a live run)
 5. Check the instrumentation setup signals — the `Software was instrumented` and `Symbols were uploaded` properties. Read `references/instrumentation.md` to interpret them.
 6. Build a detailed summary of the run including a review of all failures as well as flagging any new failures. Include the instrumentation status in the summary.
 
@@ -89,7 +93,7 @@ If the run has a status of "incomplete", refer to the `Diagnose incomplete run` 
    d. Analyze the downloaded log locally
    e. If you aren't certain what caused the issue, consider downloading logs from other counterexamples and examples for the same property. Compare each occurrence and try to see if there are any similarities or differences that might explain the failure cause. Logs from passing examples can be useful to compare against to find differences between success and failure cases.
 
-   To find more passing or failing evaluations of the property, use `snouty runs --json search`. Run `snouty runs search --help` first: it documents the query language and has ready-to-paste snippets, including one that selects an assertion's evaluations by id. The id is the "name" field in the property data you are investigating; match the "condition" field against the examples or counterexamples you want more of. Results are a sample capped at `--limit` (default 50), so they show SOME but not necessarily ALL evaluations. The examples and counterexamples you already have will likely be among them; compare each result's moment against the ones you have already downloaded.
+   To find more passing or failing evaluations of the property, use `snouty runs --json search`. Run `snouty runs search --help` first: it documents the query language and has ready-to-paste snippets, including one that selects an assertion's evaluations by id. In search, `antithesis_assert.id` is the property's `name`, not its `id` field. Match `antithesis_assert.condition` against the examples or counterexamples you want more of. Results are a sample capped at `--limit` (default 50), so they show SOME but not necessarily ALL evaluations. The examples and counterexamples you already have will likely be among them; compare each result's moment against the ones you have already downloaded.
 
 4. **Important:** Cross-reference the log against the source code of the system under test (SUT) and the workload if you have access to it.
 5. Deeply investigate the failure to develop an understanding of the timeline of events which led up to and potentially caused it.
@@ -113,7 +117,7 @@ If the "status" of a specific run is "incomplete", there may be an error log to 
 2. Look at the `failure_moment` structure in the returned JSON. If present, use the input_hash and vtime from `failure_moment` to download a log in accordance with the instructions in `references/logs.md`.
 3. Try and obtain the build logs, especially if there is no failure moment, using `snouty runs --json build-logs ${RUN_ID}` and look for errors in the build.
 
-> **Note on `links.triage_report`:** For incomplete runs, the per-property `properties` and `logs` endpoints typically return 404, but `links.triage_report` and `failure_moment` may still be populated in `show`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. The triage workflow for incomplete runs is `failure_moment` + `build-logs`, regardless of whether a report URL exists.
+> **Note on `links.triage_report`:** Incomplete runs can return properties, and `show` may still include `links.triage_report` and `failure_moment`. Report what `show` actually contains — do not claim the triage_report link is absent unless that field is null. Start with `failure_moment` + `build-logs`, then review the run's properties.
 
 ## General guidance
 
@@ -141,7 +145,7 @@ Before declaring this skill complete, review your work against the criteria belo
 
 Review criteria:
 
-- Every property status reported (passed, failed, unfound) was extracted from the actual properties fetch, not inferred or assumed
+- Every property status reported (`Passing`, `Failing`, `Undetermined`) was extracted from the actual properties fetch, not inferred or assumed
 - Findings reference specific data from the properties data — property names, assertion text, log lines, timestamps
 - Failed properties with available logs include actionable context: the assertion text, relevant log lines, and timeline context. Conclusions about failures are grounded in log evidence when logs exist
 - The summary distinguishes between what the report shows and what you interpret or recommend

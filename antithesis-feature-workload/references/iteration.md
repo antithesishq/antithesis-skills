@@ -36,15 +36,19 @@ negation of a green `Always` cannot fire. Fix the claim, not the workload —
 see `references/assertions.md`, "A Reach Claim Asserts the Precondition,
 Never the Violation."
 
+### Watch the run
+
+After implementing a property, follow its run live (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
+
 ### Triage results (Antithesis runs)
 
 After an Antithesis run, `antithesis-triage` reports property status:
 
-- **Passed**: The invariant held throughout. Good — but the workload may not
+- **Passing**: The invariant held throughout. Good — but the workload may not
   have reached all the conditions where the invariant could be violated.
-- **Failed**: The invariant was violated. This needs verification — see
+- **Failing**: The invariant was violated. This needs verification — see
   `references/verification.md`.
-- **Unfound**: The assertion was never evaluated. The workload isn't reaching
+- **Never fired** (zero examples and counterexamples): The assertion was never evaluated. The workload isn't reaching
   the code path at all.
 
 Frame triage with a focused lens: "Are the feature's properties being

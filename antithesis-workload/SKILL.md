@@ -122,7 +122,7 @@ Use the `antithesis-documentation` skill to access these pages. Prefer `snouty d
 6. Read `references/interesting-values.md`
 7. Identify the property's value menu — boundary values plus configured-limit families. See `interesting-values.md` for the discovery process and worked examples
 8. Implement the chosen property: assertions, test commands, and supporting code
-9. Write Sometimes assertions as reach claims for the behaviors the workload is designed to drive (see `references/assertions.md`, "Sometimes Assertions as Workload Reach Claims"). Assert the precondition, not the violation. Use `antithesis-launch` to run a test, then `antithesis-triage` to check which assertions fired — unfired ones are evidence the workload isn't reaching its targets and the starting point for iteration
+9. Write Sometimes assertions as reach claims for the behaviors the workload is designed to drive (see `references/assertions.md`, "Sometimes Assertions as Workload Reach Claims"). Assert the precondition, not the violation. Use `antithesis-launch` to run a test, then watch it (`references/iteration.md`, "Watch the run") or use `antithesis-triage` to check which assertions fired — unfired ones are evidence the workload isn't reaching its targets and the starting point for iteration
 
 ### Post-triage iteration
 

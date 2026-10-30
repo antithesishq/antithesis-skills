@@ -8,7 +8,7 @@ snouty runs --json list -n 200 [OPTIONS]
 
 Use `-n 200` as the default page size. Snouty's built-in default page size is too small for triage — it can miss the run when matching a triage-report URL (rule 3) or when looking for the oldest non-triaged run (rule 4). Bump higher (e.g. `-n 500` or `-n 1000`) if a search at 200 still doesn't find what the user is asking for.
 
-You may use `snouty runs list --help` to see the other OPTIONS. The `--status` option is useful if you know the status. `snouty runs list` returns runs with one of the following statuses: `starting`, `in_progress`, `completed`, `cancelled`, `incomplete`, `unknown`. The status `incomplete` usually means the run failed to start for some reason and the failure can be triaged. To determine whether ANY run is triageable, check `links.triage_report` in the run's JSON: if a report URL is present, a report was generated and you can proceed with triage. If `links` is null or `triage_report` is absent, no report exists.
+You may use `snouty runs list --help` to see the other OPTIONS. The `--status` option is useful if you know the status. `snouty runs list` returns runs with one of the following statuses: `starting`, `in_progress`, `completed`, `cancelled`, `incomplete`, `unknown`. The status `incomplete` usually means the run failed to start for some reason and the failure can be triaged. `links.triage_report` in the run's JSON shows whether a triage report was generated. A run without one can still be triaged: `incomplete` and `cancelled` runs can return properties. Fetch them with `snouty runs properties` to check.
 
 ## How to tell what run_id the user wants to use
 
@@ -25,6 +25,7 @@ Apply these rules, in order.
    consider the description of the runs returned in the run list to identify a
    run the user is asking for. Take into account the launchers and sources you
    have been using with this user. See the notes below.
+   For "the run that's running now", filter with `--status in_progress`.
 
 3. If the user provides a triage report URL, look up the run_id by matching
    the URL against `links.triage_report` in the runs list.
