@@ -6,7 +6,7 @@ Follow an `in_progress` run's properties as they are decided with `snouty runs s
 
 - Run `snouty runs stream --help`.
 - A sample's hash and vtime are a moment you can debug with `antithesis-debug`.
-- On a finished run, the stream prints `completed` and exits 0. A 409 means the run predates release 65.3.
+- On a finished run, the stream prints `completed` and exits 0. A 409 means the run predates release 66.
 
 ## When each result is final
 
