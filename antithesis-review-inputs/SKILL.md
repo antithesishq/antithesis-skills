@@ -5,12 +5,12 @@ description: >
   it uses randomness to drive the system under test into diverse regions of
   behavior.
 metadata:
-  version: "2026-10-30 d5d7b3b"
+  version: "2026-11-12 6ba10e2"
 ---
 
 # Antithesis Review Inputs
 
-**Skill version:** `2026-10-30 d5d7b3b`
+**Skill version:** `2026-11-12 6ba10e2`
 
 ## Purpose and Goal
 
