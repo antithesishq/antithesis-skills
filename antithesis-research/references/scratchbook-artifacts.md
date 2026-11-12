@@ -19,7 +19,7 @@ The scratchbook lives at `antithesis/scratchbook/` in the target repository and 
 
 ## Provenance
 
-Every top-level artifact begins with YAML provenance frontmatter recording `sut_path`, `commit`, `updated`, and `external_references`. The format is defined in `references/scratchbook-setup.md`. Downstream skills (`antithesis-setup`, `antithesis-workload`) verify this provenance against the user's current target before consuming the artifacts. An artifact lacking frontmatter is treated as legacy.
+Every top-level artifact begins with YAML provenance frontmatter recording `sut_path`, `commit`, `updated`, and `external_references`. The format is defined in `references/scratchbook-setup.md`. Downstream consumers (the antithesis plugin's `/antithesis workload` and `/antithesis properties`) verify this provenance against the user's current target before consuming the artifacts. An artifact lacking frontmatter is treated as legacy.
 
 ## Layout
 

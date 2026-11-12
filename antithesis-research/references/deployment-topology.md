@@ -89,7 +89,7 @@ The less you deploy to Antithesis while still covering the code you want to veri
 
 ## SDK Selection
 
-Determine which Antithesis Language SDKs you need based on the languages used in the SUT and workload. Refer to the SDK reference and Instrumentation overview docs (available via the `antithesis-documentation` skill).
+Determine which Antithesis Language SDKs you need based on the languages used in the SUT and workload. Refer to the SDK reference and Instrumentation overview docs (available via `snouty docs`).
 
 The workload client always needs the SDK to emit assertions. The SUT services may also need instrumentation for deeper coverage.
 

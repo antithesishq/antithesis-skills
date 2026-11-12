@@ -20,4 +20,4 @@ Agents are good but they aren't the only resource.
 
 For general questions and discussion, join the [Antithesis Discord](https://discord.com/invite/antithesis).
 
-For suspected bugs or feedback on the skills specifically, file a [GitHub issue](https://github.com/antithesishq/antithesis-skills/issues).
+For suspected bugs or feedback on the skills specifically, file a GitHub issue against [the antithesis plugin](https://github.com/antithesishq/antithesis-plugin/issues) for the `/antithesis` skill, or against [antithesis-skills](https://github.com/antithesishq/antithesis-skills/issues) for the experimental skills.

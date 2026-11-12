@@ -5,7 +5,7 @@ description: >
   each safety property, inject one realistic mutant into the SUT, run it, and
   confirm the targeted property fires. Diagnoses survivors as a bad mutant, bad
   oracle, bad workload, or bad property, and routes fixes back to
-  antithesis-workload or antithesis-research. Use once the harness is built and
+  the antithesis plugin's workload module or antithesis-research. Use once the harness is built and
   a baseline run is green.
 compatibility: Requires the `docker-compose` binary (Docker Compose v2), which snouty execs directly; `podman compose` is not supported, though podman as the container runtime behind `DOCKER_HOST` is fine. Also requires snouty (https://github.com/antithesishq/snouty), jq, git, and rsync.
 metadata:
@@ -33,18 +33,19 @@ Success means:
 - `antithesis/scratchbook/mutation-testing/report.md` records the outcome for every in-scope property, with the run that proves it
 - The user's working tree carries no mutation — every mutant lives in the fork, and `clean.sh` confirms it. Authorized fixes may land there; a mutation never does
 
-Use the `antithesis-research` skill to build the property catalog, the
-`antithesis-setup` skill to scaffold the harness, and the `antithesis-workload`
-skill to implement assertions and test commands. Use the `antithesis-launch`
-skill to submit runs — do not run `snouty launch` directly. Use the
-`antithesis-triage` skill to read results.
+This skill requires the [antithesis plugin](https://github.com/antithesishq/antithesis-plugin).
+Use the `antithesis-research` skill to build the property catalog,
+`/antithesis workload` to build the harness and workload, and
+`/antithesis properties` to implement assertions. Use `/antithesis launch` to
+submit runs — do not run `snouty launch` directly. Use `/antithesis triage` to
+read results.
 
 ## Prerequisites
 
 - If the Antithesis scratchbook (usually `antithesis/scratchbook/`) is missing, or has fallen behind the assertions in the code, reconstruct a catalog from those assertions plus the baseline run — see `references/catalog-reconstruction.md`. This is not a blocker; it does narrow what the sweep can claim.
 - DO NOT PROCEED if the Antithesis config directory contains a `manifests/` subdirectory. Kubernetes harnesses are not supported yet: mutant selection works by building one image per mutant and swapping the tag in `docker-compose.yaml`. Tell the user this and stop. Check this **before** the compose check below — a Kubernetes harness has no `docker-compose.yaml`.
-- DO NOT PROCEED if there is no `docker-compose.yaml` for Antithesis and no `manifests/` directory either. Use the `antithesis-setup` skill to create the compose harness.
-- DO NOT PROCEED if the SUT and workload contain no Antithesis SDK assertions at all. Use the `antithesis-workload` skill first — there is no oracle to validate, and a reconstruction cannot stand in for this one.
+- DO NOT PROCEED if there is no `docker-compose.yaml` for Antithesis and no `manifests/` directory either. Use `/antithesis workload` to create the compose harness.
+- DO NOT PROCEED if the SUT and workload contain no Antithesis SDK assertions at all. Use `/antithesis properties` first — there is no oracle to validate, and a reconstruction cannot stand in for this one.
 - DO NOT PROCEED if `snouty` is not installed. See `https://raw.githubusercontent.com/antithesishq/snouty/refs/heads/main/README.md` for installation options.
 - DO NOT PROCEED if `snouty` is older than 0.8.0. Use `snouty --version` to find the version. Use `snouty update` to update.
 - DO NOT PROCEED if no SUT service is built from source in this repo. A *partial* case — some services built from source, some prebuilt — is fine, and is handled by scoping (below).
@@ -73,8 +74,8 @@ run": mutate those like any other, reading the marker from run events
 report that.
 
 Check the instrumentation signals too — `Software was instrumented`, `Symbols
-were uploaded`, `Thread pausing was enabled` (`antithesis-triage`,
-`references/instrumentation.md`). Report them, but **gate on them only for a
+were uploaded`, `Thread pausing was enabled` (`/antithesis triage`,
+`references/triage/instrumentation.md`). Report them, but **gate on them only for a
 language that supports coverage instrumentation**. Python is cataloging-only and
 the fallback SDK emits none; there the fuzzer has no coverage feedback to steer
 toward a divergence, so prefer a longer re-run to a *bad oracle* diagnosis for a
@@ -82,13 +83,13 @@ survivor, and say so in the report.
 
 Green does **not** require every property in the run to pass:
 
-- A failing `Reachable` or `Sometimes` does not block the sweep: record it, route it to `antithesis-workload`, and carry it into scoping — a safety property in the same unexercised region is likely to come back *outstanding — workload gap*.
+- A failing `Reachable` or `Sometimes` does not block the sweep: record it, route it to `/antithesis workload`, and carry it into scoping — a safety property in the same unexercised region is likely to come back *outstanding — workload gap*.
 - Telemetry and volume properties (`Hypervisor utilization`, `Customer output volume`, and similar) are not SUT correctness signals. Ignore them.
 
 **A failing safety property stops the skill.** Report the failures and route the
-user to `antithesis-workload` or `antithesis-research` — but **read
+user to `/antithesis workload` or `antithesis-research` — but **read
 `counterexample_count` first**. `Always` and `Sometimes` imply `Reachable`
-(`antithesis-triage`, `references/properties.md`), so a safety property that was
+(`/antithesis triage`, `references/triage/properties.md`), so a safety property that was
 never reached can surface as failing without any invariant having been violated.
 `counterexample_count` above zero is a real violation and stops the sweep; no
 counterexamples and no examples means never evaluated — a coverage gap, handled
@@ -180,7 +181,7 @@ outstanding, in the autonomous one. Track runs spent against the ceiling in
 
 ## Documentation Grounding
 
-Use the `antithesis-documentation` skill to access these pages. Prefer `snouty docs`.
+Use `snouty docs` to access these pages.
 
 - Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
 - SDK reference: `https://antithesis.com/docs/reference/sdk.md`
@@ -249,14 +250,14 @@ current `base_tree`.
 report must account for, whether or not each one ends up with a mutant. Two
 kinds get a verdict without being mutated, and both belong in the report:
 
-- **Unexercised on the baseline.** For `Always` and `AlwaysOrUnreachable`, `example_count` 0 in the baseline means the assertion never evaluated, and a mutant nothing reaches cannot be killed. One 15-minute randomized run is a sample, though, and it under-samples exactly the deep, rare states most worth validating: confirm with a longer baseline before scoping anything out, then route it to `antithesis-workload` and record it as *outstanding — workload gap*. The verdict is provisional: it is the same *bad workload* work order as the ladder's, governed by question 4 and the ceiling like any other real-tree fix. Check this at scoping time.
+- **Unexercised on the baseline.** For `Always` and `AlwaysOrUnreachable`, `example_count` 0 in the baseline means the assertion never evaluated, and a mutant nothing reaches cannot be killed. One 15-minute randomized run is a sample, though, and it under-samples exactly the deep, rare states most worth validating: confirm with a longer baseline before scoping anything out, then route it to `/antithesis workload` and record it as *outstanding — workload gap*. The verdict is provisional: it is the same *bad workload* work order as the ladder's, governed by question 4 and the ceiling like any other real-tree fix. Check this at scoping time.
   **`Unreachable` is the exception: `example_count` 0 is its healthy state.** Whether its guarded region is exercised is exactly what the mutant's marker establishes. Take the class from the **assertion scan** — the catalog's **Type** field collapses all three safety classes to `Safety`, so a catalog read alone would scope out every `Unreachable`
 - **Not mutatable.** The property is owned by a component not built from source in this repo (a stock database image, a managed queue). A fact about the harness, not a defect in the property — never grounds for withdrawal
 - **Not cataloged.** The assertion exists in the source but never appeared in the baseline's property list. Record it as *outstanding — not cataloged* with the instrumentation diagnosis from `references/catalog-reconstruction.md` — unless the service uses the fallback SDK or JavaScript, where absence is normal and the property is mutated like any other (the join table there). The same verdict covers a mutant that never passes `verify-mutant.sh` or whose patch has gone `STALE`: the sweep could not obtain a result, and says so
 
 While scoping, note any `Sometimes` whose condition looks trivially satisfiable
 — `Sometimes(true)` in all but name. Report it as a catalog observation with the
-`Reachable(...)` rewrite `antithesis-workload`'s self-review calls for; never
+`Reachable(...)` rewrite that `/antithesis properties` calls for; never
 apply it unattended.
 
 ## General Guidance

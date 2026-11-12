@@ -58,7 +58,7 @@ assertion still would not fire, the likely defect is the assertion. That is a
 **prediction, not a finding** — record it as the mutant's **predicted verdict**,
 launch the mutant, and let the survivor confirm it before anything is rewritten.
 Follow the rule below. Any change goes through
-`antithesis-workload`'s `references/assertions.md` conventions, and record in
+the conventions in `/antithesis properties` (`references/properties/assertions.md`), and record in
 the property's evidence file the gap the mutant exposed.
 
 ## The two failure modes

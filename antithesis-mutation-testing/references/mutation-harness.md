@@ -54,7 +54,7 @@ examples below drop the `$MT/` prefix for readability only.
 
 `--config` is the compose directory *relative to the fork* (default
 `antithesis/config`). Where a step needs it as a real path — `snouty validate`,
-`antithesis-launch`'s `--config` — that is `"$FORK/$CONFIG"`.
+the config directory you give `/antithesis launch` — that is `"$FORK/$CONFIG"`.
 
 ## The fork
 
@@ -90,7 +90,7 @@ which is what makes `--exclude` worth setting on a large repo.
 
 ## Bringing the fork's stack up beside the user's own
 
-`antithesis-setup` requires every service to set `container_name:`, and
+Antithesis compose harnesses usually set `container_name:` on every service, and
 container names are global rather than project-scoped. So while
 `COMPOSE_PROJECT_NAME` keeps the fork's volumes, networks, and teardown away
 from the user's stack, it cannot separate container names: `verify-mutant.sh`
@@ -219,8 +219,8 @@ but a host without `docker-compose` cannot run snouty at all. `podman compose`
 is not an option; podman as the *runtime*, reached through `DOCKER_HOST`, is
 fine — the same front-end drives the sweep, the validate, and the launch.
 
-**Builds are usually the larger half of a sweep's cost.** `antithesis-setup`
-prescribes `context: ../..`, so the build context is the whole repo; if
+**Builds are usually the larger half of a sweep's cost.** Harnesses commonly
+use `context: ../..`, so the build context is the whole repo; if
 `.dockerignore` does not exclude `.git` and large build directories, every
 mutant busts the layer cache for every service. Time the baseline build, quote
 `N × T` to the user as part of the budget (see `SKILL.md`, interview question
@@ -238,7 +238,7 @@ select-mutant.sh baseline --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"
 
 `build-mutants.sh` calls it before each build.
 
-**Call it again immediately before each launch.** `antithesis-launch` rebuilds
+**Call it again immediately before each launch.** `/antithesis launch` rebuilds
 before submitting, so the fork at launch time must be the tree the mutant was
 verified in — otherwise the rebuild quietly replaces the verified image. Even
 then the rebuild is only *normally* a cache hit; the announcement check at the

@@ -8,7 +8,7 @@ A lot of what you'll add to your harness over time is skills.
 
 ## Skills
 
-Skills are commands in your agent: /antithesis-research, /antithesis-triage, /antithesis-workload. You invoke one, the agent does the thing. It looks like that's all there is to using them: invoke, get result, take what you get.
+Skills are commands in your agent: /antithesis triage, /antithesis workload, /antithesis-research. You invoke one, the agent does the thing. It looks like that's all there is to using them: invoke, get result, take what you get.
 
 There's more. A skill is information loaded into the agent's context for a particular kind of task. It's text in your filesystem, in markdown files you can open and read.
 
@@ -24,7 +24,7 @@ You can also use a skill outside what it was "designed for." Tell the agent to u
 
 > Using the architecture analysis from antithesis-research, draft a one-pager I can share at next week's design review.
 
-> Make me a tutorial for my colleagues. Pull from antithesis-documentation and the other antithesis skills I have installed. Start with how Antithesis works, build up to good testing practices. Use our software as analyzed by antithesis-research for the worked example.
+> Make me a tutorial for my colleagues. Pull from the Antithesis docs and the antithesis skills I have installed. Start with how Antithesis works, build up to good testing practices. Use our software as analyzed by antithesis-research for the worked example.
 
 The skill becomes context for whatever task you've got, not a fixed path you have to follow.
 
@@ -86,7 +86,7 @@ The first version is rarely the last. As you use the skill, things turn up: step
 
 Skills also tame variation. Some procedures need to be done the same way every time: your release process, your migration procedure, anything where a missed or out-of-order step causes real damage. The agent left alone isn't fully consistent across sessions. Even with the same prompt it might do things slightly differently. A skill removes that. The text becomes the spec.
 
-The best way to learn what good skills look like is to read ones other people wrote. Ours are open at [github.com/antithesishq/antithesis-skills](https://github.com/antithesishq/antithesis-skills). Read them. Lift parts into your own. Write your own that reference ours: invoke /antithesis-research as part of a bigger flow. Fork ours and pull updates periodically. Or use ours as inspiration and write something entirely your own.
+The best way to learn what good skills look like is to read ones other people wrote. Ours are open at [github.com/antithesishq/antithesis-plugin](https://github.com/antithesishq/antithesis-plugin) and [github.com/antithesishq/antithesis-skills](https://github.com/antithesishq/antithesis-skills). Read them. Lift parts into your own. Write your own that reference ours: invoke /antithesis-research as part of a bigger flow. Fork ours and pull updates periodically. Or use ours as inspiration and write something entirely your own.
 
 ## Hooks
 

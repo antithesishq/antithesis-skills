@@ -110,7 +110,7 @@ else
 fi
 
 # Isolate the compose project. Without this the name falls through to the compose
-# file's top-level `name:`, which antithesis-setup sets to the user's own project
+# file's top-level `name:`, which is usually the user's own project
 # -- so a teardown here would destroy their running containers and volumes.
 # snouty passes no -p, so exporting this covers the stack `snouty validate`
 # brings up as well as our own calls. Note container_name: is global rather than

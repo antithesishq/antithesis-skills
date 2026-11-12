@@ -47,7 +47,7 @@ pattern misses whole codebases:
 | Go | `assert.Always`, `assert.Sometimes`, `assert.Reachable`, `assert.Unreachable`, and the rich forms |
 | Java / C# | `Assert.always`, `Assert.sometimes`, `Assert.reachable`, `Assert.unreachable` (casing follows the language) |
 | Python | `always`, `sometimes`, `reachable`, `unreachable` from `antithesis.assertions` |
-| JavaScript | **There is no Antithesis JS SDK** (`antithesis-setup`, `references/language/javascript.md`). Use the fallback row below |
+| JavaScript | **There is no Antithesis JS SDK** (`/antithesis workload`, `references/workload/languages/javascript.md`). Use the fallback row below |
 | Fallback (no SDK) | hand-written JSONL `antithesis_assert` records written to the output file. Grep the JSON shape to find the **emitter**, which is usually one helper — then find that helper's callers, which are the actual assertions. Counting the emitter as one assertion yields one property for the whole SUT and under-counts the budget |
 
 Record the file, line, class, and message literal for each. Write the result to
@@ -59,13 +59,13 @@ classes and callsites from this file.
 
 **Rich variants take their base class.** `assert_always_greater_than!`,
 `ALWAYS_GREATER_THAN`, and the numeric and boolean forms in every SDK follow the
-pass/fail semantics of the base class they are named after (`antithesis-triage`,
-`references/properties.md`), so an `always_*` variant is `Always` for scoping and
+pass/fail semantics of the base class they are named after (`/antithesis triage`,
+`references/triage/properties.md`), so an `always_*` variant is `Always` for scoping and
 mutation. A real harness is full of them; a scan that only counts the five base
 spellings under-counts the budget.
 
 **Before treating a zero as real, cross-check it against an existing run**
-(`snouty runs list`, then its property list via `antithesis-triage`) — the hard
+(`snouty runs list`, then its property list via `/antithesis triage`) — the hard
 stop in `SKILL.md` must never be reached because the scan looked for the wrong
 spelling. A run whose property list contains SUT assertions proves the oracle
 exists: widen the search rather than stopping.
@@ -79,8 +79,8 @@ zero is unconfirmed when reporting it.
 
 ### 2. Read the baseline run
 
-Once the baseline is green, pull its property list with the `antithesis-triage`
-skill (`references/properties.md`). Four fields matter: `name` — the assertion's
+Once the baseline is green, pull its property list with `/antithesis triage`
+(`references/triage/properties.md`). Four fields matter: `name` — the assertion's
 message — plus `status`, `example_count`, and `counterexample_count`. **The last
 is not optional**: without it a never-reached safety property reads as `Failing`
 and stops the skill for nothing (`SKILL.md`, the baseline gate).
@@ -88,7 +88,7 @@ and stops the skill for nothing (`SKILL.md`, the baseline gate).
 ### 3. Join on the message string
 
 The run's `name` is the assertion's message literal, which is why
-`antithesis-workload` requires those messages to be unique project-wide. Match on
+`/antithesis properties` requires those messages to be unique project-wide. Match on
 it exactly. Record the run's `name` verbatim as the key everything downstream
 looks properties up by — the run side is authoritative, and quoting or escaping
 in the source literal can make the two render differently even when they match.
@@ -102,7 +102,7 @@ join failure, and the rows below say what each kind means.
 | Callsite, no run property, **fallback or JavaScript** | Normal, not a defect. These emit only when the assertion is evaluated, so they have no never-reached state to report (`mutant-design.md`) and absence means "not hit in this run" | Catalog it and mutate it like any other. Its marker is read from the run's events, not the property list (`sweep-and-verdicts.md`, the uncataloged-marker row). Do not scope it out, and do not investigate the instrumentation |
 | Run property, no callsite, **name is known platform telemetry** | `Software was instrumented`, `Symbols were uploaded`, `Thread pausing was enabled`, `Assertions are present in customer code`, `Hypervisor utilization`, `Customer output volume`, `Fault injector total packets`, `Fuzzing has branches`, `Unique Edges`, `The Test Composer was used`, `No Antithesis session errors`, and similar | Not a SUT property. Exclude it. The list is a sample of what the platform emits, not a closed set — but resolve a name you do not recognize with the row below rather than assuming it is telemetry |
 | Run property, no callsite, **name not on that list** | Most likely a first-party assertion the scan could not see: a vendored internal library, a fetched module, generated code | **Record it as unattributed and show it to the user.** Never fold it into the telemetry row — that silently shrinks the catalog, and the report then presents the smaller set as the scope that was validated |
-| **Two callsites share one message** | Antithesis collapses them into a single catalog entry (`antithesis-workload`, `references/assertions.md`) | Affects those callsites only, not the sweep. Record the collapsed entry as *outstanding — not cataloged*, since a verdict on it cannot be attributed to either site, and report the duplicate as a defect to fix in the code. Continue with the rest of the catalog |
+| **Two callsites share one message** | Antithesis collapses them into a single catalog entry (`/antithesis properties`, `references/properties/assertions.md`) | Affects those callsites only, not the sweep. Record the collapsed entry as *outstanding — not cataloged*, since a verdict on it cannot be attributed to either site, and report the duplicate as a defect to fix in the code. Continue with the rest of the catalog |
 | **No callsite matches any run property** | Either the join key is wrong or nothing is cataloged | Re-derive the key **once** — check whether the platform prefixes or groups names — and re-join. If it still matches nothing, **stop and report**, per `SKILL.md`'s "only if none of them appear is the harness broken". Note that the baseline gate certified nothing here: it asks whether every safety property is green, and with no property matched it passed vacuously. For an inherited harness the likeliest cause is that the SDK is not linked into the shipped artifact or `/opt/antithesis/catalog/` was never populated, so report that as the thing to check |
 
 The join also produces the slug-to-assertion-name mapping that `status.md` needs

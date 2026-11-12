@@ -30,7 +30,7 @@ export COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | c
 snouty validate "$FORK/$CONFIG"
 ```
 
-Then launch it through `antithesis-launch` exactly as "Launching" below
+Then launch it through `/antithesis launch` exactly as "Launching" below
 prescribes — the fork's config, the isolated compose project on the launch
 command itself, `--duration 15`, `--ephemeral` — with
 `--source mutation-testing:baseline` in place of a mutant id, and `baseline` in
@@ -69,18 +69,18 @@ whose name matches exactly before reading a verdict off it.
 
 ## Launching
 
-Use the `antithesis-launch` skill for every run, supplying these explicitly —
-a caller's parameters take precedence over that skill's defaults.
+Use `/antithesis launch` for every run, supplying these explicitly —
+a caller's parameters take precedence over that module's defaults.
 
-**Point it at the fork.** `--config "$FORK/$CONFIG"` — otherwise the launch
-skill discovers the user's real config and launches the unmutated system.
+**Point it at the fork.** Name `"$FORK/$CONFIG"` as the config directory — otherwise the launch
+module discovers the user's real config and launches the unmutated system.
 
 **Put the fork in that mutant's state immediately before launching**, with
 `select-mutant.sh <id> --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"`
 (see `mutation-harness.md`, "Paths" and "Select before building and before
 launching").
 
-**Isolate the compose project on every launch.** `antithesis-launch` builds and
+**Isolate the compose project on every launch.** `/antithesis launch` builds and
 runs `snouty validate` before submitting, and snouty brings the stack up with no
 `-p`, so the project name falls through to the compose file's top-level
 `name:` — the user's own project — and snouty's teardown would take their
@@ -89,7 +89,7 @@ containers and volumes. Set it in the **same command** as the launch; an
 
 ```sh
 COMPOSE_PROJECT_NAME="antimut-$(printf '%s' "$(cd -P "$FORK" && pwd)" | cksum | awk '{print $1}')" \
-  <the antithesis-launch invocation>
+  <the launch command /antithesis launch would run>
 ```
 
 This is the same name `build-mutants.sh` and `verify-mutant.sh` compute, so all
@@ -113,7 +113,7 @@ authoring loop, and `clean.sh` all act on the fork as well — the guidance to
 run builds and stream watchers in the background applies to *runs* in flight, and none
 of those may overlap a held fork.
 
-The window is longer than it looks — the launch skill's build plus validate is
+The window is longer than it looks — the launch module's build plus validate is
 minutes on a multi-node SUT — and mid-select the fork holds mutated source under
 the *user's own* image tags, so a build landing there pushes a mutated image to
 their real registry. So:
@@ -121,7 +121,7 @@ their real registry. So:
 ```
 for each mutant:            # strictly one at a time
   select-mutant.sh <id> --fork "$FORK" --patches "$PATCHES" --images "$IMAGES"
-  antithesis-launch ...     # build (cache hit) + push + submit
+  /antithesis launch ...   # build (cache hit) + push + submit
   record the run id
                             # only now move to the next mutant
 ```
@@ -141,7 +141,7 @@ Watch each run in the background with `snouty runs stream`, and match the target
 snouty runs stream "$RUN_ID" > "$STREAM_LOG"
 ```
 
-Once the marker's `verdict` is `passed` and the target's is `failed`, attribute a `sample <target id> counterexample <hash> <vtime>` line ("Attributing a falsification"). If it is attributed and the interview allowed it, record **falsified** and `snouty runs cancel "$RUN_ID"`. If the stream errors (`antithesis-triage`, `references/live-runs.md`), poll `snouty runs --json show "$RUN_ID" | jq -r .status` instead.
+Once the marker's `verdict` is `passed` and the target's is `failed`, attribute a `sample <target id> counterexample <hash> <vtime>` line ("Attributing a falsification"). If it is attributed and the interview allowed it, record **falsified** and `snouty runs cancel "$RUN_ID"`. If the stream errors (`/antithesis triage`, `references/triage/monitor.md`), poll `snouty runs --json show "$RUN_ID" | jq -r .status` instead.
 
 Triage each run as it lands rather than waiting for the whole
 batch, and append its row to `history.md` — run id, mutant, attempt, diagnosis,
@@ -155,7 +155,7 @@ Check these before judging any individual mutant.
 | Evidence | Diagnosis | Action |
 | --- | --- | --- |
 | Announcement missing in local validate | Wrong or unpatched build | Caught **pre-launch**; no run budget spent. Rebuild and re-verify |
-| Baseline red on a safety property | — | **Stop.** The batch cannot be interpreted: a property that was already failing tells you nothing about your mutant. Report the failures and route to `antithesis-workload` or `antithesis-research` |
+| Baseline red on a safety property | — | **Stop.** The batch cannot be interpreted: a property that was already failing tells you nothing about your mutant. Report the failures and route to `/antithesis workload` or `antithesis-research` |
 | Run did not finish normally — `status` is `incomplete`, `cancelled` (other than after an attributed kill), or `unknown` | **No result** | Not a survivor: the target's silence is missing data, not evidence. Re-launch the mutant. If it fails the same way twice, diagnose it with the incomplete-run workflow — `failure_moment` plus `build-logs` — before spending another run, and record *outstanding* if it cannot be resolved |
 
 A baseline that goes red after a round of fixes stops the loop the same way, in
@@ -193,9 +193,9 @@ verdict is what `report.md` records for the property once the round settles:
 | Marker green, target red, but no counterexample history carries the marker | **unattributed** | Both counts are run-wide totals, so these may be different histories. Not a falsification — see "Attributing a falsification" below |
 | Marker green, target green, another property red | off-target or dominated | Either the mutant is too broad — narrow it — or the target is genuinely dominated by the property that fired — which needs an argument that the target cannot be violated without the other firing, recorded in `property-relationships.md`. Domination makes the target redundant, not validated, and never yields *falsified* |
 | Marker green, divergence masked or converged before observation | **bad mutant** | The bug ran but was erased before anything could see it. Choose a different mistake for the same property |
-| Marker green, divergence reaches the assertion but the predicate tolerates it | **bad oracle** | The catalog has a hole and the mutant found it. Tighten, re-key, or relocate the assertion per `antithesis-workload`'s `references/assertions.md` and interview question 4; re-baseline and re-sweep |
+| Marker green, divergence reaches the assertion but the predicate tolerates it | **bad oracle** | The catalog has a hole and the mutant found it. Tighten, re-key, or relocate the assertion per `/antithesis properties` (`references/properties/assertions.md`) and interview question 4; re-baseline and re-sweep |
 | No observation point could ever distinguish a violation | **bad property** | Per the interview: stop and route to `antithesis-research`, or refine/withdraw and continue |
-| `setup_complete` never reached, or a container crashes deterministically on startup | too blatant | The mutant broke the system rather than the property. Narrow it to produce the targeted divergence without the crash. **A container exiting mid-run is not this row** — Antithesis injects container kill and stop faults and restarts the container afterwards (`antithesis-triage`, `references/logs.md`), so exits are routine and say nothing about the mutant |
+| `setup_complete` never reached, or a container crashes deterministically on startup | too blatant | The mutant broke the system rather than the property. Narrow it to produce the targeted divergence without the crash. **A container exiting mid-run is not this row** — Antithesis injects container kill and stop faults and restarts the container afterwards (`/antithesis triage`, `references/triage/logs.md`), so exits are routine and say nothing about the mutant |
 
 **Reach is a fact about the mutated site, not about the target.** The two
 marker-red rows above ask whether execution got to the *mutation* — do not
@@ -208,7 +208,7 @@ means the *site* was never entered — the `bad workload` row.
 ## Attributing a falsification
 
 `example_count` and `counterexample_count` are totals **across every history in
-the run** (`antithesis-triage`, `references/properties.md`). "Marker green" and
+the run** (`/antithesis triage`, `references/triage/properties.md`). "Marker green" and
 "target red" can therefore describe histories that never met: the mutant ran in
 forty histories where nothing failed, and the property failed in a forty-first
 where the mutant's branch was never taken.
@@ -218,8 +218,8 @@ target's counterexample moment and confirm the mutant's marker fired in that
 history, before it.**
 
 The check that settles it is the counterexample's own log. `snouty runs --json
-logs` streams *the history up to that moment* (`antithesis-triage`,
-`references/logs.md`), so a marker inside that stream is by construction in the
+logs` streams *the history up to that moment* (`/antithesis triage`,
+`references/triage/logs.md`), so a marker inside that stream is by construction in the
 same history and earlier than the failure:
 
 ```sh
@@ -237,7 +237,7 @@ If the marker is absent from the counterexample's own history, the diagnosis is
 The mutant is not the only thing that reddens a property — injected faults and
 pre-existing rare bugs look exactly like kills. A prediction is a hypothesis to
 test, not a conclusion to confirm: read the counterexample logs with the
-`antithesis-triage` skill's workflow, because "fired for the predicted reason"
+`/antithesis triage` workflow, because "fired for the predicted reason"
 is the difference between a falsification and a coincidence.
 
 ## Crediting collateral damage
