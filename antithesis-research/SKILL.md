@@ -52,7 +52,7 @@ If scratchbook artifacts already exist, treat them as inputs and extend them ins
 
 ## Documentation Grounding
 
-Use the `antithesis-documentation` skill to ground Antithesis-specific terminology and implementation advice.
+Use `snouty docs` to ground Antithesis-specific terminology and implementation advice.
 
 - Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
 - Sometimes assertions: `https://antithesis.com/docs/concepts/properties_assertions/sometimes_assertions.md`
@@ -115,7 +115,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 ### Property expansion (after triage)
 
 1. Read `references/property-discovery.md` and `references/property-catalog.md`
-2. Review triage findings from the `antithesis-triage` skill
+2. Review triage findings from `/antithesis triage` (in the antithesis plugin)
 3. Use the attention focuses from `references/property-discovery.md` to look for new properties inspired by triage findings
 4. Update the relevant files in the scratchbook
 5. Write evidence files for new properties to `antithesis/scratchbook/properties/{slug}.md`
@@ -152,7 +152,7 @@ Use the `antithesis-documentation` skill to ground Antithesis-specific terminolo
 
 All top-level scratchbook artifacts (everything in the list above except per-property evidence files) include provenance frontmatter recording `sut_path`, `commit`, `updated`, and `external_references`. Per-property evidence files inherit context from `property-catalog.md` and do not need their own frontmatter. See `references/scratchbook-setup.md`.
 
-These outputs should be concrete enough for the `antithesis-setup` skill and the `antithesis-workload` skill to use directly.
+These outputs should be concrete enough for the antithesis plugin to use directly: `/antithesis workload` to build the harness and workload, and `/antithesis properties` to import the property catalog.
 
 ## Self-Review
 
@@ -184,4 +184,4 @@ Review criteria:
 - Evaluation refinements have been applied to the catalog
 - Evaluation gaps have been filled via targeted discovery, and the resulting properties are in the catalog with evidence files
 - Evaluation biases (if any) have been presented to the user with supporting evidence
-- The outputs are concrete enough for `antithesis-setup` and `antithesis-workload` to use directly — no ambiguous steps or missing details
+- The outputs are concrete enough for `/antithesis workload` and `/antithesis properties` to use directly — no ambiguous steps or missing details

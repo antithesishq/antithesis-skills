@@ -38,11 +38,11 @@ Never the Violation."
 
 ### Watch the run
 
-After implementing a property, follow its run live (`antithesis-triage`, `references/live-runs.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
+After implementing a property, follow its run live (`/antithesis triage`, `references/triage/monitor.md`). Once every reach claim has passed, or as soon as the `Always` fails, ask the user to cancel the run and use "Iteration Moves" below.
 
 ### Triage results (Antithesis runs)
 
-After an Antithesis run, `antithesis-triage` reports property status:
+After an Antithesis run, `/antithesis triage` reports property status:
 
 - **Passing**: The invariant held throughout. Good — but the workload may not
   have reached all the conditions where the invariant could be violated.

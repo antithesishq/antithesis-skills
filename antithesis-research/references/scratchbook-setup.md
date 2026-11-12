@@ -10,7 +10,7 @@ If the directory or scratchbook files already exist, preserve them and extend th
 
 ## Provenance Frontmatter
 
-Every top-level artifact in the scratchbook must begin with YAML frontmatter recording what the artifact describes — which SUT, at what version, on what date, and which external references were consulted. This lets future readers and downstream skills (`antithesis-setup`, `antithesis-workload`) confirm the artifact still applies to the user's current target.
+Every top-level artifact in the scratchbook must begin with YAML frontmatter recording what the artifact describes — which SUT, at what version, on what date, and which external references were consulted. This lets future readers and downstream consumers (the antithesis plugin's `/antithesis workload` and `/antithesis properties`) confirm the artifact still applies to the user's current target.
 
 ```yaml
 ---
@@ -25,7 +25,7 @@ external_references:
 
 If the user said "just this directory" when asked the scope question, write `external_references: []`. The empty list means the question was asked and explicitly answered with no external references.
 
-Downstream skills (`antithesis-setup`, `antithesis-workload`) read whatever provenance fields are present in an artifact and describe what they find. They do not enforce a rigid schema match — older artifacts with fewer fields, or no frontmatter at all, are not "broken." An artifact lacking provenance frontmatter entirely predates this convention; downstream skills handle that case by simply describing what they found.
+Downstream consumers (the antithesis plugin's `/antithesis workload` and `/antithesis properties`) read whatever provenance fields are present in an artifact and describe what they find. They do not enforce a rigid schema match — older artifacts with fewer fields, or no frontmatter at all, are not "broken." An artifact lacking provenance frontmatter entirely predates this convention; downstream skills handle that case by simply describing what they found.
 
 Top-level artifacts requiring this frontmatter:
 
@@ -53,7 +53,7 @@ When updating an existing artifact, refresh `commit` and `updated` to reflect th
 The Antithesis scratchbook is the central location for durable Antithesis handoff artifacts. Use it to:
 
 - Persist codebase-specific Antithesis analysis across conversation turns
-- Share canonical inputs and outputs across `antithesis-research`, `antithesis-setup`, and `antithesis-workload`
+- Share canonical inputs and outputs across `antithesis-research` and the antithesis plugin's `/antithesis workload` and `/antithesis properties`
 - Record assumptions and open questions in the same files as the decisions they affect
 
 ## Writing Research Outputs

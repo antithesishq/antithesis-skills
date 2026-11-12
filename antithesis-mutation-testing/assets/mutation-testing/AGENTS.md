@@ -1,6 +1,6 @@
 This directory holds everything for validating the property catalog with mutation testing.
 
-Use the `antithesis-mutation-testing` skill to work in here. Use the `antithesis-launch` skill to submit runs — do not run `snouty launch` directly.
+Use the `antithesis-mutation-testing` skill to work in here. Use `/antithesis launch` (from the antithesis plugin) to submit runs — do not run `snouty launch` directly.
 
 **Paths**
 Every script takes its paths as arguments and derives nothing from where it sits, so this directory can be moved or renamed as long as the scripts stay together. Resolve four values once — `--source` (root of the source tree), `--patches` (the `patches/` directory below), `--images` (`images.txt` below), and `--fork` (a scratch directory outside the source tree) — and pass each script **only the flags its own signature lists below**. Every script rejects an unknown flag rather than ignoring it, so `--images` on `fork.sh` or `--source` on `sync-patches.sh` is a hard failure, not a harmless extra. `--config` is the compose directory relative to the fork, defaulting to `antithesis/config`.

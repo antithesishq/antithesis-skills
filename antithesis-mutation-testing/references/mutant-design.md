@@ -63,8 +63,8 @@ wanted. Green means the divergence happened, red means it never did — the
 single most useful fact when a mutant survives.
 
 **Where the SDK does not catalog assertions, the marker is a log record
-instead.** JavaScript has no Antithesis SDK — `antithesis-setup`'s
-`references/language/javascript.md` directs those projects to a hand-rolled
+instead.** JavaScript has no Antithesis SDK — `/antithesis workload`'s
+`references/workload/languages/javascript.md` directs those projects to a hand-rolled
 fallback — and a fallback assertion that only emits on hit has no "never
 reached" state to report. In those services, emit a distinct log line at the
 divergence point and read it back with `snouty runs events` (see the second

@@ -64,6 +64,9 @@ assertions pass on the first run.
 - Docker Compose v2 and a container engine (Docker or Podman) for local runs
 - `snouty` CLI 0.8.0 or newer installed when moving to Antithesis runs (not
   needed for local-only work)
+- The [antithesis plugin](https://github.com/antithesishq/antithesis-plugin)
+  installed when moving to Antithesis runs, for `/antithesis launch`,
+  `/antithesis triage`, and `/antithesis debug`
 
 ## Relationship to Other Skills
 
@@ -72,19 +75,20 @@ assertions pass on the first run.
   with this feature" rather than "what properties does this entire system
   have." If full research artifacts already exist in the scratchbook, use them
   as context but don't require them.
-- **antithesis-workload**: Feature-workload builds self-driving workloads, not
-  Test Composer commands. Assertion patterns, value menus, fault-tolerant
-  design, and reach claims apply to both — this skill carries its own
-  reference material adapted for feature-scoped work.
-- **antithesis-setup**: Feature-workload does not assume Antithesis
-  infrastructure is or isn't set up. When the user wants to move to Antithesis
-  and infrastructure is needed, delegate to `antithesis-setup`.
-- **antithesis-launch**: Use to submit Antithesis runs. Do not run
+- **`/antithesis workload`** (antithesis plugin): Builds the system-wide
+  hegel-driven workload. Feature-workload builds a feature-scoped
+  self-driving workload instead. Assertion patterns, value menus,
+  fault-tolerant design, and reach claims apply to both — this skill carries
+  its own reference material adapted for feature-scoped work. Feature-workload
+  does not assume an Antithesis harness is or isn't set up; when the user wants
+  to move to Antithesis and the harness (images, compose file, setup-complete
+  signal) is missing, delegate to `/antithesis workload`.
+- **`/antithesis launch`**: Use to submit Antithesis runs. Do not run
   `snouty launch` directly.
-- **antithesis-triage**: Use after each Antithesis run with a focused lens:
+- **`/antithesis triage`**: Use after each Antithesis run with a focused lens:
   "are the feature's properties being exercised? Any failures?" rather than a
   broad property portfolio review.
-- **antithesis-debug**: Use when triage shows a property failure that needs
+- **`/antithesis debug`**: Use when triage shows a property failure that needs
   deeper investigation — inspect container state at the failure moment,
   time-travel to understand the sequence.
 
@@ -104,7 +108,7 @@ assertions pass on the first run.
 
 ## Documentation Grounding
 
-Use the `antithesis-documentation` skill to access Antithesis docs.
+Use `snouty docs` to access Antithesis docs.
 
 - SDK reference: `https://antithesis.com/docs/reference/sdk.md`
 - Properties and assertions: `https://antithesis.com/docs/concepts/properties_assertions/assertions.md`
@@ -160,14 +164,14 @@ Use the `antithesis-documentation` skill to access Antithesis docs.
       assertions
     - Feature understanding seems wrong → loop back to step 3
 14. If moving to Antithesis:
-    a. Check existing setup; use `antithesis-setup` if infrastructure is needed
-    b. Use `antithesis-launch` for runs
+    a. Check existing setup; use `/antithesis workload` if infrastructure is needed
+    b. Use `/antithesis launch` for runs
     c. Watch the run (`references/iteration.md`, "Watch the run"), or use
-       `antithesis-triage` for analysis (framed: "are the feature's
+       `/antithesis triage` for analysis (framed: "are the feature's
        properties being exercised? Any failures?")
     d. Based on triage results: if a property failed, go to step 15; if reach
        claims aren't firing, go to "Iterate after a run"; if the mechanism is
-       unclear, use `antithesis-debug` for deeper inspection
+       unclear, use `/antithesis debug` for deeper inspection
 15. When a property fails, read `references/verification.md`. Classify the
     finding. Any real bug found while testing a feature is valuable.
 16. Document findings in
@@ -288,7 +292,7 @@ Review criteria:
   dangerous, or timing-sensitive internal states
 - Assertions are in workload code or surgical SUT locations — not scattered
   across production paths
-- If moving to Antithesis: the `antithesis-setup` skill was used for
+- If moving to Antithesis: `/antithesis workload` was used for
   infrastructure, not ad-hoc setup
 - If fault types are relevant to the feature's properties: those faults are
   confirmed as enabled for the tenant — see `references/faults.md`

@@ -16,6 +16,8 @@ metadata:
 
 Help the user file a bug report against the Antithesis skills by opening a pre-filled GitHub issue.
 
+This repository holds only the experimental skills (for example `antithesis-research`, `antithesis-mutation-testing`). If the problem is with the `/antithesis` skill from the antithesis plugin (its `triage`, `debug`, `workload`, `launch`, or `properties` modules), point the user to https://github.com/antithesishq/antithesis-plugin/issues/new instead, and do not use the template below.
+
 ## Base URL
 
 ```
@@ -35,7 +37,7 @@ The available fields are:
 | ------------------- | -------- | ----------------------------------------------------------------------------------------------------- |
 | `what-happened`     | textarea | Brief summary of what went wrong. Keep to 1-2 sentences — the user will elaborate.                    |
 | `expected`          | textarea | Leave **blank** — only the user knows what they expected.                                             |
-| `skill`             | input    | The skill that was active (e.g. `antithesis-triage`, `antithesis-setup`).                             |
+| `skill`             | input    | The skill that was active (e.g. `antithesis-research`, `antithesis-mutation-testing`).                 |
 | `skill-version`     | input    | Run `git -C <skills-repo> rev-parse --short HEAD` to get the commit SHA.                              |
 | `agent`             | input    | The agent name and version (e.g. `Claude Code 1.0.20`). Use the agent info available in your context. |
 | `agent-explanation` | textarea | Your honest self-assessment: what did you do, and why did it go wrong? 2-4 sentences max.             |
@@ -66,7 +68,7 @@ or reject longer URLs. If the URL would exceed this limit:
 ### Example URL
 
 ```
-https://github.com/antithesishq/antithesis-skills/issues/new?template=bug_report.yml&title=Triage%20skill%20fails%20to%20parse%20property%20results&skill=antithesis-triage&skill-version=1c45cd3&agent=Claude%20Code%201.0.20&what-happened=The%20triage%20skill%20crashed%20while%20parsing%20property%20results%20from%20the%20Antithesis%20dashboard.&agent-explanation=I%20attempted%20to%20extract%20property%20data%20from%20the%20results%20page%20but%20the%20HTML%20structure%20did%20not%20match%20the%20expected%20selectors.
+https://github.com/antithesishq/antithesis-skills/issues/new?template=bug_report.yml&title=Research%20skill%20fails%20to%20write%20property%20catalog&skill=antithesis-research&skill-version=1c45cd3&agent=Claude%20Code%201.0.20&what-happened=The%20research%20skill%20stopped%20before%20writing%20the%20property%20catalog.&agent-explanation=I%20ran%20out%20of%20context%20during%20property%20evaluation%20and%20did%20not%20checkpoint%20the%20catalog%20first.
 ```
 
 ## Presenting to the user

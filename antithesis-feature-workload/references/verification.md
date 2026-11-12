@@ -18,9 +18,9 @@ Whether from local output or Antithesis triage:
    represent a genuine violation of the property? Is the invariant actually
    broken, or did the assertion check the wrong thing?
 
-For Antithesis runs, use `antithesis-triage` to get the failure details. If
+For Antithesis runs, use `/antithesis triage` to get the failure details. If
 the triage output isn't enough to understand the mechanism, use
-`antithesis-debug` to inspect container state at the failure moment — the
+`/antithesis debug` to inspect container state at the failure moment — the
 Multiverse Debugger lets you time-travel through the sequence and inspect
 state at any point.
 
@@ -111,7 +111,7 @@ Fix the environment and continue testing.
 For any finding, ask:
 
 1. **Can I explain the mechanism step by step?** If not, dig deeper — use
-   `antithesis-debug` for Antithesis runs, add logging for local runs.
+   `/antithesis debug` for Antithesis runs, add logging for local runs.
 2. **Is the SUT actually wrong?** The sequence shows what happened; that's
    not the same as wrong. The SUT may have correctly handled an unusual but
    valid scenario.

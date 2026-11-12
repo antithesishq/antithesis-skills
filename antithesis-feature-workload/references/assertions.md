@@ -96,8 +96,8 @@ list of what to fix. This is the primary iteration signal.
 
 Write `Sometimes` assertions for the behaviors the workload is designed to
 drive. Assert the precondition — the state where the interesting behavior
-*can* occur — not the violation itself. Use `antithesis-launch` to run a
-test, then `antithesis-triage` to check which assertions fired. Unfired ones
+*can* occur — not the violation itself. Use `/antithesis launch` to run a
+test, then `/antithesis triage` to check which assertions fired. Unfired ones
 are evidence the workload isn't reaching its targets and the starting point
 for iteration.
 

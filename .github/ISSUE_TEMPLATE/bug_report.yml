@@ -1,11 +1,13 @@
 name: Bug Report
-description: Report a problem with the Antithesis skills
+description: Report a problem with the experimental Antithesis skills
 labels: ["bug"]
 body:
   - type: markdown
     attributes:
       value: |
         Thanks for taking the time to file a bug report!
+
+        This repository holds the experimental Antithesis skills. Problems with the `/antithesis` skill from the antithesis plugin belong in [antithesishq/antithesis-plugin](https://github.com/antithesishq/antithesis-plugin/issues).
 
         **Tip:** Before filling this out, try asking your agent: *"Why did you do that? What went wrong?"*
         The agent's self-assessment is often surprisingly useful for diagnosing the issue — paste it into the context section below.
@@ -16,7 +18,7 @@ body:
       label: What happened?
       description: Describe the bug. What did you do, and what went wrong?
       placeholder: |
-        I asked the agent to triage my test run and it ...
+        I asked the agent to research my codebase and it ...
     validations:
       required: true
 
@@ -33,7 +35,7 @@ body:
     attributes:
       label: Skill
       description: Which skill were you using?
-      placeholder: "e.g. antithesis-triage, antithesis-debug, antithesis-setup"
+      placeholder: "e.g. antithesis-research, antithesis-mutation-testing"
     validations:
       required: true
 
