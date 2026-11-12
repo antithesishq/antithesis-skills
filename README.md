@@ -5,7 +5,7 @@ An experimental collection of Antithesis skills for AI agents.
 > [!IMPORTANT]
 > The core Antithesis skills now live in the **[antithesis plugin](https://github.com/antithesishq/antithesis-plugin)**. Install it before using anything here. The skills in this repository build on its `/antithesis` skill and hand work off to its modules.
 >
-> The `antithesis-documentation`, `antithesis-setup`, `antithesis-setup-k8s`, `antithesis-workload`, `antithesis-launch`, `antithesis-triage`, and `antithesis-debug` skills have been removed from this repository. Use the plugin's `/antithesis [module] <prompt>` entry point instead:
+> The `antithesis-documentation`, `antithesis-setup`, `antithesis-setup-k8s`, `antithesis-workload`, `antithesis-launch`, `antithesis-triage`, `antithesis-debug`, and `antithesis-skills-feedback` skills have been removed from this repository. Use the plugin's `/antithesis [module] <prompt>` entry point instead:
 >
 > | Removed skill                                  | Use instead            |
 > | ---------------------------------------------- | ---------------------- |
@@ -35,10 +35,8 @@ These skills are experiments. They may change shape, move into the plugin, or be
 
 `antithesis-review-inputs` reviews a workload's input generation for state space exploration — how well it uses randomness to drive the system under test into diverse regions of behavior. Useful when a workload isn't finding bugs and you want to understand whether its input generation is limiting what Antithesis can explore, or as a periodic health check on existing workloads.
 
-`antithesis-skills-feedback` helps you file bug reports against these skills by opening a pre-filled GitHub issue. Report problems with the `/antithesis` skill itself on the [plugin's issue tracker](https://github.com/antithesishq/antithesis-plugin/issues).
-
 > [!NOTE]
-> LLMs are inherently non-deterministic, so these skills may not work perfectly with your AI. Please do file issues and submit PRs as you come across ways to improve them.
+> LLMs are inherently non-deterministic, so these skills may not work perfectly with your AI. Please [file issues](https://github.com/antithesishq/antithesis-skills/issues) and submit PRs as you come across ways to improve them. Report problems with the `/antithesis` skill itself on the [plugin's issue tracker](https://github.com/antithesishq/antithesis-plugin/issues).
 
 ## Starter prompts
 
@@ -151,7 +149,6 @@ The installer presents an interactive menu. Choose the following options:
    - `antithesis-feature-workload`
    - `antithesis-mutation-testing`
    - `antithesis-review-inputs`
-   - `antithesis-skills-feedback`
 2. **Pick agents** - make sure to select **Claude Code** if you want to use these skills with Claude, as it's not enabled by default.
 3. **Install scope** — choose **global**, not project.
 4. **Install method** — choose **symlink**.
