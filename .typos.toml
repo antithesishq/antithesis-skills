@@ -1,7 +1,12 @@
 [default]
-# Ignore typos inside long base64-like quoted strings (e.g. encoded URL
-# fragments in test fixtures).
-extend-ignore-re = ['"[A-Za-z0-9+/=]{20,}"']
+extend-ignore-re = [
+  # Long base64-like quoted strings (e.g. encoded URL fragments in test
+  # fixtures).
+  '"[A-Za-z0-9+/=]{20,}"',
+  # Skill version stamps ("YYYY-MM-DD <commit hash>"). Short commit hashes can
+  # look like misspelled words.
+  '\d{4}-\d{2}-\d{2} [0-9a-f]{7,40}',
+]
 
 [default.extend-words]
 mutatable = "mutatable"
