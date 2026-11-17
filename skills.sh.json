@@ -1,0 +1,21 @@
+{
+  "$schema": "https://skills.sh/schemas/skills.sh.schema.json",
+  "notGrouped": "bottom",
+  "groupings": [
+    {
+      "title": "Plan",
+      "description": "Analyze a system and find the properties to test with Antithesis.",
+      "skills": ["antithesis-research"]
+    },
+    {
+      "title": "Build",
+      "description": "Build a self-driving workload for a specific feature.",
+      "skills": ["antithesis-feature-workload"]
+    },
+    {
+      "title": "Validate",
+      "description": "Check that your workload explores well and your properties catch bugs.",
+      "skills": ["antithesis-review-inputs", "antithesis-mutation-testing"]
+    }
+  ]
+}
